@@ -16,6 +16,9 @@ function start() {
 
 	game = new game_instance(renderer);
 
+	document.onkeydown = (event) => game.keys[event.code] = { "pressed": true, "timestamp": Date.now() };
+	document.onkeyup = (event) => game.keys[event.code] = { "pressed": false, "timestamp": Date.now() };
+
 	handle = requestAnimationFrame(game_loop);
 }
 

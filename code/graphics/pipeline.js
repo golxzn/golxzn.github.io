@@ -26,10 +26,12 @@ class pipeline {
 		}
 
 		if (Array.isArray(value)) {
-			if (Number.isInteger(value[0])) {
-				this._gl.uniform1iv(location, Int32List(value));
+			if (value.length == 16) {
+				this._gl.uniformMatrix4fv(location, false, new Float32Array(value));
+			} else if (Number.isInteger(value[0])) {
+				this._gl.uniform1iv(location, new Int32Array(value));
 			} else {
-				this._gl.uniform1fv(location, Float32List(value));
+				this._gl.uniform1fv(location, new Float32Array(value));
 			}
 		} else if (typeof(value) == 'number') {
 			if (Number.isInteger(value)) {
@@ -76,6 +78,7 @@ class pipeline {
 
 		console.error(`[pipeline][${this._name}] Failed to link program:`,
 			this._gl.getProgramInfoLog(program));
+		this._gl.deleteProgram(program);
 		return null;
 	}
 
@@ -88,9 +91,9 @@ class pipeline {
 			return shader;
 		}
 
-		this._gl.deleteShader(shader);
 		console.error(`[pipeline][${this._name}] Failed to compile the shader:`,
 			this._gl.getShaderInfoLog(shader));
+		this._gl.deleteShader(shader);
 		return null;
 	}
 };

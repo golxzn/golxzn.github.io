@@ -7,6 +7,14 @@ class graphics {
 		}
 		this.gl.viewport(0, 0, canvas.width, canvas.height);
 		this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+
+		this.gl.enable(this.gl.CULL_FACE);
+		this.gl.enable(this.gl.DEPTH_TEST);
+		this.gl.depthMask(true);
+	}
+
+	aspect_ratio() {
+		return this.gl.canvas.width / this.gl.canvas.height;
 	}
 
 	set_clear_color(color) {
@@ -14,6 +22,6 @@ class graphics {
 	}
 
 	clear() {
-		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 	}
 };

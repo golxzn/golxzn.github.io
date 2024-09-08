@@ -7,6 +7,40 @@
 	<link rel="stylesheet" href="style/main.css" />
 </head>
 <body onload="start()">
+	<script id="primitive-vertex-3D" type="x-shader/x-vertex">
+attribute vec3 a_position;
+attribute vec3 a_normal;
+attribute vec2 a_uv;
+
+varying vec3 normal;
+varying vec2 uv;
+
+uniform mat4 u_model;
+uniform mat4 u_view;
+uniform mat4 u_projection;
+
+void main() {
+	gl_Position = u_projection * u_view * u_model * vec4(a_position, 1.0);
+	normal = a_normal;
+	uv = a_uv;
+}
+	</script>
+
+	<script id="primitive-fragment-3D" type="x-shader/x-fragment">
+precision mediump float;
+
+varying vec3 normal;
+varying vec2 uv;
+
+void main() {
+	// gl_FragColor = vec4(normal, 1.0);
+	gl_FragColor = vec4(uv.x, 1.0, 1.0, 1.0);
+}
+	</script>
+
+	<script src="code/math/vector.js"></script>
+	<script src="code/math/matrix.js"></script>
+
 	<script src="code/graphics/graphics.js"></script>
 	<script src="code/graphics/pipeline.js"></script>
 	<script src="code/graphics/mesh.js"></script>
@@ -17,6 +51,9 @@
 
 	<script src="code/main.js"></script>
 
-	<canvas id="display"/>
+	<div align="center">
+		<canvas id="display"></canvas>
+	</div>
+
 </body>
 </html>
