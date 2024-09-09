@@ -26,7 +26,6 @@ class game_instance {
 	}
 
 	update(delta) {
-		console.log("Delta:", delta)
 		this.scene_manager.update(delta);
 		this.camera.update(this.keyboard, delta);
 	}
