@@ -4,7 +4,8 @@ class rotating_cube {
 	constructor(name, graphics, pipeline, rotation_speed, rotation_axis = [0.0, 1.0, 0.0]) {
 		this.name = name;
 		this.pipeline = pipeline;
-		this.mesh = new mesh(graphics.gl, "cube", pipeline, this._make_cube_vertices());
+		this.mesh = new mesh(graphics.gl, "cube", pipeline,
+			this._make_vertices(), this._make_indices());
 		this.rotation_speed = rotation_speed;
 		this.rotation_axis  = rotation_axis;
 		this.transform = golxzn.math.mat4.make_identity();
@@ -19,14 +20,12 @@ class rotating_cube {
 		this.pipeline.use();
 		this.pipeline.set_uniform("u_model", this.transform);
 
-		this.mesh.bind();
-		this.mesh.draw();
-		this.mesh.unbind();
+		this.mesh.draw(graphics);
 	}
 
-	_make_cube_vertices() {
+	_make_vertices() {
 		// Define the 8 vertices of a cube
-		const vertices = [
+		return vertex.pack([
 			new vertex([-1.0, -1.0, -1.0], [0, 0, -127], [0, 0]),  // Front bottom-left
 			new vertex([ 1.0, -1.0, -1.0], [0, 0, -127], [1, 0]),  // Front bottom-right
 			new vertex([ 1.0,  1.0, -1.0], [0, 0, -127], [1, 1]),  // Front top-right
@@ -36,18 +35,17 @@ class rotating_cube {
 			new vertex([ 1.0, -1.0,  1.0], [0, 0, 128], [1, 0]),   // Back bottom-right
 			new vertex([ 1.0,  1.0,  1.0], [0, 0, 128], [1, 1]),   // Back top-right
 			new vertex([-1.0,  1.0,  1.0], [0, 0, 128], [0, 1])    // Back top-left
-		];
+		]);
+	}
 
-		// Return the array of vertices (positions, normals, and UVs) for a cube
-		const faces = [
-			vertices[0], vertices[1], vertices[2], vertices[2], vertices[3], vertices[0], // Front face
-			vertices[5], vertices[4], vertices[7], vertices[7], vertices[6], vertices[5], // Back face
-			vertices[3], vertices[2], vertices[6], vertices[6], vertices[7], vertices[3], // Top face
-			vertices[4], vertices[5], vertices[1], vertices[1], vertices[0], vertices[4], // Bottom face
-			vertices[1], vertices[5], vertices[6], vertices[6], vertices[2], vertices[1], // Right face
-			vertices[4], vertices[0], vertices[3], vertices[3], vertices[7], vertices[4] // Left face
-		];
-
-		return faces;
+	_make_indices() {
+		return new Uint16Array([
+			0, 1, 2, 2, 3, 0, // Front face
+			5, 4, 7, 7, 6, 5, // Back face
+			3, 2, 6, 6, 7, 3, // Top face
+			4, 5, 1, 1, 0, 4, // Bottom face
+			1, 5, 6, 6, 2, 1, // Right face
+			4, 0, 3, 3, 7, 4 // Left face
+		]);
 	}
 };
