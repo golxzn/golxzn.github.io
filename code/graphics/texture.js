@@ -1,11 +1,8 @@
 
 const DEFAULT_LEVEL           = 0;
-const DEFAULT_INTERNAL_FORMAT = gl.RGBA;
 const DEFAULT_WIDTH           = 1;
 const DEFAULT_HEIGHT          = 1;
 const DEFAULT_BORDER          = 0;
-const DEFAULT_SRC_FORMAT      = gl.RGBA;
-const DEFAULT_SRC_TYPE        = gl.UNSIGNED_BYTE;
 const DEFAULT_PIXELS          = new Uint8Array([0, 0, 255, 255]);
 
 class texture {
@@ -17,8 +14,9 @@ class texture {
 		this._width = DEFAULT_WIDTH;
 		this._height = DEFAULT_HEIGHT;
 		this._image = new Image()
-		img.onload = this._on_image_load;
-		img.src = url;
+		this._image.setAttribute('crossorigin', 'anonymous');
+		this._image.onload = () => this._on_image_load();
+		this._image.src = url;
 	}
 
 	bind() {
@@ -39,47 +37,49 @@ class texture {
 		this._gl.texImage2D(
 			this._target,
 			DEFAULT_LEVEL,
-			DEFAULT_INTERNAL_FORMAT,
+			this._gl.RGBA,
 			this._width, this._height,
 			DEFAULT_BORDER,
-			DEFAULT_SRC_FORMAT,
-			DEFAULT_SRC_TYPE,
+			this._gl.RGBA,
+			this._gl.UNSIGNED_BYTE,
 			DEFAULT_PIXELS
 		)
 
 		this._gl.bindTexture(this._target, null);
+		return texture;
 	}
 
 	_on_image_load() {
-		this.bind();
-
+		const gl = this._gl;
 		const img = this._image;
 		this._image = null;
 		this._width = img.width;
 		this._height = img.height;
 
-		this._gl.texImage2D(
+		this.bind();
+
+		gl.texImage2D(
 			this._target,
 			DEFAULT_LEVEL,
-			DEFAULT_INTERNAL_FORMAT,
-			DEFAULT_SRC_FORMAT,
-			DEFAULT_SRC_TYPE,
+			gl.RGBA,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
 			img
-		)
+		);
 
-		if (!this._support_mipmap(img)) {
-			this._gl.texParameteri(this._target, this._gl.TEXTURE_WRAP_S, this._gl.CLAMP_TO_EDGE);
-			this._gl.texParameteri(this._target, this._gl.TEXTURE_WRAP_T, this._gl.CLAMP_TO_EDGE);
-			this._gl.texParameteri(this._target, this._gl.TEXTURE_MIN_FILTER, this._gl.LINEAR);
+		if (!texture._support_mipmap(img)) {
+			gl.texParameteri(this._target, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(this._target, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(this._target, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 		} else {
-			this._gl.generateMipmap(this._target);
+			gl.generateMipmap(this._target);
 		}
 
 		this.unbind();
 	}
 
 	static _support_mipmap(image) {
-		return this._is_power_of_2(image.width) && this._is_power_of_2(image.height);
+		return texture._is_power_of_2(image.width) && texture._is_power_of_2(image.height);
 	}
 	static _is_power_of_2(value) {
 		return (value & (value - 1)) === 0;
