@@ -19,7 +19,8 @@ class texture {
 		this._image.src = url;
 	}
 
-	bind() {
+	bind(index = 0) {
+		this._gl.activeTexture(this._gl.TEXTURE0 + index);
 		this._gl.bindTexture(this._target, this._texture);
 	}
 
