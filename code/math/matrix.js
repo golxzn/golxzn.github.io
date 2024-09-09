@@ -86,5 +86,43 @@ Object.assign(golxzn.math, {
 					0.0, 0.0, 2.0 * near * far * invert_range,  0.0
 			];
 		},
+
+
+	/*
+		template<typename T, qualifier Q>
+	GLM_FUNC_QUALIFIER mat<4, 4, T, Q> lookAtRH(vec<3, T, Q> const& eye, vec<3, T, Q> const& center, vec<3, T, Q> const& up)
+	{
+		vec<3, T, Q> const f(normalize(center - eye));
+		vec<3, T, Q> const s(normalize(cross(f, up)));
+		vec<3, T, Q> const u(cross(s, f));
+
+		mat<4, 4, T, Q> Result(1);
+		Result[0][0] = s.x;
+		Result[1][0] = s.y;
+		Result[2][0] = s.z;
+		Result[0][1] = u.x;
+		Result[1][1] = u.y;
+		Result[2][1] = u.z;
+		Result[0][2] =-f.x;
+		Result[1][2] =-f.y;
+		Result[2][2] =-f.z;
+		Result[3][0] =-dot(s, eye);
+		Result[3][1] =-dot(u, eye);
+		Result[3][2] = dot(f, eye);
+		return Result;
+	}
+	*/
+		look_at(eye, center, up) {
+			const f = golxzn.math.normalize(golxzn.math.sub(center, eye));
+			const s = golxzn.math.normalize(golxzn.math.vec3.cross(f, up));
+			const u = golxzn.math.vec3.cross(s, f);
+			const dot = golxzn.math.dot;
+			return [
+				s[0], u[0], -f[0], 0.0,
+				s[1], u[1], -f[1], 0.0,
+				s[2], u[2], -f[2], 0.0,
+				-dot(s, eye), -dot(u, eye), dot(f, eye), 1.0
+			]
+		}
 	}
 });
