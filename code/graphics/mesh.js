@@ -24,12 +24,12 @@ class vertex {
 			data_view.setFloat32(offset + 0, vert.position[0], true);
 			data_view.setFloat32(offset + 4, vert.position[1], true);
 			data_view.setFloat32(offset + 8, vert.position[2], true);
-			data_view.setInt8(offset + 12, vert.normal[0] * 0x7F);
-			data_view.setInt8(offset + 13, vert.normal[1] * 0x7F);
-			data_view.setInt8(offset + 14, vert.normal[2] * 0x7F);
+			data_view.setInt8(offset + 12, vert.normal[0]);
+			data_view.setInt8(offset + 13, vert.normal[1]);
+			data_view.setInt8(offset + 14, vert.normal[2]);
 			data_view.setInt8(offset + 15, 0);
 			data_view.setUint16(offset + 16, vert.uv[0] * 0xFFFF, true);
-			data_view.setUint16(offset + 17, vert.uv[1] * 0xFFFF, true);
+			data_view.setUint16(offset + 18, vert.uv[1] * 0xFFFF, true);
 		}
 		return buffer;
 	}
@@ -74,9 +74,9 @@ class mesh {
 		gl.vertexAttribPointer(position_location, 3, gl.FLOAT, false, VERTEX_SIZE, 0);
 		gl.enableVertexAttribArray(position_location);
 
-		const color_location = pipeline.attribute_location("a_normal");
-		gl.vertexAttribPointer(color_location, 3, gl.BYTE, true, VERTEX_SIZE, 12)
-		gl.enableVertexAttribArray(color_location);
+		const normal_location = pipeline.attribute_location("a_normal");
+		gl.vertexAttribPointer(normal_location, 3, gl.BYTE, true, VERTEX_SIZE, 12)
+		gl.enableVertexAttribArray(normal_location);
 
 		const uv_location = pipeline.attribute_location("a_uv");
 		gl.vertexAttribPointer(uv_location, 2, gl.UNSIGNED_SHORT, true, VERTEX_SIZE, 16)
