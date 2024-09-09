@@ -6,7 +6,7 @@ class pipeline {
 		this._program = this._make_program(shaders);
 	}
 
-	get valid() {
+	valid() {
 		return this._program != null;
 	}
 
@@ -64,9 +64,13 @@ class pipeline {
 	_make_program(shaders) {
 		const program = this._gl.createProgram();
 		for (const [type, source_code] of Object.entries(shaders)) {
+			if (source_code == null) {
+				console.error(`[pipeline][${this._name}] Could not attach invalid shader!`);
+				continue;
+			}
 			const shader = this._compile_shader(source_code, type);
 			if (shader == null) {
-				console.warn(`[pipeline][${this._name}] Could not attach invalid shader!`);
+				console.error(`[pipeline][${this._name}] Could not attach invalid shader!`);
 			}
 			this._gl.attachShader(program, shader);
 		}

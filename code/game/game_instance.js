@@ -5,6 +5,8 @@ class game_instance {
 		this.keys = {}
 		this.mouse = new mouse_info([display.width / 2, display.height / 2]);
 		this.keyboard = new keyboard_info();
+
+		this.pipeline_manager = new pipeline_manager(graphics)
 		this.scene_manager = new scene_manager()
 
 		this.paused = true;
@@ -12,10 +14,7 @@ class game_instance {
 		// Should be somewhere else. for example in the player class or as the independent object
 		this.camera = new flying_camera([0.0, 0.0, 3.0]);
 
-		let shaders = {};
-		shaders[graphics.gl.VERTEX_SHADER]   = document.querySelector("#primitive-vertex-3D").text;
-		shaders[graphics.gl.FRAGMENT_SHADER] = document.querySelector("#primitive-fragment-3D").text;
-		this.primitive_pipeline = new pipeline(graphics.gl, "primitive", shaders);
+		this.primitive_pipeline = this.pipeline_manager.load("primitive-3D");
 
 		this.scene_manager.add_object(new rotating_cube("cube", graphics, this.primitive_pipeline, 1));
 
