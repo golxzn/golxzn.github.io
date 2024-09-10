@@ -19,11 +19,12 @@ class camera {
 
 		this.sensitivity = [0.1, 0.1];
 
-		this._yaw   = -90.0;
+		this._yaw   =  90.0;
 		this._pitch = 0.0;
-		this._roll  = 0.0;
+		// this._roll  = 0.0;
 
 		this._yaw_pitch_dirty = false;
+		this.update_front();
 	}
 
 	set yaw(value) {
@@ -40,15 +41,11 @@ class camera {
 
 	get yaw()   { return this._yaw; }
 	get pitch() { return this._pitch; }
-	get roll()  { return this._roll; }
+	// get roll()  { return this._roll; }
 
 	make_view() {
 		if (this._yaw_pitch_dirty) {
-			this.front = golxzn.math.normalize([
-				Math.cos(this._yaw * TO_RADIANS) * Math.cos(this._pitch * TO_RADIANS),
-				Math.sin(this._pitch * TO_RADIANS),
-				Math.sin(this._yaw * TO_RADIANS) * Math.cos(this._pitch * TO_RADIANS),
-			]);
+			this.update_front();
 			this._yaw_pitch_dirty = false;
 		}
 
@@ -57,5 +54,13 @@ class camera {
 			golxzn.math.sum(this.position, this.front),
 			this.up
 		);
+	}
+
+	update_front() {
+		this.front = golxzn.math.normalize([
+			Math.cos(this._yaw * TO_RADIANS) * Math.cos(this._pitch * TO_RADIANS),
+			Math.sin(this._pitch * TO_RADIANS),
+			Math.sin(this._yaw * TO_RADIANS) * Math.cos(this._pitch * TO_RADIANS),
+		]);
 	}
 }

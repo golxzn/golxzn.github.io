@@ -17,6 +17,13 @@ Object.assign(golxzn.math, {
 			return matrix;
 		},
 
+		scale : function(matrix, scale) {
+			matrix[0] *= scale[0];
+			matrix[5] *= scale[1];
+			matrix[10] *= scale[2];
+			return matrix;
+		},
+
 		multiply : function (lhm, rhm) {
 			return [
 				// Row 1
