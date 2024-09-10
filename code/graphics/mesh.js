@@ -47,23 +47,15 @@ class primitive_info {
 class mesh {
 	constructor(gl, name, pipeline, info) {
 		this._gl = gl;
-		this._elements_count = info.indices.length;
-		this._draw_mode = info.draw_mode != null ? info.draw_mode : gl.TRIANGLES;
-
 		this.name = name;
 		this.vao = null;
 		this.vbo = null;
 		this.ebo = null;
+		this.elements_count = info.indices.length;
+		this.draw_mode = info.draw_mode != null ? info.draw_mode : gl.TRIANGLES;
 
 		this._init_buffers(gl, pipeline, info);
 	}
-
-	draw(graphics) {
-		const gl = graphics.gl;
-		gl.bindVertexArray(this.vao);
-		gl.drawElements(this._draw_mode, this._elements_count, gl.UNSIGNED_SHORT, 0);
-	}
-
 
 // private:
 	_init_buffers(gl, pipeline, info) {

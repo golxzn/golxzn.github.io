@@ -8,9 +8,11 @@ class rotating_cube {
 		this.transform = golxzn.math.mat4.make_identity();
 
 		this.pipeline = pipeline;
-		const cube = primitives.make_cube(graphics.gl);
-		this.mesh = new mesh(graphics.gl, "cube", pipeline,
+		this.texture = null;
 		this.mesh = new mesh(graphics.gl, "cube", pipeline, primitives.make_cube(graphics.gl));
+		get_service("resource").load_texture("assets/textures/lain.jpg").then((tex) => {
+			this.texture = tex;
+		});
 	}
 
 	update(delta) {
@@ -19,9 +21,14 @@ class rotating_cube {
 	}
 
 	draw(graphics) {
-		this.pipeline.use();
-		this.pipeline.set_uniform("u_model", this.transform);
+		if (this.texture == null) return;
 
-		this.mesh.draw(graphics);
+		graphics.push_pipeline(this.pipeline);
+
+		graphics.apply_texture(0, this.texture);
+		this.pipeline.set_uniform("u_model", this.transform);
+		graphics.draw_mesh(this.mesh);
+
+		graphics.pop_pipeline();
 	}
 };
