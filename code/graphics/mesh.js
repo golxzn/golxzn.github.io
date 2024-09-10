@@ -42,20 +42,25 @@ class mesh {
 		this._draw_mode = draw_mode != null ? draw_mode : gl.TRIANGLES;
 
 		this.name = name;
-		this.vbo = -1;
+		this.vao = null;
+		this.vbo = null;
+		this.ebo = null;
 
 		this._init_buffers(gl, pipeline, vertices, indices);
 	}
 
 	draw(graphics) {
 		const gl = graphics.gl;
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
+		gl.bindVertexArray(this.vao);
 		gl.drawElements(this._draw_mode, this._elements_count, gl.UNSIGNED_SHORT, 0);
 	}
 
 
 // private:
 	_init_buffers(gl, pipeline, vertices, indices) {
+		this.vao = gl.createVertexArray();
+		gl.bindVertexArray(this.vao);
+
 		this.vbo = gl.createBuffer();
 		this.ebo = gl.createBuffer();
 		if (this.vbo == null || this.ebo == null) {

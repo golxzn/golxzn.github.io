@@ -1,6 +1,6 @@
 class graphics {
 	constructor(canvas) {
-		this.gl = canvas.getContext("webgl");
+		this.gl = canvas.getContext("webgl2");
 		if (!this.gl) {
 			alert("Cannot get WebGL Context! Seems like it isn't supported!");
 			return;
