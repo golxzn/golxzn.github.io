@@ -27,6 +27,10 @@ class game_instance {
 
 		this.primitive_pipeline = this.pipeline_manager.load("primitive-3D");
 
+		this.scene_manager.add_object(new ground(
+			"ground", graphics, this.primitive_pipeline, [10.0, 1.0, 10.0]
+		));
+
 		const cube = this.scene_manager.add_object(new rotating_cube(
 			"cube", graphics, this.primitive_pipeline, 1
 		));

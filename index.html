@@ -34,11 +34,10 @@ in vec2 uv;
 
 out vec4 frag_color;
 
-uniform sampler2D u_texture;
+uniform sampler2D u_texture_0;
 
 void main() {
-	vec4 texel = texture(u_texture, uv);
-	frag_color = mix(texel, vec4(uv, 0.0, 1.0), 0.5);
+	frag_color = texture(u_texture_0, uv);
 }
 	</script>
 
@@ -61,6 +60,7 @@ void main() {
 
 	<script src="code/game/cameras/camera.js"></script>
 	<script src="code/game/cameras/flying_camera.js"></script>
+	<script src="code/game/objects/ground.js"></script>
 	<script src="code/game/objects/rotating_cube.js"></script>
 
 	<script src="code/game/game_instance.js"></script>
