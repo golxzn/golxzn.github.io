@@ -35,18 +35,27 @@ class vertex {
 	}
 }
 
+class primitive_info {
+	constructor(vertices, indices, draw_mode = null) {
+		this.vertices = vertices;
+		this.indices = indices;
+		this.draw_mode = draw_mode;
+	}
+};
+
+
 class mesh {
-	constructor(gl, name, pipeline, vertices, indices, draw_mode = null) {
+	constructor(gl, name, pipeline, info) {
 		this._gl = gl;
-		this._elements_count = indices.length;
-		this._draw_mode = draw_mode != null ? draw_mode : gl.TRIANGLES;
+		this._elements_count = info.indices.length;
+		this._draw_mode = info.draw_mode != null ? info.draw_mode : gl.TRIANGLES;
 
 		this.name = name;
 		this.vao = null;
 		this.vbo = null;
 		this.ebo = null;
 
-		this._init_buffers(gl, pipeline, vertices, indices);
+		this._init_buffers(gl, pipeline, info);
 	}
 
 	draw(graphics) {
@@ -57,7 +66,7 @@ class mesh {
 
 
 // private:
-	_init_buffers(gl, pipeline, vertices, indices) {
+	_init_buffers(gl, pipeline, info) {
 		this.vao = gl.createVertexArray();
 		gl.bindVertexArray(this.vao);
 
@@ -69,10 +78,10 @@ class mesh {
 		}
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-		gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+		gl.bufferData(gl.ARRAY_BUFFER, info.vertices, gl.STATIC_DRAW);
 
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, info.indices, gl.STATIC_DRAW);
 
 		pipeline.use();
 		const position_location = pipeline.attribute_location("a_position");

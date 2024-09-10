@@ -12,11 +12,14 @@ class game_instance {
 		this.paused = true;
 
 		// Should be somewhere else. for example in the player class or as the independent object
-		this.camera = new flying_camera([0.0, 0.0, 3.0]);
+		this.camera = new flying_camera([0.0, 3.0, 0.0]);
 
 		this.primitive_pipeline = this.pipeline_manager.load("primitive-3D");
 
-		this.scene_manager.add_object(new rotating_cube("cube", graphics, this.primitive_pipeline, 1));
+		const cube = this.scene_manager.add_object(new rotating_cube(
+			"cube", graphics, this.primitive_pipeline, 1
+		));
+		cube.transform = golxzn.math.mat4.translate(cube.transform, [0.0, 3.0, 3.0]);
 
 		// TODO: Move projection to the camera???
 		const aspect = graphics.aspect_ratio();
