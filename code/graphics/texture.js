@@ -6,17 +6,33 @@ const DEFAULT_BORDER          = 0;
 const DEFAULT_PIXELS          = new Uint8Array([0, 0, 255, 255]);
 
 class texture {
-	constructor(gl, url) {
+	constructor(gl, image) {
 		this._gl  = gl;
-		this._url = url;
 		this._target = gl.TEXTURE_2D;
 		this._texture = this._make_texture();
-		this._width = DEFAULT_WIDTH;
-		this._height = DEFAULT_HEIGHT;
-		this._image = new Image()
-		this._image.setAttribute('crossorigin', 'anonymous');
-		this._image.onload = () => this._on_image_load();
-		this._image.src = url;
+		this._width = image.width;
+		this._height = image.height;
+
+		this.bind();
+
+		gl.texImage2D(
+			this._target,
+			DEFAULT_LEVEL,
+			gl.RGBA,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
+			image
+		);
+
+		if (!texture._support_mipmap(image)) {
+			gl.texParameteri(this._target, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(this._target, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(this._target, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		} else {
+			gl.generateMipmap(this._target);
+		}
+
+		this.unbind();
 	}
 
 	bind(index = 0) {
@@ -50,38 +66,10 @@ class texture {
 		return texture;
 	}
 
-	_on_image_load() {
-		const gl = this._gl;
-		const img = this._image;
-		this._image = null;
-		this._width = img.width;
-		this._height = img.height;
-
-		this.bind();
-
-		gl.texImage2D(
-			this._target,
-			DEFAULT_LEVEL,
-			gl.RGBA,
-			gl.RGBA,
-			gl.UNSIGNED_BYTE,
-			img
-		);
-
-		if (!texture._support_mipmap(img)) {
-			gl.texParameteri(this._target, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(this._target, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(this._target, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-		} else {
-			gl.generateMipmap(this._target);
-		}
-
-		this.unbind();
-	}
-
 	static _support_mipmap(image) {
 		return texture._is_power_of_2(image.width) && texture._is_power_of_2(image.height);
 	}
+
 	static _is_power_of_2(value) {
 		return (value & (value - 1)) === 0;
 	}
