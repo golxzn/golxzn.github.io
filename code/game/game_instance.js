@@ -2,12 +2,23 @@
 class game_instance {
 	constructor(display, graphics) {
 		this.display = display;
-		this.keys = {}
+		this.keys = {};
 		this.mouse = new mouse_info([display.width / 2, display.height / 2]);
 		this.keyboard = new keyboard_info();
 
-		this.pipeline_manager = new pipeline_manager(graphics)
-		this.scene_manager = new scene_manager()
+		// SINGLETON
+		new service_provider_singleton({
+			"pipeline": new pipeline_manager(graphics),
+			"resource": new resource_manager(graphics),
+			"scene"   : new scene_manager()
+		});
+		get_service("resource").preload_textures([
+			"assets/textures/asphalt.jpg",
+			"assets/textures/lain.jpg"
+		]);
+
+		this.pipeline_manager = get_service("pipeline");
+		this.scene_manager = get_service("scene");
 
 		this.paused = true;
 
