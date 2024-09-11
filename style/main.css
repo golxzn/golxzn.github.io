@@ -3,8 +3,26 @@
 	padding: 0;
 }
 
+html, body {
+	width: 100%;
+	height: 100%;
+}
+
 canvas {
 	display: block;
 	border: 0px;
-	background-color: #f1f1f1;
+	background-color: transparent;
+}
+
+#container {
+  position: relative;
+}
+
+#overlay {
+  color: #fff;
+  left: 0px;
+  top: 0px;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
 }

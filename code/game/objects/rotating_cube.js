@@ -9,7 +9,7 @@ class rotating_cube {
 
 		this.pipeline = pipeline;
 		this.texture = null;
-		this.mesh = new mesh(graphics.gl, "cube", pipeline, primitives.make_cube(graphics.gl));
+		this.mesh = new mesh(graphics.gl, "cube", pipeline, primitives.make_cube_strip(graphics.gl));
 		get_service("resource").load_texture("assets/textures/lain.jpg").then((tex) => {
 			this.texture = tex;
 		});
