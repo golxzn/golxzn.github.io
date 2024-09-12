@@ -6,8 +6,22 @@
 	<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link rel="stylesheet" href="style/main.css" />
+	<link rel="stylesheet" href="style/overlay.css" />
 </head>
 <body onload="start()">
+
+	<div id="container">
+		<canvas id="display"></canvas>
+		<div id="overlay">
+			<h1 id="title">[dream]</h1>
+			<div class="progress-bar" align="center">
+				<div class="progress"></div>
+			</div>
+			<h3 id="status-bar">initialization</h3>
+		</div>
+	</div>
+
+
 	<script id="primitive-3D-vert" type="x-shader/x-vertex">#version 300 es
 layout(location = 0) in vec3 a_position;
 layout(location = 1) in vec3 a_normal;
@@ -42,6 +56,7 @@ void main() {
 }
 	</script>
 
+	<script src="code/math/common.js"></script>
 	<script src="code/math/vector.js"></script>
 	<script src="code/math/matrix.js"></script>
 
@@ -64,14 +79,10 @@ void main() {
 	<script src="code/game/objects/ground.js"></script>
 	<script src="code/game/objects/rotating_cube.js"></script>
 
+	<script src="code/game/loading_screen.js"></script>
 	<script src="code/game/game_instance.js"></script>
 
 	<script src="code/main.js"></script>
-
-	<div id="container" align="center">
-		<canvas id="display"></canvas>
-		<canvas id="overlay"></canvas>
-	</div>
 
 </body>
 </html>

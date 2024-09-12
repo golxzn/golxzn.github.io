@@ -1,0 +1,48 @@
+#overlay {
+	opacity: 0.0;
+	background-color: #1F1F28;
+	color: #FF9E3B;
+	text-shadow: #ff9d3ba1 1px 0 10px;
+	left: 0px;
+	top: 0px;
+	pointer-events: none;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+#title {
+	font-size: 48pt;
+	font-family: 'Courier New', Courier, monospace;
+	padding-bottom: 4vh;
+}
+
+#status-bar {
+	padding-top: 1vh;
+}
+
+.progress-bar {
+	width: 65%;
+	height: fit-content;
+	background-color: #16161d;
+	border-radius: 25px;
+	padding: 5px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.progress {
+	height: 15px;
+	width: 0%; /* Set progress percentage here */
+	background-color: #FF9E3B;
+	border-radius: 20px;
+	text-align: center;
+	line-height: 30px;
+	color: white;
+	font-weight: bold;
+}

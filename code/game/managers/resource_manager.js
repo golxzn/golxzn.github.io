@@ -7,14 +7,15 @@ class resource_manager {
 		this.textures = new Map();
 	}
 
-	async preload_textures(paths) {
-		var promises = [];
-		for (const path of paths) {
-			promises.push(this.load_texture(path));
-		}
-		for (const promise of paths) {
-			await promise;
-		}
+	async preload_textures(paths, progress_callback = (loaded, total) => {}) {
+		let loaded_count = 0;
+		const total = paths.length;
+		await Promise.all(paths.map(async (path) => {
+			const texture = await this.load_texture(path);
+			loaded_count++;
+			progress_callback(loaded_count, total);
+			return texture;
+		}));
 	}
 
 	async load_texture(path, force_reload = false) {

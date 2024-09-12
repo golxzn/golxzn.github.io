@@ -2,28 +2,19 @@ const CLEAR_COLOR = [0.0, 0.0, 0.0, 1.0]
 
 let handle;
 let last_time = 0;
-let renderer;
-let game;
+let renderer = null;
+let loading = null;
+let game = null;
 
-function start() {
-	const display = document.getElementById("display");
+function instantiate_game(display, renderer) {
+	let instance = new game_instance(display, renderer);
 
-	display.width = window.innerWidth;
-	display.height = window.innerHeight;
-	// display.width = 1024;
-	// display.height = 720;
+	document.onkeydown = (event) => instance.on_key_down(event);
+	document.onkeyup   = (event) => instance.on_key_up(event);
 
-	renderer = new graphics(display);
-	renderer.set_clear_color(CLEAR_COLOR);
-
-	game = new game_instance(display, renderer);
-
-	document.onkeydown = (event) => game.on_key_down(event);
-	document.onkeyup   = (event) => game.on_key_up(event);
-
-	display.onmousedown = (event) => game.on_mouse_down(event);
-	display.onmousemove = (event) => game.on_mouse_move(event);
-	display.onmouseup = (event) => game.on_mouse_up(event);
+	display.onmousedown = (event) => instance.on_mouse_down(event);
+	display.onmousemove = (event) => instance.on_mouse_move(event);
+	display.onmouseup = (event) => instance.on_mouse_up(event);
 	display.addEventListener("click", async () => {
 		display.requestPointerLock({
 			unadjustedMovement: true,
@@ -32,13 +23,60 @@ function start() {
 
 	document.addEventListener("pointerlockchange", () => {
 		if (document.pointerLockElement === display) {
-			game.on_mouse_capture();
+			instance.on_mouse_capture();
 		} else {
-			game.on_mouse_release();
+			instance.on_mouse_release();
 		}
-	})
+	});
 
-	handle = requestAnimationFrame(game_loop);
+	return instance;
+}
+
+function start() {
+	const display = document.getElementById("display");
+
+	display.width = window.innerWidth;
+	display.height = window.innerHeight;
+
+	renderer = new graphics(display);
+	renderer.set_clear_color(CLEAR_COLOR);
+
+	// SINGLETON
+	new service_provider_singleton({
+		"pipeline": new pipeline_manager(renderer),
+		"resource": new resource_manager(renderer),
+		"scene"   : new scene_manager()
+	});
+
+	next_game = null;
+	loading = new loading_screen((state) => {
+		switch (state) {
+			case loading_screen.STATE_DISAPPEAR:
+				game = instantiate_game(display, renderer);
+				break;
+			case loading_screen.STATE_FINISHED:
+				loading = null;
+				break;
+		}
+	});
+
+	handle = requestAnimationFrame(loading_loop);
+}
+
+function loading_loop(timestamp) {
+	const delta = (timestamp - last_time) * 0.001;
+	last_time = timestamp;
+
+	if (loading == null) {
+		handle = requestAnimationFrame(game_loop);
+		return;
+	}
+
+	loading.update(delta);
+	renderer.clear();
+	if (game != null) game.render(renderer);
+
+	handle = requestAnimationFrame(loading_loop);
 }
 
 function game_loop(timestamp) {

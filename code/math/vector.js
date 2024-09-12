@@ -1,7 +1,3 @@
-let golxzn = {
-	math : {}
-};
-
 Object.assign(golxzn.math, {
 	vec3 : {
 		cross : function(lhv, rhv) {
