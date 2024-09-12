@@ -34,9 +34,7 @@ class camera {
 
 	set pitch(value) {
 		this._yaw_pitch_dirty = true;
-		this._pitch = value;
-		if (this._pitch >= CAMERA_MAX_PITCH) this._pitch = CAMERA_MAX_PITCH;
-		if (this._pitch <= CAMERA_MIN_PITCH) this._pitch = CAMERA_MIN_PITCH;
+		this._pitch = golxzn.math.clamp(value, CAMERA_MIN_PITCH, CAMERA_MAX_PITCH);
 	}
 
 	get yaw()   { return this._yaw; }

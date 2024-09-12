@@ -1,6 +1,6 @@
 let golxzn = { math : {
 	clamp : function(value, from, to) {
-		return Math.max(Math.min(value, from), to);
+		return Math.min(Math.max(value, from), to);
 	},
 
 	lerp : function(from, to, progress) {
