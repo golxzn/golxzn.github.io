@@ -43,6 +43,7 @@ function start() {
 
 	// SINGLETON
 	new service_provider_singleton({
+		"graphics": renderer,
 		"pipeline": new pipeline_manager(renderer),
 		"resource": new resource_manager(renderer),
 		"scene"   : new scene_manager()
