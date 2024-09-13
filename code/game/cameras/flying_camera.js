@@ -1,7 +1,7 @@
 
 class flying_camera extends camera {
-	constructor(position, speed = 10) {
-		super(position);
+	constructor(position, speed = 10, fov = 75 * TO_RADIANS, aspect = 1.0) {
+		super(position, fov, aspect);
 		this.speed = speed;
 	}
 

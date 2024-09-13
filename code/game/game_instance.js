@@ -6,29 +6,21 @@ class game_instance {
 		this.mouse = new mouse_info([display.width / 2, display.height / 2]);
 		this.keyboard = new keyboard_info();
 
-		this.pipeline_manager = get_service("pipeline");
 		this.scene_manager = get_service("scene");
 
 		this.paused = true;
 
 		// Should be somewhere else. for example in the player class or as the independent object
 		this.camera = new flying_camera([0.0, 3.0, 0.0]);
-
-		this.primitive_pipeline = this.pipeline_manager.load("primitive-3D");
+		graphics.set_active_camera(this.camera);
 
 		this.scene_manager.add_object(new ground(
-			"ground", graphics, this.primitive_pipeline, [10.0, 1.0, 10.0]
+			"ground", "assets/textures/asphalt.jpg", [10.0, 1.0, 10.0]
 		));
-
 		const cube = this.scene_manager.add_object(new rotating_cube(
-			"cube", graphics, this.primitive_pipeline, 1
+			"cube", "assets/textures/lain.jpg", 1
 		));
 		cube.transform = golxzn.math.mat4.translate(cube.transform, [0.0, 3.0, 3.0]);
-
-		// TODO: Move projection to the camera???
-		const aspect = graphics.aspect_ratio();
-		this.projection = golxzn.math.mat4.make_perspective(Math.PI * 0.4, aspect, 0.001, 1000) // ~72 deg
-		this.model = golxzn.math.mat4.make_identity();
 	}
 
 	update(delta) {
@@ -37,11 +29,6 @@ class game_instance {
 	}
 
 	render(g) {
-		this.primitive_pipeline.use();
-		this.primitive_pipeline.set_uniform("u_model", this.model);
-		this.primitive_pipeline.set_uniform("u_view", this.camera.make_view());
-		this.primitive_pipeline.set_uniform("u_projection", this.projection);
-
 		this.scene_manager.render(g);
 	}
 

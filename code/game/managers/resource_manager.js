@@ -38,6 +38,10 @@ class resource_manager {
 		return tex;
 	}
 
+	get_texture(path) {
+		return this.textures[path];
+	}
+
 	has_texture(path) {
 		return path in this.textures && this.textures[path] != null;
 	}

@@ -6,7 +6,9 @@ class graphics {
 			return;
 		}
 
+		this.active_camera = null;
 		this.pipeline_stack = [];
+		this.transform_stack = [golxzn.math.mat4.make_identity()];
 
 		this.gl.viewport(0, 0, canvas.width, canvas.height);
 		this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -15,9 +17,21 @@ class graphics {
 		this.gl.depthFunc(this.gl.LEQUAL);
 	}
 
+	set_active_camera(camera) {
+		this.active_camera = camera;
+		this.active_camera.aspect = this.aspect_ratio();
+	}
+
 	push_pipeline(pipeline) {
 		this.pipeline_stack.push(pipeline);
 		pipeline.use();
+	}
+
+	set_engine_uniforms() {
+		const pipeline = this.current_pipeline();
+		pipeline.set_uniform("u_model", this.current_transform());
+		pipeline.set_uniform("u_view", this.active_camera.make_view());
+		pipeline.set_uniform("u_projection", this.active_camera.make_projection());
 	}
 
 	current_pipeline() {
@@ -28,6 +42,19 @@ class graphics {
 		this.pipeline_stack.pop();
 	}
 
+	push_transform(matrix) {
+		this.transform_stack.push(golxzn.math.mat4.multiply(this.current_transform(), matrix));
+	}
+
+	current_transform() {
+		return this.transform_stack.at(-1);
+	}
+
+	pop_transform(matrix) {
+		this.transform_stack.pop();
+	}
+
+
 	apply_texture(id, texture) {
 		texture.bind(id);
 		this.current_pipeline().set_uniform(`u_texture_${id}`, id);
@@ -37,6 +64,7 @@ class graphics {
 		this.gl.bindVertexArray(mesh.vao);
 		this.gl.drawElements(mesh.draw_mode, mesh.elements_count, this.gl.UNSIGNED_SHORT, 0);
 	}
+
 
 	aspect_ratio() {
 		return this.gl.canvas.width / this.gl.canvas.height;

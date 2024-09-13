@@ -1,28 +1,15 @@
 
-class ground {
-	constructor(name, graphics, pipeline, scale = [1.0, 1.0, 1.0]) {
-		const m = golxzn.math.mat4;
 
-		this.name = name;
-		this.transform = m.scale(m.make_identity(), scale);
-		this.pipeline = pipeline;
-		this.texture = null;
-		this.mesh = new mesh(graphics.gl, "plane", pipeline, primitives.make_plane(graphics.gl));
+class ground extends model_object {
+	constructor(name, texture_name, scale = [1.0, 1.0, 1.0]) {
+		const resource = get_service("resource");
+		super(name, new model([
+			new textured_mesh(
+				[ resource.get_texture(texture_name) ],
+				primitives.make_plane()
+			)
+		]));
 
-		get_service("resource").load_texture("assets/textures/asphalt.jpg").then((tex) => {
-			this.texture = tex;
-		});
-	}
-
-	draw(graphics) {
-		if (this.texture == null) return;
-
-		graphics.push_pipeline(this.pipeline);
-
-		graphics.apply_texture(0, this.texture);
-		this.pipeline.set_uniform("u_model", this.transform);
-		graphics.draw_mesh(this.mesh);
-
-		graphics.pop_pipeline();
+		this.transform = golxzn.math.mat4.scale(this.transform, scale);
 	}
 }
