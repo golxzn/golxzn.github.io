@@ -6,20 +6,29 @@ class graphics {
 			return;
 		}
 
+		const m = golxzn.math.mat4;
+
 		this.active_camera = null;
 		this.pipeline_stack = [];
-		this.transform_stack = [golxzn.math.mat4.make_identity()];
+		this.transform_stack = [m.make_identity()];
+		this.transform_inverse_stack = [m.inverse(m.make_identity())];
+		this.model_view = m.make_identity();
+
+		this.light_direction = [0.577, -0.577, 0.577];
+		this.phong_blinn = true;
 
 		this.gl.viewport(0, 0, canvas.width, canvas.height);
 		this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
 
 		this.gl.enable(this.gl.DEPTH_TEST);
 		this.gl.depthFunc(this.gl.LEQUAL);
+		this.gl.depthMask(true);
 	}
 
 	set_active_camera(camera) {
 		this.active_camera = camera;
 		this.active_camera.aspect = this.aspect_ratio();
+		this.update_model_view();
 	}
 
 	push_pipeline(pipeline) {
@@ -29,9 +38,21 @@ class graphics {
 
 	set_engine_uniforms() {
 		const pipeline = this.current_pipeline();
-		pipeline.set_uniform("u_model", this.current_transform());
-		pipeline.set_uniform("u_view", this.active_camera.make_view());
+		this.update_model_view();
+		pipeline.set_uniform("u_model_view", this.model_view);
 		pipeline.set_uniform("u_projection", this.active_camera.make_projection());
+		if (pipeline.uniform_location("u_normal_matrix")) {
+			pipeline.set_uniform("u_normal_matrix",
+				golxzn.math.mat3.inverse(golxzn.math.mat3.build_from(this.model_view)),
+				{ transpose: true }
+			);
+		}
+
+		// TODO: Remove this shit or move somewhere
+		if (pipeline.uniform_location("u_dir_light.color") != null) {
+			pipeline.set_uniform("u_dir_light.color", [1.0, 1.0, 1.0]);
+			pipeline.set_uniform("u_dir_light.direction", this.light_direction);
+		}
 	}
 
 	current_pipeline() {
@@ -44,10 +65,15 @@ class graphics {
 
 	push_transform(matrix) {
 		this.transform_stack.push(golxzn.math.mat4.multiply(this.current_transform(), matrix));
+		this.transform_inverse_stack.push(golxzn.math.mat4.inverse(this.current_transform()));
 	}
 
 	current_transform() {
 		return this.transform_stack.at(-1);
+	}
+
+	current_inverse_transform() {
+		return this.transform_inverse_stack.at(-1);
 	}
 
 	pop_transform(matrix) {
@@ -57,7 +83,17 @@ class graphics {
 
 	apply_texture(id, texture) {
 		texture.bind(id);
-		this.current_pipeline().set_uniform(`u_texture_${id}`, id);
+		this.current_pipeline().set_uniform(`u_texture_${id}`, id, { as_integer: true });
+	}
+
+	apply_material(material) {
+		const pipeline = this.current_pipeline();
+		if (pipeline.uniform_location("u_material.ambient") != null) {
+			pipeline.set_uniform("u_material.ambient", material.ambient);
+			pipeline.set_uniform("u_material.diffuse", material.diffuse);
+			pipeline.set_uniform("u_material.specular", material.specular);
+			pipeline.set_uniform("u_material.shininess", material.shininess);
+		}
 	}
 
 	draw_mesh(mesh) {
@@ -76,5 +112,12 @@ class graphics {
 
 	clear() {
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+	}
+
+	update_model_view() {
+		this.model_view = golxzn.math.mat4.multiply(
+			this.current_transform(),
+			this.active_camera.make_view()
+		);
 	}
 };

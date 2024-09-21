@@ -4,8 +4,9 @@ class rotating_cube extends model_object {
 		const resource = get_service("resource");
 
 		super(name, new model([
-			new textured_mesh(
-				[ resource.get_texture(texture_name) ],
+			new mesh(
+				[ texture_name ],
+				"white rubber",
 				primitives.make_cube_strip()
 			)
 		]));

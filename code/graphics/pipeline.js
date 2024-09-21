@@ -18,7 +18,7 @@ class pipeline {
 		return this._gl.getUniformLocation(this._program, uniform_name);
 	}
 
-	set_uniform(uniform_name, value) {
+	set_uniform(uniform_name, value, options = { transpose: false, as_integer: false }) {
 		const location = this.uniform_location(uniform_name);
 		if (location == null) {
 			console.error(`[pipeline][${this._name}] Could not find a "${uniform_name}" uniform location!`);
@@ -26,19 +26,33 @@ class pipeline {
 		}
 
 		if (Array.isArray(value)) {
-			if (value.length == 16) {
-				this._gl.uniformMatrix4fv(location, false, new Float32Array(value));
-			} else if (Number.isInteger(value[0])) {
-				this._gl.uniform1iv(location, new Int32Array(value));
-			} else {
-				this._gl.uniform1fv(location, new Float32Array(value));
+			const data = new Float32Array(value);
+			switch (value.length) {
+				case 16:
+					this._gl.uniformMatrix4fv(location, options.transpose, data);
+					break;
+				case 9:
+					this._gl.uniformMatrix3fv(location, options.transpose, data);
+					break;
+				case 4:
+					this._gl.uniform4fv(location, data);
+					break;
+				case 3:
+					this._gl.uniform3fv(location, data);
+					break;
+				case 2:
+					this._gl.uniform2fv(location, data);
+					break;
 			}
+
 		} else if (typeof(value) == 'number') {
-			if (Number.isInteger(value)) {
+			if (options.as_integer) {
 				this._gl.uniform1i(location, value);
 			} else {
 				this._gl.uniform1f(location, value);
 			}
+		} else if (typeof(value) == 'boolean') {
+			this._gl.uniform1i(location, +value);
 		} else {
 			console.error(
 				`[pipeline][${this._name}] Cannot set uniform "${uniform_name}".`,

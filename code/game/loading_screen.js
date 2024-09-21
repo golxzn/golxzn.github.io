@@ -2,6 +2,11 @@
 const APPEAR_DURATION    = 0.75;
 const DISAPPEAR_DURATION = 0.75;
 
+const PRELOAD_TEXTURES = [
+	"assets/textures/asphalt.jpg",
+	"assets/textures/lain.jpg"
+];
+
 class loading_screen {
 	static STATE_APPEAR               = 0;
 	static STATE_RESOURCE_LOADING     = 1;
@@ -66,12 +71,11 @@ class loading_screen {
 
 	_process_resource_loading_state(delta) {
 		if (this._texture_promises.length == 0) {
-			this._texture_promises = get_service("resource").preload_textures([
-				"assets/textures/asphalt.jpg",
-				"assets/textures/lain.jpg"
-			], (loaded, total) => {
-				this._next_progress = loaded / total;
-			});
+			this._texture_promises = get_service("resource").preload_textures(
+				PRELOAD_TEXTURES, (loaded, total) => {
+					this._next_progress = loaded / total;
+				}
+			);
 			if (this._texture_promises.length == 0) {
 				throw new Error("No resources found!");
 			}
@@ -79,7 +83,24 @@ class loading_screen {
 
 		// TODO: Fix loading! The speed of progress changing should be lerped between next progress
 		// to reach it faster!
-		this._progress = Math.min(this._progress + delta, this._next_progress);
+		// this._progress = Math.min(this._progress + delta, this._next_progress);
+
+		// Calculate the distance to the next progress
+		const distance = this._next_progress - this._progress;
+
+		// Determine a speed factor based on the distance
+		// You can adjust the multiplier to control the speed
+		const speed_factor = Math.max(0.1, Math.abs(distance)); // Minimum speed factor to avoid being too slow
+		const speed = Math.min(delta * speed_factor, Math.abs(distance)); // Ensure we don't overshoot
+
+		// Update the progress smoothly
+		this._progress += speed * Math.sign(distance);
+
+
+		// Ensure we don't exceed the next progress
+		if (Math.abs(this._progress - this._next_progress) < 0.01) {
+			this._progress = this._next_progress; // Snap to the target if very close
+		}
 
 		const percentage = Math.floor(this._progress * 100);
 		this.progress_bar.style.width = `${percentage}%`;
@@ -91,7 +112,14 @@ class loading_screen {
 	}
 
 	_process_pipeline_compiling_state(delta) {
-		get_service("pipeline").load("primitive-3D");
+		const pipeline_service = get_service("pipeline");
+
+		for (const dimension of Object.keys(SHADERS)) {
+			for (const shader of Object.keys(SHADERS[dimension])) {
+				pipeline_service.load(dimension, shader);
+			}
+		}
+
 		this.current_state = loading_screen.STATE_DISAPPEAR;
 	}
 

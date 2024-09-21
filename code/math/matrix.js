@@ -24,6 +24,66 @@ Object.assign(golxzn.math, {
 			return matrix;
 		},
 
+		transpose : function(matrix) {
+			var transposed = new Array(matrix.length)
+			var t = 0;
+			for (var i = 0; i < 4; ++i) {
+				for (var j = 0; j < 4; ++j) {
+					transposed[t++] = matrix[j * 4 + i];
+				}
+			}
+			return transposed;
+		},
+
+		inverse : function(m) {
+			// Calculate the determinant of the matrix
+			const det = m[0] * (
+				m[5] * (m[10] * m[15] - m[14] * m[11]) -
+				m[9] * (m[6] * m[15] - m[14] * m[7]) +
+				m[13] * (m[6] * m[11] - m[10] * m[7])
+			) - m[4] * (
+				m[1] * (m[10] * m[15] - m[14] * m[11]) -
+				m[9] * (m[2] * m[15] - m[14] * m[3]) +
+				m[13] * (m[2] * m[11] - m[10] * m[3])
+			) + m[8] * (
+				m[1] * (m[6] * m[15] - m[14] * m[7]) -
+				m[5] * (m[2] * m[15] - m[14] * m[3]) +
+				m[13] * (m[2] * m[7] - m[6] * m[3])
+			) - m[12] * (
+				m[1] * (m[6] * m[11] - m[10] * m[7]) -
+				m[5] * (m[2] * m[11] - m[10] * m[3]) +
+				m[9] * (m[2] * m[7] - m[6] * m[3])
+			);
+
+			// If determinant is 0, the matrix is not invertible
+			if (det === 0) {
+				return null;
+			}
+
+			const inverted_det = 1.0 / det;
+			return [
+				+(m[5] * (m[10] * m[15] - m[14] * m[11]) - m[9] * (m[6] * m[15] - m[14] * m[7]) + m[13] * (m[6] * m[11] - m[10] * m[7])) * inverted_det,
+				-(m[1] * (m[10] * m[15] - m[14] * m[11]) - m[9] * (m[2] * m[15] - m[14] * m[3]) + m[13] * (m[2] * m[11] - m[10] * m[3])) * inverted_det,
+				+(m[1] * (m[6] * m[15] - m[14] * m[7]) - m[5] * (m[2] * m[15] - m[14] * m[3]) + m[13] * (m[2] * m[7] - m[6] * m[3])) * inverted_det,
+				-(m[1] * (m[6] * m[11] - m[10] * m[7]) - m[5] * (m[2] * m[11] - m[10] * m[3]) + m[9] * (m[2] * m[7] - m[6] * m[3])) * inverted_det,
+
+				-(m[4] * (m[10] * m[15] - m[14] * m[11]) - m[8] * (m[6] * m[15] - m[14] * m[7]) + m[12] * (m[6] * m[11] - m[10] * m[7])) * inverted_det,
+				+(m[0] * (m[10] * m[15] - m[14] * m[11]) - m[8] * (m[2] * m[15] - m[14] * m[3]) + m[12] * (m[2] * m[11] - m[10] * m[3])) * inverted_det,
+				-(m[0] * (m[6] * m[15] - m[14] * m[7]) - m[4] * (m[2] * m[15] - m[14] * m[3]) + m[12] * (m[2] * m[7] - m[6] * m[3])) * inverted_det,
+				(m[0] * (m[6] * m[11] - m[10] * m[7]) - m[4] * (m[2] * m[11] - m[10] * m[3]) + m[8] * (m[2] * m[7] - m[6] * m[3])) * inverted_det,
+
+				+(m[4] * (m[9] * m[15] - m[13] * m[11]) - m[8] * (m[5] * m[15] - m[13] * m[7]) + m[12] * (m[5] * m[11] - m[9] * m[7])) * inverted_det,
+				-(m[0] * (m[9] * m[15] - m[13] * m[11]) - m[8] * (m[1] * m[15] - m[13] * m[3]) + m[12] * (m[1] * m[11] - m[9] * m[3])) * inverted_det,
+				+(m[0] * (m[5] * m[15] - m[13] * m[7]) - m[4] * (m[1] * m[15] - m[13] * m[3]) + m[12] * (m[1] * m[7] - m[5] * m[3])) * inverted_det,
+				-(m[0] * (m[5] * m[11] - m[9] * m[7]) - m[4] * (m[1] * m[11] - m[9] * m[3]) + m[8] * (m[1] * m[7] - m[5] * m[3])) * inverted_det,
+
+				-(m[4] * (m[9] * m[14] - m[13] * m[10]) - m[8] * (m[5] * m[14] - m[13] * m[6]) + m[12] * (m[5] * m[10] - m[9] * m[6])) * inverted_det,
+				+(m[0] * (m[9] * m[14] - m[13] * m[10]) - m[8] * (m[1] * m[14] - m[13] * m[2]) + m[12] * (m[1] * m[10] - m[9] * m[2])) * inverted_det,
+				-(m[0] * (m[5] * m[14] - m[13] * m[6]) - m[4] * (m[1] * m[14] - m[13] * m[2]) + m[12] * (m[1] * m[6] - m[5] * m[2])) * inverted_det,
+				+(m[0] * (m[5] * m[10] - m[9] * m[6]) - m[4] * (m[1] * m[10] - m[9] * m[2]) + m[8] * (m[1] * m[6] - m[5] * m[2])) * inverted_det,
+			];
+		},
+
 		multiply : function (lhm, rhm) {
 			return [
 				// Row 1
@@ -94,31 +154,6 @@ Object.assign(golxzn.math, {
 			];
 		},
 
-
-	/*
-		template<typename T, qualifier Q>
-	GLM_FUNC_QUALIFIER mat<4, 4, T, Q> lookAtRH(vec<3, T, Q> const& eye, vec<3, T, Q> const& center, vec<3, T, Q> const& up)
-	{
-		vec<3, T, Q> const f(normalize(center - eye));
-		vec<3, T, Q> const s(normalize(cross(f, up)));
-		vec<3, T, Q> const u(cross(s, f));
-
-		mat<4, 4, T, Q> Result(1);
-		Result[0][0] = s.x;
-		Result[1][0] = s.y;
-		Result[2][0] = s.z;
-		Result[0][1] = u.x;
-		Result[1][1] = u.y;
-		Result[2][1] = u.z;
-		Result[0][2] =-f.x;
-		Result[1][2] =-f.y;
-		Result[2][2] =-f.z;
-		Result[3][0] =-dot(s, eye);
-		Result[3][1] =-dot(u, eye);
-		Result[3][2] = dot(f, eye);
-		return Result;
-	}
-	*/
 		look_at(eye, center, up) {
 			const f = golxzn.math.normalize(golxzn.math.sub(center, eye));
 			const s = golxzn.math.normalize(golxzn.math.vec3.cross(f, up));
@@ -129,6 +164,48 @@ Object.assign(golxzn.math, {
 				s[1], u[1], -f[1], 0.0,
 				s[2], u[2], -f[2], 0.0,
 				-dot(s, eye), -dot(u, eye), dot(f, eye), 1.0
+			]
+		}
+	},
+
+	mat3 : {
+		identity : function() {
+			return [
+				1.0, 0.0, 0.0,
+				0.0, 1.0, 0.0,
+				0.0, 0.0, 1.0
+			]
+		},
+
+		build_from : function(m) {
+			return [
+				m[0], m[1], m[2],
+				m[4], m[5], m[6],
+				m[8], m[9], m[10]
+			]
+		},
+
+		inverse : function(m) {
+			const det =
+				m[0] * (m[4] * m[8] - m[3] * m[5]) -
+				m[1] * (m[3] * m[8] - m[5] * m[6]) +
+				m[2] * (m[3] * m[3] - m[4] * m[6]);
+
+			if (det <= 0) {
+				return null;
+			}
+
+			const invdet = 1.0 / det;
+			return [
+				(m[4] * m[8] - m[3] * m[5]) * invdet,
+				(m[2] * m[3] - m[1] * m[8]) * invdet,
+				(m[1] * m[5] - m[2] * m[4]) * invdet,
+				(m[5] * m[6] - m[3] * m[8]) * invdet,
+				(m[0] * m[8] - m[2] * m[6]) * invdet,
+				(m[3] * m[2] - m[0] * m[5]) * invdet,
+				(m[3] * m[3] - m[6] * m[4]) * invdet,
+				(m[6] * m[1] - m[0] * m[3]) * invdet,
+				(m[0] * m[4] - m[3] * m[1]) * invdet,
 			]
 		}
 	}

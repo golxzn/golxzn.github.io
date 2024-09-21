@@ -5,14 +5,14 @@ class pipeline_manager {
 		this._pipelines = new Map();
 	}
 
-	load(name, force_reload = false) {
+	load(dimensions, name, force_reload = false) {
 		if (!force_reload && this.has_pipeline(name)) {
 			return this._pipelines[name];
 		}
 
 		const pipeline_instance = new pipeline(this._gl, name, {
-			[this._gl.VERTEX_SHADER  ]: pipeline_manager._get_shader_text(name, "vert"),
-			[this._gl.FRAGMENT_SHADER]: pipeline_manager._get_shader_text(name, "frag")
+			[this._gl.VERTEX_SHADER  ]: pipeline_manager._get_shader_text(name, dimensions, "vert"),
+			[this._gl.FRAGMENT_SHADER]: pipeline_manager._get_shader_text(name, dimensions, "frag")
 		});
 		if (pipeline_instance != null && pipeline_instance.valid()) {
 			this._pipelines[name] = pipeline_instance;
@@ -26,15 +26,12 @@ class pipeline_manager {
 		return name in this._pipelines && this._pipelines[name] != null;
 	}
 
-	static _make_shader_name(name, type) {
-		return `#${name}-${type}`;
-	}
+	static _get_shader_text(name, dimensions, type) {
+		if (!(dimensions in SHADERS)) return null;
 
-	static _get_shader_text(name, type) {
-		const element = document.querySelector(pipeline_manager._make_shader_name(name, type));
-		if (element != null) {
-			return element.text;
-		}
-		return null;
+		const dim = SHADERS[dimensions];
+		if (!(name in dim)) return null;
+
+		return dim[name][type];
 	}
 };

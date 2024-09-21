@@ -17,13 +17,16 @@ class primitive_info {
 
 
 class mesh {
-	constructor(info) {
+	constructor(textures, material, info) {
 		this.vao = null;
 		this.vbo = null;
 		this.ebo = null;
 		this.elements_count = info.indices.length;
 		this.draw_mode = info.draw_mode != null ? info.draw_mode : gl.TRIANGLES;
+
 		this.pipeline_name = info.pipeline_name;
+		this.textures = textures;
+		this.material = material;
 
 		this._init_buffers(info);
 	}
@@ -90,19 +93,5 @@ class mesh {
 				return 4;
 		}
 		return 0;
-	}
-}
-
-class textured_mesh extends mesh {
-	constructor(textures, info) {
-		super(info);
-		this.textures = textures;
-	}
-
-	draw(graphics) {
-		for (var id = 0; id < this.textures.length; id++) {
-			graphics.apply_texture(id, this.textures[id]);
-		}
-		graphics.draw_mesh(this);
 	}
 }

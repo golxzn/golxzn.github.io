@@ -2,7 +2,7 @@
 const primitives = {
 	get_pipeline_attributes(gl, name) {
 		switch (name) {
-			case "primitive-3D": return [
+			case "3D": return [
 				{ count: 3, type: gl.FLOAT,          normalized: false },
 				{ count: 4, type: gl.BYTE,           normalized: true },
 				{ count: 2, type: gl.UNSIGNED_SHORT, normalized: true }
@@ -13,7 +13,7 @@ const primitives = {
 
 	make_plane() {
 		const gl = get_service("graphics").gl;
-		return new primitive_info("primitive-3D", this.get_pipeline_attributes(gl, "primitive-3D"), new Uint8Array([
+		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes(gl, "3D"), new Uint8Array([
 		//  [         x          ]  [         y          ]  [         z          ]  [ normal 3 + offset  ]  [         UV          ]
 			0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xBF, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF,
@@ -27,7 +27,7 @@ const primitives = {
 
 	make_cube() {
 		const gl = get_service("graphics").gl;
-		return new primitive_info("primitive-3D", this.get_pipeline_attributes(gl, "primitive-3D"), new Uint8Array([
+		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes(gl, "3D"), new Uint8Array([
 		//  [         x          ]  [         y          ]  [         z          ]  [ normal 3 + offset  ]  [         UV          ]
 			0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x81, 0x00, 0xFF, 0xFF, 0x00, 0x00,
@@ -49,7 +49,7 @@ const primitives = {
 
 	make_cube_strip() {
 		const gl = get_service("graphics").gl;
-		return new primitive_info("primitive-3D", this.get_pipeline_attributes(gl, "primitive-3D"), new Uint8Array([
+		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes(gl, "3D"), new Uint8Array([
 		//  [         x          ]  [         y          ]  [         z          ]  [ normal 3 + offset  ]  [         UV          ]
 			0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x81, 0x00, 0xFF, 0xFF, 0x00, 0x00,
