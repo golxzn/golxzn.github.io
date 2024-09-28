@@ -11,32 +11,10 @@ class game_instance {
 		this.paused = true;
 
 		// Should be somewhere else. for example in the player class or as the independent object
-		this.camera = new flying_camera([0.0, 3.0, 0.0]);
+		this.camera = new flying_camera([0.0, 3.0, -5.0]);
 		graphics.set_active_camera(this.camera);
 
-		const m = golxzn.math.mat4;
-
-		this.scene_manager.add_object(new ground(
-			"ground", "assets/textures/asphalt.jpg", [10.0, 1.0, 10.0]
-		));
-		const cube = this.scene_manager.add_object(new rotating_cube(
-			"cube", "assets/textures/lain.jpg", 1
-		));
-		cube.transform = m.translate(cube.transform, [0.0, 3.0, 3.0]);
-
-		const cube_strip = primitives.make_cube_strip();
-		cube_strip.pipeline_name = [ "3D", "PRIMITIVE" ];
-
-		const position = golxzn.math.scale(graphics.light_direction, -10);
-
-		this.scene_manager.add_object(new model_object("saint lain", new model([
-			new mesh(
-				[ "assets/textures/lain.jpg" ],
-				null,
-				cube_strip
-			)
-		]), m.translate(m.scale(m.make_identity(), [0.25, 0.25, 0.25]), position)));
-
+		this._load_demo_scene(graphics);
 	}
 
 	update(delta) {
@@ -48,6 +26,50 @@ class game_instance {
 		this.scene_manager.render(g);
 	}
 
+	_load_demo_scene(graphics) {
+		const m4 = golxzn.math.mat4;
+
+		// GAME OBJECTS
+
+		const grnd = this.scene_manager.add_object(new ground(
+			"ground", "assets/textures/asphalt.jpg", [10.0, 1.0, 10.0]
+		));
+		grnd.transform = m4.translate(grnd.transform, [0.0, -1.0, 0.0]);
+
+		const cube = this.scene_manager.add_object(new rotating_cube(
+			"cube", "assets/textures/lain.jpg", 1
+		));
+		cube.transform = m4.translate(cube.transform, [0.0, 0.5, 0.0]);
+
+		// LIGHTING
+		const directional_power = [0.1, 0.1, 0.08];
+		const directional_properties = {
+			ambient: directional_power,
+			diffuse: directional_power,
+			specular: directional_power
+		};
+		graphics.directional_lights = {
+			'u_dir_light': new DirectionalLight([1.0, -1.0, -1.0], directional_properties)
+		};
+
+		const attenuation = [ 1.0, 0.09, 0.032 ];
+		const rgb = [
+			[1.0, 0.0, 0.0],
+			[0.0, 1.0, 0.0],
+			[0.0, 0.0, 1.0]
+		];
+
+		for (const color of rgb) {
+			const pos = golxzn.math.scale(color, 5.0);
+			graphics.point_lights.push(new PointLight(
+				pos, attenuation, { ambient: color, diffuse: color, specular: color }
+			));
+
+			this.scene_manager.add_object(new model_object(color.toString(), new model([
+				new mesh([], null, primitives.make_cube_colored(color))
+			]), m4.scale(m4.translate(m4.make_identity(), pos), [0.25, 0.25, 0.25])));
+		}
+	}
 
 // Event handling
 
@@ -75,11 +97,6 @@ class game_instance {
 
 	on_key_up(event) {
 		if (this.paused) return;
-		if (event.code == "KeyL") {
-			const g = get_service("graphics");
-			g.phong_blinn = !g.phong_blinn;
-			console.log("blinn-phong lighting", g.phong_blinn ? "was enabled" : "was disabled");
-		}
 
 		this.keyboard.on_key_up(event);
 	}

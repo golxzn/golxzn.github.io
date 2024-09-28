@@ -11,11 +11,9 @@ class graphics {
 		this.active_camera = null;
 		this.pipeline_stack = [];
 		this.transform_stack = [m.make_identity()];
-		this.transform_inverse_stack = [m.inverse(m.make_identity())];
-		this.model_view = m.make_identity();
 
-		this.light_direction = [0.577, -0.577, 0.577];
-		this.phong_blinn = true;
+		this.directional_lights = {};
+		this.point_lights = [];
 
 		this.gl.viewport(0, 0, canvas.width, canvas.height);
 		this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -28,7 +26,7 @@ class graphics {
 	set_active_camera(camera) {
 		this.active_camera = camera;
 		this.active_camera.aspect = this.aspect_ratio();
-		this.update_model_view();
+		this._mvp = null;
 	}
 
 	push_pipeline(pipeline) {
@@ -38,20 +36,36 @@ class graphics {
 
 	set_engine_uniforms() {
 		const pipeline = this.current_pipeline();
-		this.update_model_view();
-		pipeline.set_uniform("u_model_view", this.model_view);
-		pipeline.set_uniform("u_projection", this.active_camera.make_projection());
+		// pipeline.set_uniform("u_model_view", this.model_view());
+		// pipeline.set_uniform("u_projection", this.active_camera.make_projection());
+		pipeline.set_uniform("u_mvp", this.model_view_projection());
+		if (pipeline.uniform_location("u_model")) {
+			pipeline.set_uniform("u_model", this.current_transform());
+			pipeline.set_uniform("u_view_position", this.active_camera.position)
+		}
 		if (pipeline.uniform_location("u_normal_matrix")) {
 			pipeline.set_uniform("u_normal_matrix",
-				golxzn.math.mat3.inverse(golxzn.math.mat3.build_from(this.model_view)),
+				golxzn.math.mat3.inverse(golxzn.math.mat3.build_from(this.current_transform())),
 				{ transpose: true }
 			);
 		}
 
-		// TODO: Remove this shit or move somewhere
-		if (pipeline.uniform_location("u_dir_light.color") != null) {
-			pipeline.set_uniform("u_dir_light.color", [1.0, 1.0, 1.0]);
-			pipeline.set_uniform("u_dir_light.direction", this.light_direction);
+		if (pipeline.lighting_support()) {
+			this.set_engine_lighting_uniforms();
+		}
+	}
+
+	set_engine_lighting_uniforms() {
+		const pipeline = this.current_pipeline();
+		for (const [name, light] of Object.entries(this.directional_lights)) {
+			light.apply(pipeline, name);
+		}
+
+		if (pipeline.uniform_location('u_point_lights_count') == null) return;
+
+		pipeline.set_uniform('u_point_lights_count', this.point_lights.length, { as_integer: true });
+		for (var i = 0; i < this.point_lights.length; i++) {
+			this.point_lights[i].apply(pipeline, `u_point_lights[${i}]`);
 		}
 	}
 
@@ -65,25 +79,24 @@ class graphics {
 
 	push_transform(matrix) {
 		this.transform_stack.push(golxzn.math.mat4.multiply(this.current_transform(), matrix));
-		this.transform_inverse_stack.push(golxzn.math.mat4.inverse(this.current_transform()));
 	}
 
 	current_transform() {
 		return this.transform_stack.at(-1);
 	}
 
-	current_inverse_transform() {
-		return this.transform_inverse_stack.at(-1);
-	}
-
-	pop_transform(matrix) {
+	pop_transform() {
 		this.transform_stack.pop();
 	}
 
 
 	apply_texture(id, texture) {
-		texture.bind(id);
-		this.current_pipeline().set_uniform(`u_texture_${id}`, id, { as_integer: true });
+		const name = `u_texture_${id}`;
+		const pipeline = this.current_pipeline();
+		if (pipeline.uniform_location(name) != null) {
+			texture.bind(id);
+			this.current_pipeline().set_uniform(name, id, { as_integer: true });
+		}
 	}
 
 	apply_material(material) {
@@ -114,10 +127,17 @@ class graphics {
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 	}
 
-	update_model_view() {
-		this.model_view = golxzn.math.mat4.multiply(
+	model_view() {
+		return golxzn.math.mat4.multiply(
 			this.current_transform(),
 			this.active_camera.make_view()
 		);
 	}
+	model_view_projection() {
+		return golxzn.math.mat4.multiply(
+			this.model_view(),
+			this.active_camera.make_projection()
+		);
+	}
+
 };

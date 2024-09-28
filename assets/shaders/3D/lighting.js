@@ -1,5 +1,7 @@
 Object.assign(SHADERS["3D"], { LIGHTING : {
 
+//============================================ VERTEX ============================================//
+
 vert : /* glsl */ `#version 300 es
 
 layout(location = 0) in vec3 a_position;
@@ -7,45 +9,54 @@ layout(location = 1) in vec3 a_normal;
 layout(location = 2) in vec2 a_uv;
 
 out vec3 f_position;
+out vec3 f_to_view;
 out vec3 f_normal;
 out vec2 f_uv;
 
-uniform mat4 u_model_view;
-uniform mat4 u_projection;
+uniform mat4 u_mvp;
+uniform mat4 u_model;
 uniform mat3 u_normal_matrix;
+uniform vec3 u_view_position;
 
 void main() {
-	vec4 mv_position = u_model_view * vec4(a_position, 1.0);
-	gl_Position = u_projection * mv_position;
-	f_position = mv_position.xyz;
+	gl_Position = u_mvp * vec4(a_position, 1.0);
+	f_position = vec3(u_model * vec4(a_position, 1.0));
+	f_to_view = u_view_position - f_position;
 	f_normal = u_normal_matrix * a_normal;
 	f_uv = a_uv;
 }
 `,
 
+//=========================================== FRAGMENT ===========================================//
 
 frag : /* glsl */ `#version 300 es
 precision mediump float;
 
+#define MAX_POINT_LIGHT_COLORS 16
+
 in vec3 f_position;
 in vec3 f_normal;
+in vec3 f_to_view;
 in vec2 f_uv;
 
 out vec4 frag_color;
 
+struct LightProperties {
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+};
+
 struct DirectionalLight {
+	LightProperties properties;
 	vec3 direction;
-	vec3 color;
 };
 
 struct PointLight {
-	vec3 position;
-	vec3 color;
+	LightProperties properties;
 
-	// Attenuation
-	float att_constant;
-	float att_linear;
-	float att_qubic;
+	vec3 position;
+	vec3 attenuation; // [constant, linear, cubic]
 };
 
 struct Material {
@@ -55,59 +66,61 @@ struct Material {
 	float shininess;
 };
 
-const PointLight u_point_light = PointLight(
-	vec3(0.0, 0.5, 0.0),
-	vec3(1.0, 0.1, 1.0),
-	1.0, 0.22, 0.2
-);
-
 uniform DirectionalLight u_dir_light;
-uniform Material u_material;
+uniform int              u_point_lights_count;
+uniform PointLight       u_point_lights[MAX_POINT_LIGHT_COLORS];
+uniform Material         u_material;
+uniform sampler2D        u_texture_0; // diffuse
 
-uniform sampler2D u_texture_0; // diffuse
 
 float attenuation(PointLight light, float dist) {
-	return 1.0 / (light.att_constant + light.att_linear * dist + light.att_qubic * dist * dist);
+	return 1.0 / (light.attenuation.r + light.attenuation.g * dist + light.attenuation.b * dist * dist);
 }
+
+float calc_diffuse(vec3 to_light, vec3 normal) {
+	return max(dot(normal, to_light), 0.0);
+}
+
+float calc_specular(vec3 to_light, vec3 to_view, vec3 normal) {
+	vec3 half_direction = normalize(to_light + to_view);
+	return pow(max(dot(normal, half_direction), 0.0), u_material.shininess);
+}
+
 
 void main() {
-	vec3 normal = normalize(f_normal);
-	vec3 to_light = normalize(-u_dir_light.direction);
-	vec3 to_view = normalize(-f_position);
 	vec3 texel = texture(u_texture_0, f_uv).xyz;
+	vec3 normal = normalize(f_normal);
+	vec3 to_view = normalize(f_to_view);
+	vec3 to_light = normalize(-u_dir_light.direction);
 
 	// Directional Light
-	vec3 ambient = u_material.ambient * u_dir_light.color;
+	vec3 ambient = u_dir_light.properties.ambient;
+	vec3 diffuse = u_dir_light.properties.diffuse * calc_diffuse(to_light, normal);
+	vec3 specular = u_dir_light.properties.specular * calc_specular(to_light, to_view, normal);
 
-	float diffuse_component = max(dot(to_light, normal), 0.0);
-	vec3 diffuse = u_material.diffuse * diffuse_component * texel;
+	#pragma optionNV(unroll)
+	for (int i = 0; i < u_point_lights_count; ++i) {
+		if (dot(normal, to_view) <= 0.0) continue;
 
-	float specular_component = pow(max(dot(to_view, reflect(-to_light, normal)), 0.0), u_material.shininess);
-	vec3 specular = u_material.specular * specular_component * u_dir_light.color;
+		PointLight point = u_point_lights[i];
+		to_light = point.position - f_position;
+		float att = attenuation(point, length(to_light));
+		to_light = normalize(to_light);
 
+		ambient += point.properties.ambient * att;
+		diffuse += point.properties.diffuse * calc_diffuse(to_light, normal) * att;
+		specular += point.properties.specular * calc_specular(to_light, to_view, normal) * att;
+	}
 
-	// Point Light
-	vec3 to_point_light = u_point_light.position - f_position;
-	float to_point_light_dist = length(to_point_light);
-	to_point_light = normalize(to_point_light);
-	float att = attenuation(u_point_light, to_point_light_dist);
+	ambient *= u_material.ambient * texel;
+	diffuse *= u_material.diffuse * texel;
+	specular *= u_material.specular;
 
-	vec3 point_ambient = u_material.ambient * u_point_light.color * att;
-
-	float point_diffuse_component = max(dot(to_point_light, normal), 0.0) * att;
-	vec3 point_diffuse = u_material.diffuse * (point_diffuse_component * texel);
-
-	vec3 point_reflection = reflect(-to_point_light, normal);
-	float point_specular_component = pow(max(dot(to_view, point_reflection), 0.0), u_material.shininess) * att;
-	vec3 point_specular = u_material.specular * point_specular_component * u_point_light.color;
-
-	ambient += point_ambient;
-	diffuse += point_diffuse;
-	specular += point_specular;
-
-	frag_color = vec4((ambient + diffuse + specular) * texel, 1.0);
+	frag_color = mix(vec4(ambient + diffuse + specular, 1.0), vec4(normal, 1.0), 0.0);
 }
 `
+
+//================================================================================================//
 
 } });
 
