@@ -49,11 +49,12 @@ function start() {
 		"scene"   : new scene_manager()
 	});
 
-	next_game = null;
 	loading = new loading_screen((state) => {
 		switch (state) {
 			case loading_screen.STATE_DISAPPEAR:
-				game = instantiate_game(display, renderer);
+				if (game == null) {
+					game = instantiate_game(display, renderer);
+				}
 				break;
 			case loading_screen.STATE_FINISHED:
 				loading = null;
