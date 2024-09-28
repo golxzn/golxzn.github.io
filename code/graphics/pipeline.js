@@ -1,13 +1,18 @@
 
 class pipeline {
-	constructor(gl, name, shaders) {
+	constructor(gl, name, shaders, has_lighting = false) {
 		this._gl = gl;
 		this._name = name;
 		this._program = this._make_program(shaders);
+		this._lighting_support = has_lighting;
 	}
 
 	valid() {
 		return this._program != null;
+	}
+
+	lighting_support() {
+		return this._lighting_support;
 	}
 
 	attribute_location(attribute_name) {
@@ -109,7 +114,11 @@ class pipeline {
 			return shader;
 		}
 
-		console.error(`[pipeline][${this._name}] Failed to compile the shader:`,
+		const type_names = {
+			[this._gl.VERTEX_SHADER]: "VERTEX",
+			[this._gl.FRAGMENT_SHADER]: "FRAGMENT"
+		}
+		console.error(`[pipeline][${this._name}] Failed to compile the ${type_names[type]} shader:`,
 			this._gl.getShaderInfoLog(shader));
 		this._gl.deleteShader(shader);
 		return null;

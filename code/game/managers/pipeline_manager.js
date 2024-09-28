@@ -10,10 +10,12 @@ class pipeline_manager {
 			return this._pipelines[name];
 		}
 
+		const fragment_code = pipeline_manager._get_shader_text(name, dimensions, "frag");
 		const pipeline_instance = new pipeline(this._gl, name, {
 			[this._gl.VERTEX_SHADER  ]: pipeline_manager._get_shader_text(name, dimensions, "vert"),
-			[this._gl.FRAGMENT_SHADER]: pipeline_manager._get_shader_text(name, dimensions, "frag")
-		});
+			[this._gl.FRAGMENT_SHADER]: fragment_code
+		}, pipeline_manager._check_lighting_support(fragment_code));
+
 		if (pipeline_instance != null && pipeline_instance.valid()) {
 			this._pipelines[name] = pipeline_instance;
 			return pipeline_instance;
@@ -24,6 +26,10 @@ class pipeline_manager {
 
 	has_pipeline(name) {
 		return name in this._pipelines && this._pipelines[name] != null;
+	}
+
+	static _check_lighting_support(code) {
+		return code.includes("LightProperties");
 	}
 
 	static _get_shader_text(name, dimensions, type) {
