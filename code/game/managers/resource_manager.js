@@ -69,6 +69,7 @@ class resource_manager {
 	_load_default_materials() {
 		return {
 // Have taken from http://devernay.free.fr/cours/opengl/materials.html
+"none":           { ambient: [ 1.000000, 1.000000, 1.000000 ], diffuse: [ 1.000000, 1.000000, 1.000000 ], specular: [ 1.000000, 1.000000, 1.000000 ], shininess: 128.0 * 0.25 },
 "emerald":        { ambient: [ 0.021500, 0.174500, 0.021500 ], diffuse: [ 0.075680, 0.614240, 0.075680 ], specular: [ 0.633000, 0.727811, 0.633000 ], shininess: 128.0 * 0.6 },
 "jade":           { ambient: [ 0.135000, 0.222500, 0.157500 ], diffuse: [ 0.540000, 0.890000, 0.630000 ], specular: [ 0.316228, 0.316228, 0.316228 ], shininess: 128.0 * 0.1 },
 "obsidian":       { ambient: [ 0.053750, 0.050000, 0.066250 ], diffuse: [ 0.182750, 0.170000, 0.225250 ], specular: [ 0.332741, 0.328634, 0.346435 ], shininess: 128.0 * 0.3 },

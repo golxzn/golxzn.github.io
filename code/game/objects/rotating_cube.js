@@ -7,7 +7,7 @@ class rotating_cube extends model_object {
 			new mesh(
 				[ texture_name ],
 				"white rubber",
-				primitives.make_cube_strip()
+				primitives.make_cube()
 			)
 		]));
 
