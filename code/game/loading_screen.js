@@ -1,6 +1,7 @@
 
 const APPEAR_DURATION    = 0.75;
 const DISAPPEAR_DURATION = 0.75;
+const LOADING_SPEED      = 2.0;
 
 const PRELOAD_TEXTURES = [
 	"assets/textures/asphalt.jpg",
@@ -83,19 +84,7 @@ class loading_screen {
 
 		// TODO: Fix loading! The speed of progress changing should be lerped between next progress
 		// to reach it faster!
-		// this._progress = Math.min(this._progress + delta, this._next_progress);
-
-		// Calculate the distance to the next progress
-		const distance = this._next_progress - this._progress;
-
-		// Determine a speed factor based on the distance
-		// You can adjust the multiplier to control the speed
-		const speed_factor = Math.max(0.1, Math.abs(distance)); // Minimum speed factor to avoid being too slow
-		const speed = Math.min(delta * speed_factor, Math.abs(distance)); // Ensure we don't overshoot
-
-		// Update the progress smoothly
-		this._progress += speed * Math.sign(distance);
-
+		this._progress = Math.min(this._progress + LOADING_SPEED * delta, this._next_progress);
 
 		// Ensure we don't exceed the next progress
 		if (Math.abs(this._progress - this._next_progress) < 0.01) {
