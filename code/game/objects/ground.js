@@ -7,7 +7,7 @@ class ground extends model_object {
 			new mesh(
 				[ texture_name ],
 				"white rubber",
-				primitives.make_plane()
+				primitives.make_custom_plane(5, 5)
 			)
 		]));
 

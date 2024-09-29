@@ -24,8 +24,8 @@ class texture {
 			image
 		);
 
-		gl.texParameteri(this._target, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(this._target, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(this._target, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
+		gl.texParameteri(this._target, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
 		gl.texParameteri(this._target, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 		if (!texture._support_mipmap(image)) {
 			gl.texParameteri(this._target, gl.TEXTURE_MIN_FILTER, gl.LINEAR);

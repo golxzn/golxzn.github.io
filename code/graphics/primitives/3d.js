@@ -12,6 +12,12 @@ const primitives = {
 				{ count: 4, type: gl.UNSIGNED_BYTE,  normalized: true },
 				{ count: 2, type: gl.UNSIGNED_SHORT, normalized: true }
 			];
+			case "3D_UV": return [
+				{ count: 3, type: gl.FLOAT,          normalized: false },
+				{ count: 4, type: gl.UNSIGNED_BYTE,  normalized: true },
+				{ count: 2, type: gl.FLOAT,          normalized: false }
+			];
+
 		}
 		return [];
 	},
@@ -27,8 +33,39 @@ const primitives = {
 		]), new Uint16Array([
 			0, 1, 2, 3
 		]), gl.TRIANGLE_STRIP);
-
 	},
+
+	make_custom_plane(position_scale, uv_scale) {
+		const gl = get_service("graphics").gl;
+
+		// Original plane data (vertex positions, normals, UVs)
+		let plane_data = new Uint8Array([
+		//  [         x          ]  [         y          ]  [         z          ]  [ normal 3 + offset  ]  [                    UV                      ]
+			0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x7F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x7F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F,
+			0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x7F, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x7F, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F
+		]);
+
+		const stride = 24;
+		for (var i = 0; i < 4; ++i) {
+			let position = new Float32Array(plane_data.buffer, i * stride, 3);
+			for (let j = 0; j < position.length; j++) {
+				position[j] *= position_scale;
+			}
+
+			let uv = new Float32Array(plane_data.buffer, i * stride + 16, 2);
+			for (let j = 0; j < uv.length; j++) {
+				uv[j] *= uv_scale;
+			}
+		}
+
+		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes(gl, "3D_UV"),
+			plane_data, new Uint16Array([0, 1, 2, 3]), gl.TRIANGLE_STRIP
+		);
+	},
+
+
 
 	make_cube() {
 		const gl = get_service("graphics").gl;
