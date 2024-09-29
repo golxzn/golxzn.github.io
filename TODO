@@ -1,10 +1,14 @@
 [ ] Graphics
-	[x] UV scaling (make ground repeated mirrored)
+	[ ] Framebuffers & Render passes (NEW RENDERING APPROACH!)
 	[ ] Shadows
 		[ ] Depth framebuffer
+		[ ] Anti-aliasing
+		[ ] Stencil??? Somehow to cut out hidden light
+	[ ] SpotLight support
 	[ ] Volumetric Fog
 	[ ] Particles
 		[ ] Instancing
+	[x] UV scaling (make ground repeated mirrored)
 
 [ ] Models
 	[ ] glb/obj loading
