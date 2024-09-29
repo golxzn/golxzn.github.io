@@ -1,5 +1,5 @@
 [ ] Graphics
-	[ ] UV scaling
+	[x] UV scaling (make ground repeated mirrored)
 	[ ] Shadows
 		[ ] Depth framebuffer
 	[ ] Volumetric Fog

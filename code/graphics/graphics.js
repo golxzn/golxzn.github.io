@@ -18,7 +18,10 @@ class graphics {
 		this.gl.viewport(0, 0, canvas.width, canvas.height);
 		this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
 
+		this.gl.enable(this.gl.CULL_FACE);
 		this.gl.enable(this.gl.DEPTH_TEST);
+		this.gl.cullFace(this.gl.FRONT);
+		this.gl.frontFace(this.gl.CCW);
 		this.gl.depthFunc(this.gl.LEQUAL);
 		this.gl.depthMask(true);
 	}
