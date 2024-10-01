@@ -5,22 +5,26 @@ const DEFAULT_FRAMEBUFFER_CALLBACKS = {
 }
 
 class render_pass {
-	constructor(name, framebuffer, settings = [], callbacks = DEFAULT_FRAMEBUFFER_CALLBACKS) {
+	constructor(name, framebuffer, settings = [], callbacks = DEFAULT_FRAMEBUFFER_CALLBACKS, pipeline = null) {
 		this._gl = framebuffer._gl;
 
 		this.name = name;
 		this.framebuffer = framebuffer;
 		this.settings = settings;
 		this.callbacks = callbacks;
+		this.pipeline = pipeline;
 	}
 
 	valid() {
 		return this.framebuffer != null && this.framebuffer.complete();
 	}
 
+	has_pipeline() {
+		return this.pipeline != null;
+	}
+
 	bind() {
 		this.framebuffer.bind();
-		this._gl.viewport(0, 0, this.framebuffer.width(), this.framebuffer.height());
 		this.settings.forEach(param => this._gl.enable(param));
 		this.callbacks.bind();
 	}

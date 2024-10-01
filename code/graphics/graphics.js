@@ -44,10 +44,10 @@ class graphics {
 		this.render_passes = [
 			new render_pass(
 				"Color Render Pass",
-				new framebuffer(gl, [canvas.width, canvas.height],
-					{ format: gl.RGB,              attachment: gl.COLOR_ATTACHMENT0 },
-					{ format: gl.DEPTH24_STENCIL8, attachment: gl.DEPTH_STENCIL_ATTACHMENT },
-				), [
+				new framebuffer(gl, [canvas.width, canvas.height], [
+					{ type: attachment_type.texture,      format: gl.RGB,              attachment: gl.COLOR_ATTACHMENT0 },
+					{ type: attachment_type.renderbuffer, format: gl.DEPTH24_STENCIL8, attachment: gl.DEPTH_STENCIL_ATTACHMENT  },
+				]), [
 					gl.CULL_FACE,
 					gl.DEPTH_TEST
 				], {
@@ -90,7 +90,11 @@ class graphics {
 			instance.render(this);
 			pass.unbind();
 		}
-		this._blit_on_quad(this.render_passes[this.active_pass].framebuffer.texture())
+		this._blit_on_quad(this.current_render_pass().framebuffer.texture())
+	}
+
+	current_render_pass() {
+		return this.render_passes[this.active_pass];
 	}
 
 	set_active_camera(camera) {
@@ -101,7 +105,12 @@ class graphics {
 
 	push_pipeline(pipeline) {
 		this.pipeline_stack.push(pipeline);
-		pipeline.use();
+		const pass = this.current_render_pass();
+		if (pass.has_pipeline()) {
+			pass.pipeline.use();
+		} else {
+			pipeline.use();
+		}
 	}
 
 	set_engine_uniforms() {
@@ -140,7 +149,8 @@ class graphics {
 	}
 
 	current_pipeline() {
-		return this.pipeline_stack.at(-1);
+		const pass = this.current_render_pass();
+		return pass.has_pipeline() ? pass.pipeline : this.pipeline_stack.at(-1);
 	}
 
 	pop_pipeline() {
