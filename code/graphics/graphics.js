@@ -24,12 +24,10 @@ void main() {
 
 class graphics {
 	constructor(canvas) {
-		const gl = canvas.getContext("webgl2");
 		if (!gl) {
 			alert("Cannot get WebGL2 Context! Seems like it isn't supported!");
 			return;
 		}
-		this.gl = gl;
 
 		const m = golxzn.math.mat4;
 
@@ -44,7 +42,7 @@ class graphics {
 		this.render_passes = [
 			new render_pass(
 				"Color Render Pass",
-				new framebuffer(gl, [canvas.width, canvas.height], [
+				new framebuffer([canvas.width, canvas.height], [
 					{ type: attachment_type.texture,      format: gl.RGB,              attachment: gl.COLOR_ATTACHMENT0 },
 					{ type: attachment_type.renderbuffer, format: gl.DEPTH24_STENCIL8, attachment: gl.DEPTH_STENCIL_ATTACHMENT  },
 				]), [
@@ -63,7 +61,7 @@ class graphics {
 			)
 		];
 
-		this.blit_texture_pipeline = new pipeline(gl, "screen", {
+		this.blit_texture_pipeline = new pipeline("screen", {
 			[gl.VERTEX_SHADER  ]: BLIT_TEXTURE_VERTEX_SHADER_CODE,
 			[gl.FRAGMENT_SHADER]: BLIT_TEXTURE_FRAGMENT_SHADER_CODE
 		})
@@ -190,21 +188,21 @@ class graphics {
 	}
 
 	draw_mesh(mesh) {
-		this.gl.bindVertexArray(mesh.vao);
-		this.gl.drawElements(mesh.draw_mode, mesh.elements_count, this.gl.UNSIGNED_SHORT, 0);
+		gl.bindVertexArray(mesh.vao);
+		gl.drawElements(mesh.draw_mode, mesh.elements_count, gl.UNSIGNED_SHORT, 0);
 	}
 
 
 	aspect_ratio() {
-		return this.gl.canvas.width / this.gl.canvas.height;
+		return gl.canvas.width / gl.canvas.height;
 	}
 
 	set_clear_color(color) {
-		this.gl.clearColor(color[0], color[1], color[2], color[3]);
+		gl.clearColor(color[0], color[1], color[2], color[3]);
 	}
 
 	clear() {
-		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	}
 
 	model_view() {
@@ -223,7 +221,6 @@ class graphics {
 
 	_blit_on_quad(texture) {
 		// Blit on screen
-		const gl = this.gl;
 		gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 		gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -235,8 +232,8 @@ class graphics {
 		texture.bind();
 		this.blit_texture_pipeline.set_uniform("u_texture_0", 0, { as_integer: true });
 
-		this.gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
-		this.gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
+		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
 	}
 

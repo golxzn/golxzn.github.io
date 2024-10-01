@@ -1,6 +1,6 @@
 
 const primitives = {
-	get_pipeline_attributes(gl, name) {
+	get_pipeline_attributes(name) {
 		switch (name) {
 			case "3D": return [
 				{ count: 3, type: gl.FLOAT,          normalized: false },
@@ -23,8 +23,7 @@ const primitives = {
 	},
 
 	make_plane() {
-		const gl = get_service("graphics").gl;
-		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes(gl, "3D"), new Uint8Array([
+		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes("3D"), new Uint8Array([
 		//  [         x          ]  [         y          ]  [         z          ]  [ normal 3 + offset  ]  [         UV          ]
 			0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x7F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x7F, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF,
@@ -36,8 +35,6 @@ const primitives = {
 	},
 
 	make_custom_plane(position_scale, uv_scale) {
-		const gl = get_service("graphics").gl;
-
 		// Original plane data (vertex positions, normals, UVs)
 		let plane_data = new Uint8Array([
 		//  [         x          ]  [         y          ]  [         z          ]  [ normal 3 + offset  ]  [                    UV                      ]
@@ -60,7 +57,7 @@ const primitives = {
 			}
 		}
 
-		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes(gl, "3D_UV"),
+		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes("3D_UV"),
 			plane_data, new Uint16Array([0, 1, 2, 3]), gl.TRIANGLE_STRIP
 		);
 	},
@@ -68,8 +65,7 @@ const primitives = {
 
 
 	make_cube() {
-		const gl = get_service("graphics").gl;
-		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes(gl, "3D"), new Uint8Array([
+		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes("3D"), new Uint8Array([
 			0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0x00, 0xFF, 0xFF, 0x00, 0x00,
 			0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0xFF, 0xFF,
@@ -110,8 +106,7 @@ const primitives = {
 	},
 
 	make_cube_optimized() {
-		const gl = get_service("graphics").gl;
-		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes(gl, "3D"), new Uint8Array([
+		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes("3D"), new Uint8Array([
 		//  [         x          ]  [         y          ]  [         z          ]  [ normal 3 + offset  ]  [         UV          ]
 			0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00, // 0
 			0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x81, 0x00, 0xFF, 0xFF, 0x00, 0x00, // 1
@@ -132,8 +127,7 @@ const primitives = {
 	},
 
 	make_cube_strip() {
-		const gl = get_service("graphics").gl;
-		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes(gl, "3D"), new Uint8Array([
+		return new primitive_info(["3D", "LIGHTING"], this.get_pipeline_attributes("3D"), new Uint8Array([
 		//  [         x          ]  [         y          ]  [         z          ]  [ normal 3 + offset  ]  [         UV          ]
 			0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x81, 0x00, 0xFF, 0xFF, 0x00, 0x00,
@@ -150,13 +144,12 @@ const primitives = {
 	},
 
 	make_cube_colored(color) {
-		const gl = get_service("graphics").gl;
 		const to_byte = function(flt) { return parseInt(255 * flt); }
 
 		const r = to_byte(color[0]);
 		const g = to_byte(color[1]);
 		const b = to_byte(color[2]);
-		return new primitive_info(["3D", "PRIMITIVE"], this.get_pipeline_attributes(gl, "3D_COLOR"), new Uint8Array([
+		return new primitive_info(["3D", "PRIMITIVE"], this.get_pipeline_attributes("3D_COLOR"), new Uint8Array([
 		//  [         x          ]  [         y          ]  [         z          ]  [3 + offset ]  [         UV          ]
 			0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, r, g, b, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x80, 0xBF, r, g, b, 0x00, 0xFF, 0xFF, 0x00, 0x00,

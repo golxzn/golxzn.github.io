@@ -2,7 +2,6 @@
 class resource_manager {
 	constructor(graphics) {
 		this._url = document.URL;
-		this._gl = graphics.gl;
 
 		this.textures = new Map();
 		this.materials = new Map();
@@ -35,7 +34,7 @@ class resource_manager {
 			img.src = this._make_url(path);
 		});
 
-		const tex = new texture(this._gl, image);
+		const tex = new texture(image);
 		this.textures[path] = tex;
 		return tex;
 	}

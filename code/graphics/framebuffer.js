@@ -6,9 +6,7 @@ const attachment_type = {
 
 
 class framebuffer {
-	constructor(gl, size, attachments) {
-		this._gl = gl;
-
+	constructor(size, attachments) {
 		this.id = gl.createFramebuffer();
 		this.size = size;
 		this.textures = [];
@@ -28,27 +26,25 @@ class framebuffer {
 	}
 
 	destroy() {
-		const gl = this._gl;
 		this.textures.forEach(texture => gl.deleteTexture(texture));
 		this.render_buffers.forEach(renderbuffer => gl.deleteRenderbuffer(renderbuffer));
 		gl.deleteFramebuffer(this.id);
 	}
 
 	bind(target = null) {
-		this._gl.bindFramebuffer(this._default_or(target), this.id);
-		this._gl.viewport(0, 0, this.size[0], this.size[1]);
+		gl.bindFramebuffer(this._default_or(target), this.id);
+		gl.viewport(0, 0, this.size[0], this.size[1]);
 	}
 
 	unbind(target = null) {
-		this._gl.bindFramebuffer(this._default_or(target), null);
+		gl.bindFramebuffer(this._default_or(target), null);
 	}
 
 	complete(target = null) {
-		return this._gl.checkFramebufferStatus(this._default_or(target)) == this._gl.FRAMEBUFFER_COMPLETE;
+		return gl.checkFramebufferStatus(this._default_or(target)) == gl.FRAMEBUFFER_COMPLETE;
 	}
 
 	texture(index = 0) {
-		const gl = this._gl;
 		const tex = this.textures[index];
 		return {
 			bind: function(index = 0) {
@@ -65,7 +61,6 @@ class framebuffer {
 	height() { return this.size[1]; }
 
 	_make_texture(attachment) {
-		const gl = this._gl;
 		const texture = gl.createTexture();
 		const internal_format = attachment.internal == undefined
 			? attachment.format
@@ -81,7 +76,6 @@ class framebuffer {
 	}
 
 	_make_render_buffer(attachment) {
-		const gl = this._gl;
 		const render_buffer = gl.createRenderbuffer();
 		gl.bindRenderbuffer(gl.RENDERBUFFER, render_buffer);
 		gl.renderbufferStorage(gl.RENDERBUFFER, attachment.format, this.size[0], this.size[1]);
@@ -90,6 +84,6 @@ class framebuffer {
 	}
 
 	_default_or(target) {
-		return target == null ? this._gl.FRAMEBUFFER : target;
+		return target == null ? gl.FRAMEBUFFER : target;
 	}
 };

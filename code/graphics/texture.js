@@ -6,8 +6,7 @@ const DEFAULT_BORDER          = 0;
 const DEFAULT_PIXELS          = new Uint8Array([0, 0, 255, 255]);
 
 class texture {
-	constructor(gl, image) {
-		this._gl  = gl;
+	constructor(image) {
 		this._target = gl.TEXTURE_2D;
 		this._texture = this._make_texture();
 		this._width = image.width;
@@ -38,33 +37,33 @@ class texture {
 	}
 
 	bind(index = 0) {
-		this._gl.activeTexture(this._gl.TEXTURE0 + index);
-		this._gl.bindTexture(this._target, this._texture);
+		gl.activeTexture(gl.TEXTURE0 + index);
+		gl.bindTexture(this._target, this._texture);
 	}
 
 	unbind() {
-		this._gl.bindTexture(this._target, null);
+		gl.bindTexture(this._target, null);
 	}
 
 // private:
 
 	_make_texture() {
-		const texture = this._gl.createTexture();
-		this._gl.bindTexture(this._target, texture);
+		const texture = gl.createTexture();
+		gl.bindTexture(this._target, texture);
 
 		// Loading the placeholder
-		this._gl.texImage2D(
+		gl.texImage2D(
 			this._target,
 			DEFAULT_LEVEL,
-			this._gl.RGBA,
+			gl.RGBA,
 			this._width, this._height,
 			DEFAULT_BORDER,
-			this._gl.RGBA,
-			this._gl.UNSIGNED_BYTE,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
 			DEFAULT_PIXELS
 		)
 
-		this._gl.bindTexture(this._target, null);
+		gl.bindTexture(this._target, null);
 		return texture;
 	}
 

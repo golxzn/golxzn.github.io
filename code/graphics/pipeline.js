@@ -1,7 +1,6 @@
 
 class pipeline {
-	constructor(gl, name, shaders, has_lighting = false) {
-		this._gl = gl;
+	constructor(name, shaders, has_lighting = false) {
 		this._name = name;
 		this._program = this._make_program(shaders);
 		this._lighting_support = has_lighting;
@@ -16,11 +15,11 @@ class pipeline {
 	}
 
 	attribute_location(attribute_name) {
-		return this._gl.getAttribLocation(this._program, attribute_name);
+		return gl.getAttribLocation(this._program, attribute_name);
 	}
 
 	uniform_location(uniform_name) {
-		return this._gl.getUniformLocation(this._program, uniform_name);
+		return gl.getUniformLocation(this._program, uniform_name);
 	}
 
 	set_uniform(uniform_name, value, options = { transpose: false, as_integer: false }) {
@@ -34,30 +33,30 @@ class pipeline {
 			const data = new Float32Array(value);
 			switch (value.length) {
 				case 16:
-					this._gl.uniformMatrix4fv(location, options.transpose, data);
+					gl.uniformMatrix4fv(location, options.transpose, data);
 					break;
 				case 9:
-					this._gl.uniformMatrix3fv(location, options.transpose, data);
+					gl.uniformMatrix3fv(location, options.transpose, data);
 					break;
 				case 4:
-					this._gl.uniform4fv(location, data);
+					gl.uniform4fv(location, data);
 					break;
 				case 3:
-					this._gl.uniform3fv(location, data);
+					gl.uniform3fv(location, data);
 					break;
 				case 2:
-					this._gl.uniform2fv(location, data);
+					gl.uniform2fv(location, data);
 					break;
 			}
 
 		} else if (typeof(value) == 'number') {
 			if (options.as_integer) {
-				this._gl.uniform1i(location, value);
+				gl.uniform1i(location, value);
 			} else {
-				this._gl.uniform1f(location, value);
+				gl.uniform1f(location, value);
 			}
 		} else if (typeof(value) == 'boolean') {
-			this._gl.uniform1i(location, +value);
+			gl.uniform1i(location, +value);
 		} else {
 			console.error(
 				`[pipeline][${this._name}] Cannot set uniform "${uniform_name}".`,
@@ -69,19 +68,19 @@ class pipeline {
 	get_uniform(uniform_name) {
 		const location = this.uniform_location(uniform_name);
 		if (location != null) {
-			return this._gl.getUniform(this._program, location);
+			return gl.getUniform(this._program, location);
 		}
 		console.error(`[pipeline][${this._name}] Cannot get "${uniform_name}" uniform value.`);
 		return null;
 	}
 
 	use() {
-		this._gl.useProgram(this._program);
+		gl.useProgram(this._program);
 	}
 
 // private:
 	_make_program(shaders) {
-		const program = this._gl.createProgram();
+		const program = gl.createProgram();
 		for (const [type, source_code] of Object.entries(shaders)) {
 			if (source_code == null) {
 				console.error(`[pipeline][${this._name}] Could not attach invalid shader!`);
@@ -91,36 +90,36 @@ class pipeline {
 			if (shader == null) {
 				console.error(`[pipeline][${this._name}] Could not attach invalid shader!`);
 			}
-			this._gl.attachShader(program, shader);
+			gl.attachShader(program, shader);
 		}
 
-		this._gl.linkProgram(program);
-		if (this._gl.getProgramParameter(program, this._gl.LINK_STATUS)) {
+		gl.linkProgram(program);
+		if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
 			return program;
 		}
 
 		console.error(`[pipeline][${this._name}] Failed to link program:`,
-			this._gl.getProgramInfoLog(program));
-		this._gl.deleteProgram(program);
+			gl.getProgramInfoLog(program));
+		gl.deleteProgram(program);
 		return null;
 	}
 
 	_compile_shader(source_code, type) {
-		const shader = this._gl.createShader(type);
-		this._gl.shaderSource(shader, source_code);
-		this._gl.compileShader(shader);
+		const shader = gl.createShader(type);
+		gl.shaderSource(shader, source_code);
+		gl.compileShader(shader);
 
-		if (this._gl.getShaderParameter(shader, this._gl.COMPILE_STATUS)) {
+		if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
 			return shader;
 		}
 
 		const type_names = {
-			[this._gl.VERTEX_SHADER]: "VERTEX",
-			[this._gl.FRAGMENT_SHADER]: "FRAGMENT"
+			[gl.VERTEX_SHADER]: "VERTEX",
+			[gl.FRAGMENT_SHADER]: "FRAGMENT"
 		}
 		console.error(`[pipeline][${this._name}] Failed to compile the ${type_names[type]} shader:`,
-			this._gl.getShaderInfoLog(shader));
-		this._gl.deleteShader(shader);
+			gl.getShaderInfoLog(shader));
+		gl.deleteShader(shader);
 		return null;
 	}
 };

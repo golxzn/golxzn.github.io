@@ -1,7 +1,6 @@
 
 class pipeline_manager {
-	constructor(graphics) {
-		this._gl = graphics.gl;
+	constructor() {
 		this._pipelines = new Map();
 	}
 
@@ -11,9 +10,9 @@ class pipeline_manager {
 		}
 
 		const fragment_code = pipeline_manager._get_shader_text(name, dimensions, "frag");
-		const pipeline_instance = new pipeline(this._gl, name, {
-			[this._gl.VERTEX_SHADER  ]: pipeline_manager._get_shader_text(name, dimensions, "vert"),
-			[this._gl.FRAGMENT_SHADER]: fragment_code
+		const pipeline_instance = new pipeline(name, {
+			[gl.VERTEX_SHADER  ]: pipeline_manager._get_shader_text(name, dimensions, "vert"),
+			[gl.FRAGMENT_SHADER]: fragment_code
 		}, pipeline_manager._check_lighting_support(fragment_code));
 
 		if (pipeline_instance != null && pipeline_instance.valid()) {

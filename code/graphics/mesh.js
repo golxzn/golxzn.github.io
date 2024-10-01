@@ -33,8 +33,6 @@ class mesh {
 
 // private:
 	_init_buffers(info) {
-		const gl = get_service("graphics").gl;
-
 		this.vao = gl.createVertexArray();
 		gl.bindVertexArray(this.vao);
 
@@ -55,7 +53,7 @@ class mesh {
 		var attribute_sizes = new Array(info.layout.length);
 		for (var i = 0; i < info.layout.length; i++) {
 			const attribute = info.layout[i];
-			attribute_sizes[i] = mesh.get_bytes_size(gl, attribute.type) * attribute.count;
+			attribute_sizes[i] = mesh.get_bytes_size(attribute.type) * attribute.count;
 			vertex_size += attribute_sizes[i];
 		}
 
@@ -74,7 +72,7 @@ class mesh {
 		}
 	}
 
-	static get_bytes_size(gl, type) {
+	static get_bytes_size(type) {
 		switch (type) {
 			case gl.BYTE:
 			case gl.UNSIGNED_BYTE:
