@@ -1,10 +1,35 @@
+
+const BLIT_TEXTURE_VERTEX_SHADER_CODE = /* glsl */ `#version 300 es
+layout(location = 0) in vec2 a_position;
+
+out vec2 f_uv;
+
+void main() {
+	gl_Position = vec4(a_position, 0.0, 1.0);
+	f_uv = (a_position + vec2(1.0)) * 0.5;
+}
+`;
+
+const BLIT_TEXTURE_FRAGMENT_SHADER_CODE = /* glsl */ `#version 300 es
+precision mediump float;
+in vec2 f_uv;
+out vec4 frag_color;
+
+uniform sampler2D u_texture_0;
+
+void main() {
+	frag_color = texture(u_texture_0, f_uv);
+}
+`;
+
 class graphics {
 	constructor(canvas) {
-		this.gl = canvas.getContext("webgl2");
-		if (!this.gl) {
+		const gl = canvas.getContext("webgl2");
+		if (!gl) {
 			alert("Cannot get WebGL2 Context! Seems like it isn't supported!");
 			return;
 		}
+		this.gl = gl;
 
 		const m = golxzn.math.mat4;
 
@@ -15,15 +40,57 @@ class graphics {
 		this.directional_lights = {};
 		this.point_lights = [];
 
-		this.gl.viewport(0, 0, canvas.width, canvas.height);
-		this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+		this.active_pass = 0;
+		this.render_passes = [
+			new render_pass(
+				"Color Render Pass",
+				new framebuffer(gl, [canvas.width, canvas.height],
+					{ format: gl.RGB,              attachment: gl.COLOR_ATTACHMENT0 },
+					{ format: gl.DEPTH24_STENCIL8, attachment: gl.DEPTH_STENCIL_ATTACHMENT },
+				), [
+					gl.CULL_FACE,
+					gl.DEPTH_TEST
+				], {
+					bind: function() {
+						gl.cullFace(gl.FRONT);
+						gl.frontFace(gl.CCW);
+						gl.depthFunc(gl.LEQUAL);
+						gl.depthMask(true);
+						gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+					},
+					unbind: function() {}
+				}
+			)
+		];
 
-		this.gl.enable(this.gl.CULL_FACE);
-		this.gl.enable(this.gl.DEPTH_TEST);
-		this.gl.cullFace(this.gl.FRONT);
-		this.gl.frontFace(this.gl.CCW);
-		this.gl.depthFunc(this.gl.LEQUAL);
-		this.gl.depthMask(true);
+		this.blit_texture_pipeline = new pipeline(gl, "screen", {
+			[gl.VERTEX_SHADER  ]: BLIT_TEXTURE_VERTEX_SHADER_CODE,
+			[gl.FRAGMENT_SHADER]: BLIT_TEXTURE_FRAGMENT_SHADER_CODE
+		})
+		this.blit_mesh = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+			-1.0, -1.0,
+			 1.0, -1.0,
+			-1.0,  1.0,
+			 1.0,  1.0,
+		]), gl.STATIC_DRAW);
+		gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+		gl.enableVertexAttribArray(0);
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	}
+
+	render(instance) {
+		this.active_pass = -1;
+		for (const pass of this.render_passes) {
+			this.active_pass++;
+			pass.bind();
+			instance.render(this);
+			pass.unbind();
+		}
+		this._blit_on_quad(this.render_passes[this.active_pass].framebuffer.texture())
 	}
 
 	set_active_camera(camera) {
@@ -141,6 +208,26 @@ class graphics {
 			this.model_view(),
 			this.active_camera.make_projection()
 		);
+	}
+
+
+	_blit_on_quad(texture) {
+		// Blit on screen
+		const gl = this.gl;
+		gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		gl.enable(gl.CULL_FACE);
+		gl.cullFace(gl.FRONT);
+		gl.frontFace(gl.CW);
+
+		this.blit_texture_pipeline.use();
+		texture.bind();
+		this.blit_texture_pipeline.set_uniform("u_texture_0", 0, { as_integer: true });
+
+		this.gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
+		this.gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
 	}
 
 };

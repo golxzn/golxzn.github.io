@@ -75,8 +75,9 @@ function loading_loop(timestamp) {
 	}
 
 	loading.update(delta);
-	renderer.clear();
-	if (game != null) game.render(renderer);
+	if (game != null){
+		renderer.render(game);
+	}
 
 	handle = requestAnimationFrame(loading_loop);
 }
@@ -86,9 +87,7 @@ function game_loop(timestamp) {
 	last_time = timestamp;
 
 	game.update(delta);
-
-	renderer.clear();
-	game.render(renderer);
+	renderer.render(game);
 
 	handle = requestAnimationFrame(game_loop);
 }
