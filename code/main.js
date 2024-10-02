@@ -33,8 +33,6 @@ function instantiate_game(display, renderer) {
 }
 
 function start() {
-	const display = document.getElementById("display");
-
 	display.width = window.innerWidth;
 	display.height = window.innerHeight;
 
