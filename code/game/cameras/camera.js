@@ -5,7 +5,6 @@ const CAMERA_MAX_PITCH = 89.0;
 const PERSPECTIVE_NEAR = 0.01;
 const PERSPECTIVE_FAR  = 100;
 
-const TO_RADIANS = Math.PI / 180.0;
 
 class camera {
 	static DIRECTION_FORWARD  = 0;
@@ -15,7 +14,7 @@ class camera {
 	static DIRECTION_UP       = 4;
 	static DIRECTION_DOWN     = 5;
 
-	constructor(position, fov = 75 * TO_RADIANS, aspect = 1.0) {
+	constructor(position, fov = golxzn.math.to_radians(75), aspect = 1.0) {
 		this.position = position;
 		this.front    = [0.0, 0.0, -1.0];
 		this.up       = [0.0, 1.0, 0.0];
@@ -86,9 +85,9 @@ class camera {
 
 	update_front() {
 		this.front = golxzn.math.normalize([
-			Math.cos(this._yaw * TO_RADIANS) * Math.cos(this._pitch * TO_RADIANS),
-			Math.sin(this._pitch * TO_RADIANS),
-			Math.sin(this._yaw * TO_RADIANS) * Math.cos(this._pitch * TO_RADIANS),
+			Math.cos(golxzn.math.to_radians(this._yaw)) * Math.cos(golxzn.math.to_radians(this._pitch)),
+			Math.sin(golxzn.math.to_radians(this._pitch)),
+			Math.sin(golxzn.math.to_radians(this._yaw)) * Math.cos(golxzn.math.to_radians(this._pitch)),
 		]);
 	}
 }
