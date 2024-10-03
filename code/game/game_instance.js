@@ -42,15 +42,14 @@ class game_instance {
 		cube.transform = m4.translate(cube.transform, [0.0, 0.5, 0.0]);
 
 		// LIGHTING
-		const directional_power = [0.1, 0.1, 0.08];
+		// const directional_power = [0.1, 0.1, 0.08];
+		const directional_power = [0.5, 0.5, 0.5];
 		const directional_properties = {
 			ambient: directional_power,
 			diffuse: directional_power,
 			specular: directional_power
 		};
-		graphics.directional_lights = {
-			'u_dir_light': new DirectionalLight([1.0, -1.0, -1.0], directional_properties)
-		};
+		graphics.directional_lights = new DirectionalLight([0.0, -1.0, 0.0], directional_properties);
 
 		const attenuation = [ 1.0, 0.09, 0.032 ];
 		const rgb = [

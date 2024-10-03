@@ -8,6 +8,7 @@ layout(location = 0) in vec3 a_position;
 layout(location = 1) in vec3 a_normal;
 layout(location = 2) in vec2 a_uv;
 
+out vec4 f_position_light_space;
 out vec3 f_position;
 out vec3 f_to_view;
 out vec3 f_normal;
@@ -15,12 +16,15 @@ out vec2 f_uv;
 
 uniform mat4 u_mvp;
 uniform mat4 u_model;
+uniform mat4 u_light;
 uniform mat3 u_normal_matrix;
 uniform vec3 u_view_position;
 
 void main() {
 	gl_Position = u_mvp * vec4(a_position, 1.0);
-	f_position = vec3(u_model * vec4(a_position, 1.0));
+	vec4 vertex_position = u_model * vec4(a_position, 1.0);
+	f_position = vec3(vertex_position);
+	f_position_light_space = u_light * vertex_position;
 	f_to_view = u_view_position - f_position;
 	f_normal = u_normal_matrix * a_normal;
 	f_uv = a_uv;
@@ -34,6 +38,7 @@ precision mediump float;
 
 #define MAX_POINT_LIGHT_COLORS 16
 
+in vec4 f_position_light_space;
 in vec3 f_position;
 in vec3 f_normal;
 in vec3 f_to_view;
@@ -70,7 +75,8 @@ uniform DirectionalLight u_dir_light;
 uniform int              u_point_lights_count;
 uniform PointLight       u_point_lights[MAX_POINT_LIGHT_COLORS];
 uniform Material         u_material;
-uniform sampler2D        u_texture_0; // diffuse
+uniform sampler2D        u_texture_0; // shadow map ALWAYS FIRST!!!!
+uniform sampler2D        u_texture_1; // diffuse
 
 
 float attenuation(PointLight light, float dist) {
@@ -86,17 +92,24 @@ float calc_specular(vec3 to_light, vec3 to_view, vec3 normal) {
 	return pow(max(dot(normal, half_direction), 0.0), u_material.shininess);
 }
 
+float calc_shadow(vec4 fragment_pos_light_space) {
+	vec3 projection_coords = (fragment_pos_light_space.xyz / fragment_pos_light_space.w) * 0.5 + 0.5;
+	float closest_depth = texture(u_texture_0, projection_coords.xy).r;
+	float current_depth = projection_coords.z;
+	return step(current_depth, closest_depth);
+}
 
 void main() {
-	vec3 texel = texture(u_texture_0, f_uv).xyz;
+	vec3 texel = texture(u_texture_1, f_uv).xyz;
 	vec3 normal = normalize(f_normal);
 	vec3 to_view = normalize(f_to_view);
 	vec3 to_light = normalize(-u_dir_light.direction);
 
 	// Directional Light
+	float shadow = calc_shadow(f_position_light_space);
 	vec3 ambient = u_dir_light.properties.ambient;
-	vec3 diffuse = u_dir_light.properties.diffuse * calc_diffuse(to_light, normal);
-	vec3 specular = u_dir_light.properties.specular * calc_specular(to_light, to_view, normal);
+	vec3 diffuse = shadow * u_dir_light.properties.diffuse * calc_diffuse(to_light, normal);
+	vec3 specular = shadow * u_dir_light.properties.specular * calc_specular(to_light, to_view, normal);
 
 	#pragma optionNV(unroll)
 	for (int i = 0; i < u_point_lights_count; ++i) {
@@ -116,7 +129,7 @@ void main() {
 	diffuse *= u_material.diffuse * texel;
 	specular *= u_material.specular;
 
-	frag_color = mix(vec4(ambient + diffuse + specular, 1.0), vec4(normal, 1.0), 0.0);
+	frag_color = vec4(ambient + diffuse + specular, 1.0);
 }
 `
 

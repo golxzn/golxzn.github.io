@@ -6,7 +6,7 @@ const attachment_type = {
 
 
 class framebuffer {
-	constructor(size, attachments) {
+	constructor(size, attachments, parameters = null) {
 		this.id = gl.createFramebuffer();
 		this.size = size;
 		this.textures = [];
@@ -47,8 +47,8 @@ class framebuffer {
 	texture(index = 0) {
 		const tex = this.textures[index];
 		return {
-			bind: function(index = 0) {
-				gl.activeTexture(gl.TEXTURE0 + index);
+			bind: function(bind_index = 0) {
+				gl.activeTexture(gl.TEXTURE0 + bind_index);
 				gl.bindTexture(gl.TEXTURE_2D, tex);
 			},
 			unbind: function() {
@@ -65,12 +65,19 @@ class framebuffer {
 		const internal_format = attachment.internal == undefined
 			? attachment.format
 			: attachment.internal;
+		const data_type = attachment.data_type == undefined ? gl.UNSIGNED_BYTE : attachment.data_type;
 
 		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texImage2D(gl.TEXTURE_2D, 0, internal_format, this.size[0], this.size[1], 0,
-			attachment.format, gl.UNSIGNED_BYTE, null);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texImage2D(gl.TEXTURE_2D, 0,
+			internal_format, this.size[0], this.size[1], 0,
+			attachment.format, data_type, null
+		);
+
+		const params = this._default_parameters_or(attachment.parameters);
+		for (const [parameter, value] of Object.entries(params)) {
+			gl.texParameteri(gl.TEXTURE_2D, parameter, value);
+		}
+
 		gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment.attachment, gl.TEXTURE_2D, texture, 0);
 		return texture;
 	}
@@ -81,6 +88,13 @@ class framebuffer {
 		gl.renderbufferStorage(gl.RENDERBUFFER, attachment.format, this.size[0], this.size[1]);
 		gl.framebufferRenderbuffer(gl.FRAMEBUFFER, attachment.attachment, gl.RENDERBUFFER, render_buffer);
 		return render_buffer;
+	}
+
+	_default_parameters_or(params) {
+		return params != undefined ? params : {
+			[gl.TEXTURE_MIN_FILTER]: gl.LINEAR,
+			[gl.TEXTURE_MAG_FILTER]: gl.LINEAR
+		};
 	}
 
 	_default_or(target) {

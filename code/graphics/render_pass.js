@@ -11,6 +11,10 @@ class render_pass {
 		this.settings = settings;
 		this.callbacks = callbacks;
 		this.pipeline = pipeline;
+
+		if (!this.framebuffer.complete()) {
+			throw new Error(`[${name}] The framebuffer is not complete`);
+		}
 	}
 
 	valid() {
@@ -21,15 +25,15 @@ class render_pass {
 		return this.pipeline != null;
 	}
 
-	bind() {
+	bind(graphics) {
 		this.framebuffer.bind();
 		this.settings.forEach(param => gl.enable(param));
-		this.callbacks.bind();
+		this.callbacks.bind(this, graphics);
 	}
 
-	unbind() {
+	unbind(graphics) {
+		this.callbacks.unbind(this, graphics);
 		this.settings.forEach(param => gl.disable(param));
-		this.callbacks.unbind();
 		this.framebuffer.unbind();
 	}
 };

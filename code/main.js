@@ -36,16 +36,16 @@ function start() {
 	display.width = window.innerWidth;
 	display.height = window.innerHeight;
 
-	renderer = new graphics(display);
-	renderer.set_clear_color(CLEAR_COLOR);
 
 	// SINGLETON
 	new service_provider_singleton({
-		"graphics": renderer,
-		"pipeline": new pipeline_manager(renderer),
-		"resource": new resource_manager(renderer),
+		"pipeline": new pipeline_manager(),
+		"resource": new resource_manager(),
 		"scene"   : new scene_manager()
 	});
+	renderer = new graphics(display);
+	renderer.set_clear_color(CLEAR_COLOR);
+	service_provider().set("graphics", renderer); // Requires pipeline manager
 
 	loading = new loading_screen((state) => {
 		switch (state) {
@@ -81,6 +81,8 @@ function loading_loop(timestamp) {
 }
 
 function game_loop(timestamp) {
+	ensure_canvas_size();
+
 	const delta = (timestamp - last_time) * 0.001;
 	last_time = timestamp;
 
@@ -88,4 +90,9 @@ function game_loop(timestamp) {
 	renderer.render(game);
 
 	handle = requestAnimationFrame(game_loop);
+}
+
+function ensure_canvas_size() {
+	gl.canvas.width = gl.canvas.clientWidth;
+	gl.canvas.height = gl.canvas.clientHeight;
 }

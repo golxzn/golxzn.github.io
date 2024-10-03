@@ -1,6 +1,6 @@
 
 class resource_manager {
-	constructor(graphics) {
+	constructor() {
 		this._url = document.URL;
 
 		this.textures = new Map();

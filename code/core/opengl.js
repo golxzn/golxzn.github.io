@@ -1,3 +1,4 @@
+'use strict';
 
 const display = document.getElementById("display");
 const gl = display.getContext("webgl2", {
