@@ -40,6 +40,7 @@ class graphics {
 
 		this.directional_lights = {};
 		this.point_lights = [];
+		this.spot_lights = [];
 		this.applied_textures_count = 0;
 		this.shadow_map_texture = null;
 
@@ -193,6 +194,11 @@ class graphics {
 		pipeline.set_uniform('u_point_lights_count', this.point_lights.length, { as_integer: true });
 		for (var i = 0; i < this.point_lights.length; i++) {
 			this.point_lights[i].apply(pipeline, `u_point_lights[${i}]`);
+		}
+
+		pipeline.set_uniform('u_spot_lights_count', this.spot_lights.length, { as_integer: true });
+		for (var i = 0; i < this.spot_lights.length; i++) {
+			this.spot_lights[i].apply(pipeline, `u_spot_lights[${i}]`);
 		}
 	}
 

@@ -107,3 +107,49 @@ class PointLight extends LightBase {
 	}
 	projection() { return this._projection; }
 }
+
+const DEFAULT_SPOT_LIMITS = { inner: golxzn.math.to_radians(15), outer: golxzn.math.to_radians(17) }
+
+class SpotLight extends PointLight {
+	constructor(position, direction, attenuation = [ 1.0, 0.022, 0.0019 ], limits = null, base = null) {
+		if (base != null) super(position, attenuation, base);
+		else super();
+
+		this._direction = golxzn.math.normalize(direction);
+		this._limits = limits == null ? DEFAULT_SPOT_LIMITS : limits;
+		this._view = null;
+		this._projection = golxzn.math.mat4.make_orthographic(
+			-10.0, 10.0,
+			-10.0, 10.0,
+			1.0, 7.5
+		);
+	}
+
+	set direction(value) {
+		this._direction = value;
+		this._view = null;
+	}
+	get direction() { return this._direction; }
+
+	apply(pipeline, name) {
+		const direction_name = `${name}.direction`;
+		if (pipeline.uniform_location(direction_name) == null) return;
+
+		super.apply(pipeline, name);
+		pipeline.set_uniform(direction_name, this._direction);
+		pipeline.set_uniform(`${name}.limits.inner`, this._limits.inner);
+		pipeline.set_uniform(`${name}.limits.outer`, this._limits.outer);
+	}
+
+	view() {
+		if (this._view == null) {
+			this._view = golxzn.math.mat4.look_at(
+				this._direction,
+				this._position,
+				[0.0, 1.0, 0.0]
+			);
+		}
+		return this._view;
+	}
+	projection() { return this._projection; }
+}

@@ -68,6 +68,15 @@ class game_instance {
 				new mesh([], null, primitives.make_cube_colored(color))
 			]), m4.scale(m4.translate(m4.make_identity(), pos), [0.25, 0.25, 0.25])));
 		}
+
+		const spot_color = [0.9, 0.1, 0.9]
+		graphics.spot_lights.push(new SpotLight(
+			[-10.0, 2.0, 0.0], // position
+			[0.0, -1.0, 0.0], // direction
+			[1.0, 0.022, 0.019], // attenuation
+			{ inner: golxzn.math.to_radians(15), outer: golxzn.math.to_radians(17) },
+			{ ambient: spot_color, diffuse: spot_color, specular: spot_color }
+		));
 	}
 
 // Event handling

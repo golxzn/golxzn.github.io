@@ -37,6 +37,7 @@ frag : /* glsl */ `#version 300 es
 precision mediump float;
 
 #define MAX_POINT_LIGHT_COLORS 16
+#define MAX_SPOT_LIGHT_COLORS 16
 
 in vec4 f_position_light_space;
 in vec3 f_position;
@@ -64,6 +65,19 @@ struct PointLight {
 	vec3 attenuation; // [constant, linear, cubic]
 };
 
+struct Limits {
+	float inner;
+	float outer;
+};
+struct SpotLight {
+	LightProperties properties;
+
+	vec3 position;
+	vec3 attenuation; // [constant, linear, cubic]
+	vec3 direction;
+	Limits limits;
+};
+
 struct Material {
 	vec3 ambient;
 	vec3 diffuse;
@@ -74,13 +88,18 @@ struct Material {
 uniform DirectionalLight u_dir_light;
 uniform int              u_point_lights_count;
 uniform PointLight       u_point_lights[MAX_POINT_LIGHT_COLORS];
+uniform int              u_spot_lights_count;
+uniform SpotLight        u_spot_lights[MAX_SPOT_LIGHT_COLORS];
 uniform Material         u_material;
 uniform sampler2D        u_texture_0; // shadow map ALWAYS FIRST!!!!
 uniform sampler2D        u_texture_1; // diffuse
 
+float attenuation(vec3 attenuation, float dist) {
+	return attenuation.r + attenuation.g * dist + attenuation.b * dist * dist;
+}
 
-float attenuation(PointLight light, float dist) {
-	return 1.0 / (light.attenuation.r + light.attenuation.g * dist + light.attenuation.b * dist * dist);
+float spot_intensity(float spot_factor, Limits limits) {
+	return clamp((spot_factor - limits.outer) / (limits.inner - limits.outer), 0.0, 1.0);
 }
 
 float calc_diffuse(vec3 to_light, vec3 normal) {
@@ -117,12 +136,29 @@ void main() {
 
 		PointLight point = u_point_lights[i];
 		to_light = point.position - f_position;
-		float att = attenuation(point, length(to_light));
+		float att = 1.0 / attenuation(point.attenuation, length(to_light));
 		to_light = normalize(to_light);
 
 		ambient += point.properties.ambient * att;
 		diffuse += point.properties.diffuse * calc_diffuse(to_light, normal) * att;
 		specular += point.properties.specular * calc_specular(to_light, to_view, normal) * att;
+	}
+
+	// Spot light
+	#pragma optionNV(unroll)
+	for (int i = 0; i < u_spot_lights_count; ++i) {
+		SpotLight spot = u_spot_lights[i];
+
+		to_light = spot.position - f_position;
+		float att = attenuation(spot.attenuation, length(to_light));
+		to_light = normalize(to_light);
+
+		float spot_factor = dot(to_light, normalize(spot.direction));
+		float intensity = spot_intensity(spot_factor, spot.limits) / att;
+
+		ambient += spot.properties.ambient * intensity;
+		diffuse += spot.properties.diffuse * calc_diffuse(to_light, normal) * intensity;
+		specular += spot.properties.specular * calc_specular(to_light, to_view, normal) * intensity;
 	}
 
 	ambient *= u_material.ambient * texel;
