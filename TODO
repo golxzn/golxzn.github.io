@@ -1,13 +1,13 @@
 [ ] Graphics
 	[ ] Framebuffers & Render passes (NEW RENDERING APPROACH!)
 	[ ] Shadows
-		[ ] Depth framebuffer
-		[ ] Anti-aliasing
-		[ ] Stencil??? Somehow to cut out hidden light
-	[ ] SpotLight support
+		[x] Depth framebuffer
+		[-] Anti-aliasing (unsupported in webgl2)
+		[?] Stencil??? Somehow to cut out hidden light
 	[ ] Volumetric Fog
 	[ ] Particles
 		[ ] Instancing
+	[x] SpotLight support
 	[x] UV scaling (make ground repeated mirrored)
 
 [ ] Models
