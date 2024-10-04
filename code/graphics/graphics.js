@@ -45,8 +45,8 @@ class graphics {
 		this.shadow_map_texture = null;
 
 		this.active_pass = 0;
-		this.render_passes = [
-			new render_pass("Depth Map", new framebuffer([1024, 1024], [ {
+		this.render_passes = {
+			shadow: new render_pass("Depth Map", new framebuffer([1024, 1024], [ {
 				type: attachment_type.texture,
 				format: gl.DEPTH_COMPONENT,
 				internal: gl.DEPTH_COMPONENT32F,
@@ -63,38 +63,35 @@ class graphics {
 				gl.DEPTH_TEST
 			], {
 				bind: function(pass, graphics) {
-					const light = graphics.directional_lights;
-					graphics.push_view(light.view());
-					graphics.push_projection(light.projection());
 					gl.cullFace(gl.BACK);
 					gl.depthFunc(gl.LESS);
 					gl.depthMask(true);
 					gl.clear(gl.DEPTH_BUFFER_BIT);
 				},
 				unbind: function(pass, graphics) {
-					graphics.pop_projection();
-					graphics.pop_view();
 					graphics.shadow_map_texture = pass.framebuffer.texture();
 				}
 			}, pipelines.load("3D", "DEPTH")),
 
-			new render_pass("Color Render Pass", new framebuffer([canvas.width, canvas.height], [
+			color: new render_pass("Color Render Pass", new framebuffer([canvas.width, canvas.height], [
 				{ type: attachment_type.texture,      format: gl.RGBA,             attachment: gl.COLOR_ATTACHMENT0 },
 				{ type: attachment_type.renderbuffer, format: gl.DEPTH24_STENCIL8, attachment: gl.DEPTH_STENCIL_ATTACHMENT  },
 			]), [
 				gl.CULL_FACE,
 				gl.DEPTH_TEST
 			], {
-				bind: function(graphics) {
+				bind: function(pass, graphics) {
 					gl.cullFace(gl.FRONT);
 					gl.frontFace(gl.CCW);
 					gl.depthFunc(gl.LEQUAL);
 					gl.depthMask(true);
 					gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 				},
-				unbind: function(graphics) {}
+				unbind: function(pass, graphics) {
+				}
 			} )
-		];
+		};
+		this._current_render_pass = null;
 
 		this.blit_texture_pipeline = new pipeline("screen", {
 			[gl.VERTEX_SHADER  ]: BLIT_TEXTURE_VERTEX_SHADER_CODE,
@@ -120,30 +117,38 @@ class graphics {
 		this.projection_stack = [this.active_camera.make_projection()];
 		this.view_stack = [this.active_camera.make_view()];
 
-		this.active_pass = -1;
-		for (const pass of this.render_passes) {
-			this.active_pass++;
-			pass.bind(this);
+		// Spot Shadows
+		const shadow_pass = this.render_passes.shadow
+		this._current_render_pass = shadow_pass;
+		for (const spot of this.spot_lights) {
+			this.push_view(spot.view());
+			this.push_projection(spot.projection());
+			shadow_pass.bind(this);
 			instance.render(this);
-			pass.unbind(this);
+			shadow_pass.unbind(this);
+			this.pop_projection();
+			this.pop_view();
 		}
+
+		const color_pass = this.render_passes.color;
+		this._current_render_pass = color_pass;
+		color_pass.bind(this);
+		instance.render(this);
+		color_pass.unbind(this);
 
 		gl.clear(gl.COLOR_BUFFER_BIT);
 		gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-		this._blit_on_quad(this.current_render_pass().framebuffer.texture());
-
-		gl.viewport(10, 10, gl.canvas.width / 8, gl.canvas.width / 8);
-		this._blit_on_quad(this.shadow_map_texture);
-	}
-
-	current_render_pass() {
-		return this.render_passes[this.active_pass];
+		this._blit_on_quad(color_pass.framebuffer.texture());
 	}
 
 	set_active_camera(camera) {
 		this.active_camera = camera;
 		this.active_camera.aspect = this.aspect_ratio();
 		this._mvp = null;
+	}
+
+	current_render_pass() {
+		return this._current_render_pass;
 	}
 
 	push_pipeline(pipeline) {
@@ -163,23 +168,13 @@ class graphics {
 			pipeline.set_uniform("u_model", this.current_transform());
 			pipeline.set_uniform("u_view_position", this.active_camera.position)
 		}
-		if (pipeline.uniform_location("u_light")) {
-			// TODO: Fuck how should I set this shit for every fucking light source???
-			const light = this.directional_lights;
-			pipeline.set_uniform("u_light", golxzn.math.mat4.multiply(
-				light.view(),
-				light.projection()
-			));
-			this.applied_textures_count = 0;
-			this.apply_texture(0, this.shadow_map_texture);
-		}
+
 		if (pipeline.uniform_location("u_normal_matrix")) {
 			pipeline.set_uniform("u_normal_matrix",
 				golxzn.math.mat3.inverse(golxzn.math.mat3.build_from(this.current_transform())),
 				{ transpose: true }
 			);
 		}
-
 		if (pipeline.lighting_support()) {
 			this.set_engine_lighting_uniforms();
 		}
@@ -187,6 +182,18 @@ class graphics {
 
 	set_engine_lighting_uniforms() {
 		const pipeline = this.current_pipeline();
+
+		if (pipeline.uniform_location("u_light")) {
+			// TODO: Fuck how should I set this shit for every fucking light source???
+			const light = this.spot_lights[0];
+			pipeline.set_uniform("u_light", golxzn.math.mat4.multiply(
+				light.view(),
+				light.projection()
+			));
+			this.applied_textures_count = 0;
+			this.apply_texture(0, this.shadow_map_texture);
+		}
+
 		this.directional_lights.apply(pipeline, "u_dir_light");
 
 		if (pipeline.uniform_location('u_point_lights_count') == null) return;

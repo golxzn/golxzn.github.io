@@ -1,6 +1,6 @@
 
 class flying_camera extends camera {
-	constructor(position, speed = 10, fov = 75 * TO_RADIANS, aspect = 1.0) {
+	constructor(position, speed = 10, fov = golxzn.math.to_radians(75), aspect = 1.0) {
 		super(position, fov, aspect);
 		this.speed = speed;
 	}

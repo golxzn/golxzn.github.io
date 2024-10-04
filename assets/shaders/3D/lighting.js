@@ -111,11 +111,25 @@ float calc_specular(vec3 to_light, vec3 to_view, vec3 normal) {
 	return pow(max(dot(normal, half_direction), 0.0), u_material.shininess);
 }
 
-float calc_shadow(vec4 fragment_pos_light_space) {
+float calc_shadow(vec4 fragment_pos_light_space, float bias, int accuracy) {
 	vec3 projection_coords = (fragment_pos_light_space.xyz / fragment_pos_light_space.w) * 0.5 + 0.5;
-	float closest_depth = texture(u_texture_0, projection_coords.xy).r;
+	if (projection_coords.z > 1.0) return 0.0;
+
+	// float closest_depth = texture(u_texture_0, projection_coords.xy).r;
 	float current_depth = projection_coords.z;
-	return step(current_depth, closest_depth);
+
+	int line_width = accuracy * 2 + 1;
+	float shadow_weight = 1.0 / float(line_width * line_width);
+	vec2 texel_size = 1.0 / vec2(textureSize(u_texture_0, 0));
+	float shadow = 0.0;
+	for (int x = -accuracy; x <= accuracy; ++x) {
+		for (int y = -accuracy; y <= accuracy; ++y) {
+			float pcf_depth = texture(u_texture_0, projection_coords.xy + vec2(x, y) * texel_size).r;
+			shadow += step(pcf_depth, current_depth - bias) * shadow_weight;
+		}
+	}
+
+	return shadow;
 }
 
 void main() {
@@ -125,10 +139,9 @@ void main() {
 	vec3 to_light = normalize(-u_dir_light.direction);
 
 	// Directional Light
-	float shadow = calc_shadow(f_position_light_space);
 	vec3 ambient = u_dir_light.properties.ambient;
-	vec3 diffuse = shadow * u_dir_light.properties.diffuse * calc_diffuse(to_light, normal);
-	vec3 specular = shadow * u_dir_light.properties.specular * calc_specular(to_light, to_view, normal);
+	vec3 diffuse = u_dir_light.properties.diffuse * calc_diffuse(to_light, normal);
+	vec3 specular = u_dir_light.properties.specular * calc_specular(to_light, to_view, normal);
 
 	#pragma optionNV(unroll)
 	for (int i = 0; i < u_point_lights_count; ++i) {
@@ -153,11 +166,15 @@ void main() {
 		float att = attenuation(spot.attenuation, length(to_light));
 		to_light = normalize(to_light);
 
-		float spot_factor = dot(to_light, normalize(spot.direction));
-		float intensity = spot_intensity(spot_factor, spot.limits) / att;
+		float spot_factor = dot(normalize(spot.direction), -to_light);
+		if (spot_factor < spot.limits.outer) continue;
 
+		float diffuse_component = calc_diffuse(to_light, normal);
+		// float bias = max(0.001 * (1.0 - diffuse_component), 0.0001);
+		float shadow = 1.0 - calc_shadow(f_position_light_space, 0.0001, 1);
+		float intensity = shadow * (spot_intensity(spot_factor, spot.limits) / att);
 		ambient += spot.properties.ambient * intensity;
-		diffuse += spot.properties.diffuse * calc_diffuse(to_light, normal) * intensity;
+		diffuse += spot.properties.diffuse * diffuse_component * intensity;
 		specular += spot.properties.specular * calc_specular(to_light, to_view, normal) * intensity;
 	}
 

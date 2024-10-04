@@ -34,7 +34,7 @@ class DirectionalLight extends LightBase {
 	}
 
 	set direction(value) {
-		this._direction = value;
+		this._direction = golxzn.math.normalize(value);
 		this._view = null;
 	}
 	get direction() { return this._direction; }
@@ -61,6 +61,8 @@ class DirectionalLight extends LightBase {
 	projection() { return this._projection; }
 }
 
+const ATTENUATION_THRESHOLD = 0.005;
+
 class PointLight extends LightBase {
 	constructor(position, attenuation = [ 1.0, 0.09, 0.032 ], base = null) {
 		if (base != null) super(base.ambient, base.diffuse, base.specular);
@@ -68,20 +70,20 @@ class PointLight extends LightBase {
 
 		this.attenuation = attenuation;
 		this._position = position;
-		this._view = null;
-		this._projection = golxzn.math.mat4.make_orthographic(
-			-10.0, 10.0,
-			-10.0, 10.0,
-			1.0, 7.5
-		);
 	}
 
 	set position(value) {
 		this._position = value;
-		this._view = null;
 	}
 	get position() { return this._position; }
 
+	max_distance() {
+		const c = this.attenuation[0] - (1.0 / ATTENUATION_THRESHOLD);
+		const l = this.attenuation[1];
+		const q = this.attenuation[2];
+
+		return (-l + Math.sqrt(l * l - 4.0 * q * c) ) / (2.0 * q);
+	}
 
 	apply(pipeline, name) {
 		const point_position_name = `${name}.position`;
@@ -91,21 +93,6 @@ class PointLight extends LightBase {
 		pipeline.set_uniform(point_position_name, this._position);
 		pipeline.set_uniform(`${name}.attenuation`, this.attenuation);
 	}
-
-	view() {
-		if (this._view == null) {
-			this._view = golxzn.math.mat4.look_at(
-				[0.0, 0.0, 0.0], // TODO: How to set this to fit the camera view?
-				this._position,
-				[0.0, 1.0, 0.0]
-			);
-			// TODO: I guess I need to take the camera position, throw the ray from the camera to
-			// the surface, take this intersection dot and make to_light vector. And that's how
-			// I could get the direction
-		}
-		return this._view;
-	}
-	projection() { return this._projection; }
 }
 
 const DEFAULT_SPOT_LIMITS = { inner: golxzn.math.to_radians(15), outer: golxzn.math.to_radians(17) }
@@ -118,15 +105,20 @@ class SpotLight extends PointLight {
 		this._direction = golxzn.math.normalize(direction);
 		this._limits = limits == null ? DEFAULT_SPOT_LIMITS : limits;
 		this._view = null;
-		this._projection = golxzn.math.mat4.make_orthographic(
-			-10.0, 10.0,
-			-10.0, 10.0,
-			1.0, 7.5
+		this._projection = golxzn.math.mat4.make_perspective(
+			this._limits.outer * 2,
+			1.0,
+			PERSPECTIVE_NEAR,
+			this.max_distance()
 		);
 	}
-
+	set position(value) {
+		this._position = value;
+		this._view = null;
+	}
+	get position() { return this._position; }
 	set direction(value) {
-		this._direction = value;
+		this._direction = golxzn.math.normalize(value);
 		this._view = null;
 	}
 	get direction() { return this._direction; }
@@ -144,8 +136,8 @@ class SpotLight extends PointLight {
 	view() {
 		if (this._view == null) {
 			this._view = golxzn.math.mat4.look_at(
-				this._direction,
 				this._position,
+				this._direction,
 				[0.0, 1.0, 0.0]
 			);
 		}

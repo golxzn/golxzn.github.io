@@ -7,10 +7,8 @@ class game_instance {
 		this.keyboard = new keyboard_info();
 
 		this.scene_manager = get_service("scene");
-
 		this.paused = true;
 
-		// Should be somewhere else. for example in the player class or as the independent object
 		this.camera = new flying_camera([0.0, 3.0, -5.0]);
 		graphics.set_active_camera(this.camera);
 
@@ -42,8 +40,7 @@ class game_instance {
 		cube.transform = m4.translate(cube.transform, [0.0, 0.5, 0.0]);
 
 		// LIGHTING
-		// const directional_power = [0.1, 0.1, 0.08];
-		const directional_power = [0.5, 0.5, 0.5];
+		const directional_power = [0.03, 0.034, 0.042];
 		const directional_properties = {
 			ambient: directional_power,
 			diffuse: directional_power,
@@ -53,9 +50,9 @@ class game_instance {
 
 		const attenuation = [ 1.0, 0.09, 0.032 ];
 		const rgb = [
-			[1.0, 0.0, 0.0],
-			[0.0, 1.0, 0.0],
-			[0.0, 0.0, 1.0]
+			// [1.0, 0.0, 0.0],
+			// [0.0, 1.0, 0.0],
+			// [0.0, 0.0, 1.0]
 		];
 
 		for (const color of rgb) {
@@ -71,12 +68,28 @@ class game_instance {
 
 		const spot_color = [0.9, 0.1, 0.9]
 		graphics.spot_lights.push(new SpotLight(
-			[-10.0, 2.0, 0.0], // position
-			[0.0, -1.0, 0.0], // direction
-			[1.0, 0.022, 0.019], // attenuation
-			{ inner: golxzn.math.to_radians(15), outer: golxzn.math.to_radians(17) },
+			[-8.0, 8.0, 0.0], // position
+			[1.0, -1.0, 0.0], // direction
+			[1.0, 0.007, 0.0002], // attenuation
+			{ inner: Math.cos(golxzn.math.to_radians(20.5)), outer: Math.cos(golxzn.math.to_radians(25.5)) },
 			{ ambient: spot_color, diffuse: spot_color, specular: spot_color }
 		));
+		this.scene_manager.add_object(new model_object("spot", new model([
+			new mesh([], null, primitives.make_cube_colored(spot_color))
+		]), m4.scale(m4.translate(m4.make_identity(), graphics.spot_lights[0].position), [0.25, 0.25, 0.25])));
+
+		// graphics.spot_lights.push(new SpotLight(
+		// 	[0.0, 8.0, 8.0], // position
+		// 	[0.0, -1.0, -1.0], // direction
+		// 	[1.0, 0.007, 0.0002], // attenuation
+		// 	{ inner: Math.cos(golxzn.math.to_radians(20.5)), outer: Math.cos(golxzn.math.to_radians(25.5)) },
+		// 	{ ambient: spot_color, diffuse: spot_color, specular: spot_color }
+		// ));
+		// this.scene_manager.add_object(new model_object("spot2", new model([
+		// 	new mesh([], null, primitives.make_cube_colored(spot_color))
+		// ]), m4.scale(m4.translate(m4.make_identity(), graphics.spot_lights[1].position), [0.25, 0.25, 0.25])));
+
+
 	}
 
 // Event handling
