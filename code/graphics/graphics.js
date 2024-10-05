@@ -38,9 +38,10 @@ class graphics {
 		this.projection_stack = [];
 		this.view_stack = [];
 
-		this.directional_lights = {};
+		this.directional_lights = null;
 		this.point_lights = [];
 		this.spot_lights = [];
+
 		this.applied_textures_count = 0;
 		this.shadow_map_texture = null;
 

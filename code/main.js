@@ -84,6 +84,7 @@ function game_loop(timestamp) {
 	ensure_canvas_size();
 
 	const delta = (timestamp - last_time) * 0.001;
+	updateFPS(delta);
 	last_time = timestamp;
 
 	game.update(delta);
@@ -95,4 +96,17 @@ function game_loop(timestamp) {
 function ensure_canvas_size() {
 	gl.canvas.width = gl.canvas.clientWidth;
 	gl.canvas.height = gl.canvas.clientHeight;
+}
+
+
+var fps_update_timer = 0;
+const fps_display = document.querySelector("#fps")
+
+function updateFPS(delta) {
+	fps_update_timer += delta;
+	if (fps_update_timer >= 0.25) {
+		const fps = Math.round(1.0 / delta);
+		fps_display.textContent = Math.round(fps);
+		fps_update_timer = 0;
+	}
 }
