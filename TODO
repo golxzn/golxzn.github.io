@@ -1,12 +1,14 @@
 [ ] Graphics
-	[ ] Framebuffers & Render passes (NEW RENDERING APPROACH!)
-	[ ] Shadows
-		[x] Depth framebuffer
-		[-] Anti-aliasing (unsupported in webgl2)
-		[?] Stencil??? Somehow to cut out hidden light
-	[ ] Volumetric Fog
 	[ ] Particles
 		[ ] Instancing
+	[ ] Volumetric Fog
+	[x] Framebuffers & Render passes (NEW RENDERING APPROACH!)
+	[x] Shadows
+		[x] Depth framebuffer
+		[x] Spotlight shadows
+		[L] Point light shadows
+		[-] Anti-aliasing (unsupported in webgl2)
+		[-] Stencil??? Somehow to cut out hidden light
 	[x] SpotLight support
 	[x] UV scaling (make ground repeated mirrored)
 
@@ -20,4 +22,18 @@
 	[ ] Intersection Events
 
 [ ] Sounds
+	[ ] Sound integration
+	[ ] 3D sounds
+	[ ] Sound manager
+
+[ ] Mobile support
+	[ ] Controllers
+
+[ ] Game
+	[ ] Player
+	[ ] Level
+		[ ] Apartment & Building models
+		[ ] Street
+		[ ] Lamps
+	[ ] WakeUp animation
 
