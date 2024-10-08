@@ -50,9 +50,9 @@ class game_instance {
 
 		const attenuation = [ 1.0, 0.09, 0.032 ];
 		const rgb = [
-			// [1.0, 0.0, 0.0],
-			// [0.0, 1.0, 0.0],
-			// [0.0, 0.0, 1.0]
+			[1.0, 0.0, 0.0],
+			[0.0, 1.0, 0.0],
+			[0.0, 0.0, 1.0]
 		];
 
 		for (const color of rgb) {
@@ -66,28 +66,29 @@ class game_instance {
 			]), m4.scale(m4.translate(m4.make_identity(), pos), [0.25, 0.25, 0.25])));
 		}
 
-		const spot_color = [0.9, 0.1, 0.9]
+		const spot_color1 = [0.9, 0.1, 0.9]
 		graphics.spot_lights.push(new SpotLight(
 			[-8.0, 8.0, 0.0], // position
 			[1.0, -1.0, 0.0], // direction
 			[1.0, 0.007, 0.0002], // attenuation
-			{ inner: Math.cos(golxzn.math.to_radians(20.5)), outer: Math.cos(golxzn.math.to_radians(25.5)) },
-			{ ambient: spot_color, diffuse: spot_color, specular: spot_color }
+			{ inner: Math.cos(golxzn.math.to_radians(20.5)), outer: Math.cos(golxzn.math.to_radians(22.5)) },
+			{ ambient: spot_color1, diffuse: spot_color1, specular: spot_color1 }
 		));
 		this.scene_manager.add_object(new model_object("spot", new model([
-			new mesh([], null, primitives.make_cube_colored(spot_color))
+			new mesh([], null, primitives.make_cube_colored(spot_color1))
 		]), m4.scale(m4.translate(m4.make_identity(), graphics.spot_lights[0].position), [0.25, 0.25, 0.25])));
 
-		// graphics.spot_lights.push(new SpotLight(
-		// 	[0.0, 8.0, 8.0], // position
-		// 	[0.0, -1.0, -1.0], // direction
-		// 	[1.0, 0.007, 0.0002], // attenuation
-		// 	{ inner: Math.cos(golxzn.math.to_radians(20.5)), outer: Math.cos(golxzn.math.to_radians(25.5)) },
-		// 	{ ambient: spot_color, diffuse: spot_color, specular: spot_color }
-		// ));
-		// this.scene_manager.add_object(new model_object("spot2", new model([
-		// 	new mesh([], null, primitives.make_cube_colored(spot_color))
-		// ]), m4.scale(m4.translate(m4.make_identity(), graphics.spot_lights[1].position), [0.25, 0.25, 0.25])));
+		const spot_color2 = [0.5, 0.1, 0.9];
+		graphics.spot_lights.push(new SpotLight(
+			[0.0, 8.0, 8.0], // position
+			[0.0, -1.0, -1.0], // direction
+			[1.0, 0.007, 0.0002], // attenuation
+			{ inner: Math.cos(golxzn.math.to_radians(12.5)), outer: Math.cos(golxzn.math.to_radians(14.5)) },
+			{ ambient: spot_color2, diffuse: spot_color2, specular: spot_color2 }
+		));
+		this.scene_manager.add_object(new model_object("spot2", new model([
+			new mesh([], null, primitives.make_cube_colored(spot_color2))
+		]), m4.scale(m4.translate(m4.make_identity(), graphics.spot_lights[1].position), [0.25, 0.25, 0.25])));
 
 
 	}

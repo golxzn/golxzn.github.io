@@ -38,8 +38,8 @@ class model {
 				if (mesh.material != null) {
 					graphics.apply_material(resources.get_material(mesh.material));
 				}
-				for (var id = 0; id < mesh.textures.length; id++) {
-					graphics.apply_texture(id, resources.get_texture(mesh.textures[id]));
+				for (const texture_id of mesh.textures) {
+					graphics.apply_texture(resources.get_texture(texture_id));
 				}
 
 				graphics.draw_mesh(mesh);

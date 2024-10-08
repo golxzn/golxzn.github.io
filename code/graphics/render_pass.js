@@ -12,9 +12,9 @@ class render_pass {
 		this.callbacks = callbacks;
 		this.pipeline = pipeline;
 
-		if (!this.framebuffer.complete()) {
-			throw new Error(`[${name}] The framebuffer is not complete`);
-		}
+		// if (!this.framebuffer.complete()) {
+		// 	throw new Error(`[${name}] The framebuffer is not complete`);
+		// }
 	}
 
 	valid() {

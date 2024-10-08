@@ -4,11 +4,14 @@ Object.assign(SHADERS["3D"], { LIGHTING : {
 
 vert : /* glsl */ `#version 300 es
 
+#define MAX_POINT_LIGHT_COLORS 16
+#define MAX_SPOT_LIGHT_COLORS 16
+
 layout(location = 0) in vec3 a_position;
 layout(location = 1) in vec3 a_normal;
 layout(location = 2) in vec2 a_uv;
 
-out vec4 f_position_light_space;
+out vec4 f_spotlight_positions[MAX_SPOT_LIGHT_COLORS];
 out vec3 f_position;
 out vec3 f_to_view;
 out vec3 f_normal;
@@ -16,15 +19,19 @@ out vec2 f_uv;
 
 uniform mat4 u_mvp;
 uniform mat4 u_model;
-uniform mat4 u_light;
 uniform mat3 u_normal_matrix;
 uniform vec3 u_view_position;
+
+uniform mediump int u_spot_lights_count;
+uniform mat4 u_spot_light_transform[MAX_SPOT_LIGHT_COLORS];
 
 void main() {
 	gl_Position = u_mvp * vec4(a_position, 1.0);
 	vec4 vertex_position = u_model * vec4(a_position, 1.0);
+	for (int i = 0; i < u_spot_lights_count; ++i) {
+		f_spotlight_positions[i] = u_spot_light_transform[i] * vertex_position;
+	}
 	f_position = vec3(vertex_position);
-	f_position_light_space = u_light * vertex_position;
 	f_to_view = u_view_position - f_position;
 	f_normal = u_normal_matrix * a_normal;
 	f_uv = a_uv;
@@ -39,7 +46,7 @@ precision mediump float;
 #define MAX_POINT_LIGHT_COLORS 16
 #define MAX_SPOT_LIGHT_COLORS 16
 
-in vec4 f_position_light_space;
+in vec4 f_spotlight_positions[MAX_SPOT_LIGHT_COLORS];
 in vec3 f_position;
 in vec3 f_normal;
 in vec3 f_to_view;
@@ -91,7 +98,7 @@ uniform PointLight       u_point_lights[MAX_POINT_LIGHT_COLORS];
 uniform int              u_spot_lights_count;
 uniform SpotLight        u_spot_lights[MAX_SPOT_LIGHT_COLORS];
 uniform Material         u_material;
-uniform sampler2D        u_texture_0; // shadow map ALWAYS FIRST!!!!
+uniform mediump sampler2DArray u_texture_0; // shadow map ALWAYS FIRST!!!!
 uniform sampler2D        u_texture_1; // diffuse
 
 float attenuation(vec3 attenuation, float dist) {
@@ -111,11 +118,10 @@ float calc_specular(vec3 to_light, vec3 to_view, vec3 normal) {
 	return pow(max(dot(normal, half_direction), 0.0), u_material.shininess);
 }
 
-float calc_shadow(vec4 fragment_pos_light_space, float bias, int accuracy) {
+float calc_shadow(vec4 fragment_pos_light_space, int id, float bias, int accuracy) {
 	vec3 projection_coords = (fragment_pos_light_space.xyz / fragment_pos_light_space.w) * 0.5 + 0.5;
 	if (projection_coords.z > 1.0) return 0.0;
 
-	// float closest_depth = texture(u_texture_0, projection_coords.xy).r;
 	float current_depth = projection_coords.z;
 
 	int line_width = accuracy * 2 + 1;
@@ -124,7 +130,8 @@ float calc_shadow(vec4 fragment_pos_light_space, float bias, int accuracy) {
 	float shadow = 0.0;
 	for (int x = -accuracy; x <= accuracy; ++x) {
 		for (int y = -accuracy; y <= accuracy; ++y) {
-			float pcf_depth = texture(u_texture_0, projection_coords.xy + vec2(x, y) * texel_size).r;
+			vec3 uv = vec3(projection_coords.xy + vec2(x, y) * texel_size, id);
+			float pcf_depth = texture(u_texture_0, uv).r;
 			shadow += step(pcf_depth, current_depth - bias) * shadow_weight;
 		}
 	}
@@ -171,7 +178,7 @@ void main() {
 
 		float diffuse_component = calc_diffuse(to_light, normal);
 		// float bias = max(0.001 * (1.0 - diffuse_component), 0.0001);
-		float shadow = 1.0 - calc_shadow(f_position_light_space, 0.0001, 1);
+		float shadow = 1.0 - calc_shadow(f_spotlight_positions[i], i, 0.0001, 1);
 		float intensity = shadow * (spot_intensity(spot_factor, spot.limits) / att);
 		ambient += spot.properties.ambient * intensity;
 		diffuse += spot.properties.diffuse * diffuse_component * intensity;

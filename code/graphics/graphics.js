@@ -43,12 +43,13 @@ class graphics {
 		this.spot_lights = [];
 
 		this.applied_textures_count = 0;
-		this.shadow_map_texture = null;
+		this.spotlight_shadow_map_texture = null;
 
 		this.active_pass = 0;
 		this.render_passes = {
-			shadow: new render_pass("Depth Map", new framebuffer([1024, 1024], [ {
-				type: attachment_type.texture,
+			spotlight_shadow: new render_pass("Spotlight Shadows", new framebuffer([1024, 1024], [ {
+				type: attachment_type.texture_array,
+				layers: 16, // TODO: Set MAX_SPOT_LIGHT_COUNTS
 				format: gl.DEPTH_COMPONENT,
 				internal: gl.DEPTH_COMPONENT32F,
 				attachment: gl.DEPTH_ATTACHMENT,
@@ -64,13 +65,12 @@ class graphics {
 				gl.DEPTH_TEST
 			], {
 				bind: function(pass, graphics) {
-					gl.cullFace(gl.BACK);
-					gl.depthFunc(gl.LESS);
+					gl.cullFace(gl.FRONT);
+					gl.frontFace(gl.CCW);
+					gl.depthFunc(gl.LEQUAL);
 					gl.depthMask(true);
-					gl.clear(gl.DEPTH_BUFFER_BIT);
 				},
 				unbind: function(pass, graphics) {
-					graphics.shadow_map_texture = pass.framebuffer.texture();
 				}
 			}, pipelines.load("3D", "DEPTH")),
 
@@ -118,19 +118,37 @@ class graphics {
 		this.projection_stack = [this.active_camera.make_projection()];
 		this.view_stack = [this.active_camera.make_view()];
 
-		// Spot Shadows
-		const shadow_pass = this.render_passes.shadow
+		// Spotlights Shadows
+		const shadow_pass = this.render_passes.spotlight_shadow;
+		const depth_framebuffer = shadow_pass.framebuffer;
+		const spotlight_shadow_maps = depth_framebuffer.texture_array();
+
 		this._current_render_pass = shadow_pass;
-		for (const spot of this.spot_lights) {
-			this.push_view(spot.view());
-			this.push_projection(spot.projection());
+		for (var i = 0; i < this.spot_lights.length; ++i) {
+			const spotlight = this.spot_lights[i];
+			this.push_view(spotlight.view());
+			this.push_projection(spotlight.projection());
 			shadow_pass.bind(this);
-			instance.render(this);
+
+			gl.framebufferTextureLayer(
+				gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, spotlight_shadow_maps.handler, 0, i
+			);
+			gl.clear(gl.DEPTH_BUFFER_BIT);
+
+			if (depth_framebuffer.complete()) {
+				instance.render(this);
+			}
 			shadow_pass.unbind(this);
 			this.pop_projection();
 			this.pop_view();
 		}
+		spotlight_shadow_maps.unbind();
+		this.spotlight_shadow_map_texture = spotlight_shadow_maps;
 
+		// Point lights Shadows
+		// TODO
+
+		// Color pass
 		const color_pass = this.render_passes.color;
 		this._current_render_pass = color_pass;
 		color_pass.bind(this);
@@ -184,17 +202,6 @@ class graphics {
 	set_engine_lighting_uniforms() {
 		const pipeline = this.current_pipeline();
 
-		if (pipeline.uniform_location("u_light")) {
-			// TODO: Fuck how should I set this shit for every fucking light source???
-			const light = this.spot_lights[0];
-			pipeline.set_uniform("u_light", golxzn.math.mat4.multiply(
-				light.view(),
-				light.projection()
-			));
-			this.applied_textures_count = 0;
-			this.apply_texture(0, this.shadow_map_texture);
-		}
-
 		this.directional_lights.apply(pipeline, "u_dir_light");
 
 		if (pipeline.uniform_location('u_point_lights_count') == null) return;
@@ -206,8 +213,17 @@ class graphics {
 
 		pipeline.set_uniform('u_spot_lights_count', this.spot_lights.length, { as_integer: true });
 		for (var i = 0; i < this.spot_lights.length; i++) {
-			this.spot_lights[i].apply(pipeline, `u_spot_lights[${i}]`);
+			const light = this.spot_lights[i];
+			light.apply(pipeline, `u_spot_lights[${i}]`);
+
+			pipeline.set_uniform(`u_spot_light_transform[${i}]`, golxzn.math.mat4.multiply(
+				light.view(),
+				light.projection()
+			));
 		}
+
+		this.applied_textures_count = 0;
+		this.apply_texture(this.spotlight_shadow_map_texture);
 	}
 
 	current_pipeline() {
@@ -236,8 +252,8 @@ class graphics {
 	}
 
 
-	apply_texture(id, texture) {
-		const index = id + this.applied_textures_count;
+	apply_texture(texture) {
+		const index = this.applied_textures_count;
 		const name = `u_texture_${index}`;
 		const pipeline = this.current_pipeline();
 		if (pipeline.uniform_location(name) != null) {
