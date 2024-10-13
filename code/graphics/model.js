@@ -42,7 +42,7 @@ class model {
 					graphics.apply_texture(resources.get_texture(texture_id));
 				}
 
-				graphics.draw_mesh(mesh);
+				mesh.draw(graphics);
 			}
 
 			graphics.pop_pipeline();

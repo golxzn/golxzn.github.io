@@ -279,6 +279,39 @@ class graphics {
 	}
 
 
+//============================== draw buffers ==============================//
+
+	draw_array(draw_info, mesh_instance) {
+		const vbo = mesh_instance.buffers[draw_info.target_buffer];
+		gl.bindVertexArray(mesh_instance.vao);
+		gl.drawArrays(draw_info.mode, 0, vbo.info.count);
+		gl.bindVertexArray(null);
+	}
+
+	draw_elements(draw_info, mesh_instance) {
+		const ebo = mesh_instance.buffers[draw_info.target_buffer];
+		gl.bindVertexArray(mesh_instance.vao);
+		gl.drawElements(draw_info.mode, ebo.info.count, gl.UNSIGNED_SHORT, 0);
+		gl.bindVertexArray(null);
+	}
+
+	draw_instanced_array(draw_info, mesh_instance) {
+		const vbo = mesh_instance.buffers[draw_info.target_buffer];
+		gl.bindVertexArray(mesh_instance.vao);
+		gl.drawArraysInstanced(draw_info.mode, 0, vbo.info.count, draw_info.instances_count);
+		gl.bindVertexArray(null);
+	}
+
+	draw_instanced_elements(draw_info, mesh_instance) {
+		const ebo = mesh_instance.buffers[draw_info.target_buffer];
+		gl.bindVertexArray(mesh_instance.vao);
+		gl.drawElementsInstanced(draw_info.mode, ebo.info.count, gl.UNSIGNED_SHORT, 0,
+			draw_info.instances_count);
+		gl.bindVertexArray(null);
+	}
+
+//==========================================================================//
+
 	aspect_ratio() {
 		return display.clientWidth / display.clientHeight;
 	}
