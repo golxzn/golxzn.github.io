@@ -15,10 +15,10 @@ precision mediump float;
 in vec2 f_uv;
 out vec4 frag_color;
 
-uniform sampler2D u_texture_0;
+uniform sampler2D u_screen;
 
 void main() {
-	frag_color = texture(u_texture_0, f_uv);
+	frag_color = texture(u_screen, f_uv);
 }
 `;
 
@@ -42,7 +42,7 @@ class graphics {
 		this.point_lights = [];
 		this.spot_lights = [];
 
-		this.applied_textures_count = 0;
+		this.bound_textures = 0;
 		this.spotlight_shadow_map_texture = null;
 
 		this.active_pass = 0;
@@ -114,7 +114,6 @@ class graphics {
 	}
 
 	render(instance) {
-		this.applied_textures_count = 0;
 		this.projection_stack = [this.active_camera.make_projection()];
 		this.view_stack = [this.active_camera.make_view()];
 
@@ -171,6 +170,7 @@ class graphics {
 	}
 
 	push_pipeline(pipeline) {
+		this.bound_textures = 0;
 		this.pipeline_stack.push(pipeline);
 		const pass = this.current_render_pass();
 		if (pass.has_pipeline()) {
@@ -222,8 +222,9 @@ class graphics {
 			));
 		}
 
-		this.applied_textures_count = 0;
-		this.apply_texture(this.spotlight_shadow_map_texture);
+		if (this.spotlight_shadow_map_texture) {
+			this.apply_texture(this.spotlight_shadow_map_texture, "u_spotlight_shadow_map");
+		}
 	}
 
 	current_pipeline() {
@@ -232,6 +233,7 @@ class graphics {
 	}
 
 	pop_pipeline() {
+		this.bound_textures = 0;
 		this.pipeline_stack.pop();
 	}
 
@@ -252,15 +254,13 @@ class graphics {
 	}
 
 
-	apply_texture(texture) {
-		const index = this.applied_textures_count;
-		const name = `u_texture_${index}`;
+	apply_texture(texture, name) {
 		const pipeline = this.current_pipeline();
 		if (pipeline.uniform_location(name) != null) {
-			texture.bind(index);
-			this.current_pipeline().set_uniform(name, index, { as_integer: true });
+			texture.bind(this.bound_textures);
+			this.current_pipeline().set_uniform(name, this.bound_textures, { as_integer: true });
+			++this.bound_textures;
 		}
-		this.applied_textures_count++;
 	}
 
 	apply_material(material) {
@@ -349,7 +349,7 @@ class graphics {
 
 		this.blit_texture_pipeline.use();
 		texture.bind();
-		this.blit_texture_pipeline.set_uniform("u_texture_0", 0, { as_integer: true });
+		this.blit_texture_pipeline.set_uniform("u_screen", 0, { as_integer: true });
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
 		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

@@ -98,8 +98,9 @@ uniform PointLight       u_point_lights[MAX_POINT_LIGHT_COLORS];
 uniform int              u_spot_lights_count;
 uniform SpotLight        u_spot_lights[MAX_SPOT_LIGHT_COLORS];
 uniform Material         u_material;
-uniform mediump sampler2DArray u_texture_0; // shadow map ALWAYS FIRST!!!!
-uniform sampler2D        u_texture_1; // diffuse
+
+uniform mediump sampler2DArray u_spotlight_shadow_map; // shadow map ALWAYS FIRST!!!!
+uniform sampler2D u_diffuse;
 
 float attenuation(vec3 attenuation, float dist) {
 	return attenuation.r + attenuation.g * dist + attenuation.b * dist * dist;
@@ -126,12 +127,12 @@ float calc_shadow(vec4 fragment_pos_light_space, int id, float bias, int accurac
 
 	int line_width = accuracy * 2 + 1;
 	float shadow_weight = 1.0 / float(line_width * line_width);
-	vec2 texel_size = 1.0 / vec2(textureSize(u_texture_0, 0));
+	vec2 texel_size = 1.0 / vec2(textureSize(u_spotlight_shadow_map, 0));
 	float shadow = 0.0;
 	for (int x = -accuracy; x <= accuracy; ++x) {
 		for (int y = -accuracy; y <= accuracy; ++y) {
 			vec3 uv = vec3(projection_coords.xy + vec2(x, y) * texel_size, id);
-			float pcf_depth = texture(u_texture_0, uv).r;
+			float pcf_depth = texture(u_spotlight_shadow_map, uv).r;
 			shadow += step(pcf_depth, current_depth - bias) * shadow_weight;
 		}
 	}
@@ -140,7 +141,7 @@ float calc_shadow(vec4 fragment_pos_light_space, int id, float bias, int accurac
 }
 
 void main() {
-	vec3 texel = texture(u_texture_1, f_uv).xyz;
+	vec3 texel = texture(u_diffuse, f_uv).xyz;
 	vec3 normal = normalize(f_normal);
 	vec3 to_view = normalize(f_to_view);
 	vec3 to_light = normalize(-u_dir_light.direction);

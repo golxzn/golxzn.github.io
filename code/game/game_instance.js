@@ -75,7 +75,7 @@ class game_instance {
 			{ ambient: spot_color1, diffuse: spot_color1, specular: spot_color1 }
 		));
 		this.scene_manager.add_object(new model_object("spot", new model([
-			new mesh([], null, primitives.make_cube_colored(spot_color1))
+			new mesh({}, null, primitives.make_cube_colored(spot_color1))
 		]), m4.scale(m4.translate(m4.make_identity(), graphics.spot_lights[0].position), [0.25, 0.25, 0.25])));
 
 		const spot_color2 = [0.5, 0.1, 0.9];
@@ -87,7 +87,7 @@ class game_instance {
 			{ ambient: spot_color2, diffuse: spot_color2, specular: spot_color2 }
 		));
 		this.scene_manager.add_object(new model_object("spot2", new model([
-			new mesh([], null, primitives.make_cube_colored(spot_color2))
+			new mesh({}, null, primitives.make_cube_colored(spot_color2))
 		]), m4.scale(m4.translate(m4.make_identity(), graphics.spot_lights[1].position), [0.25, 0.25, 0.25])));
 
 

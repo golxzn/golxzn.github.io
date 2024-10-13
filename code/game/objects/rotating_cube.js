@@ -5,7 +5,7 @@ class rotating_cube extends model_object {
 
 		super(name, new model([
 			new mesh(
-				[ texture_name ],
+				{ u_diffuse: texture_name },
 				"white rubber",
 				primitives.make_cube()
 			)

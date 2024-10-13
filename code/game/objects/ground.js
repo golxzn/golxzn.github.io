@@ -5,7 +5,7 @@ class ground extends model_object {
 		const resource = get_service("resource");
 		super(name, new model([
 			new mesh(
-				[ texture_name ],
+				{ u_diffuse: texture_name },
 				"white rubber",
 				primitives.make_custom_plane(5, 5)
 			)
