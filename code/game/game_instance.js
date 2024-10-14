@@ -62,7 +62,7 @@ class game_instance {
 			));
 
 			this.scene_manager.add_object(new model_object(color.toString(), new model([
-				new mesh([], null, primitives.make_cube_colored(color))
+				new mesh({}, null, primitives.make_cube_colored(color))
 			]), m4.scale(m4.translate(m4.make_identity(), pos), [0.25, 0.25, 0.25])));
 		}
 
@@ -91,6 +91,40 @@ class game_instance {
 		]), m4.scale(m4.translate(m4.make_identity(), graphics.spot_lights[1].position), [0.25, 0.25, 0.25])));
 
 
+		// PARTICLES
+
+		const particles_count = 50000;
+		var snow = this.scene_manager.add_object(new particles(
+			"snow-particles", { u_diffuse: "assets/textures/lain.jpg" }, particles_count
+		))
+
+		const spawn_rectangle = {
+			x1: -50.0, z1: -50.0,
+			x2:  50.0, z2:  50.0
+		};
+		const get_random = function(from, to) {
+			return (Math.random() * (to - from)) + from;
+		}
+
+		// Spawn particles
+		const x = 0;
+		const y = 1;
+		const z = 2;
+		snow.transform_all_particles((id, particle) => {
+			particle.offsets[x] = get_random(spawn_rectangle.x1, spawn_rectangle.x2);
+			particle.offsets[y] = get_random(10, 12);
+			particle.offsets[z] = get_random(spawn_rectangle.z1, spawn_rectangle.z2);
+
+			particle.rotation[x] = 0;
+			particle.rotation[y] = golxzn.math.to_radians(get_random(0, 180));
+			particle.rotation[z] = 0;
+
+			// const scale = 1.0 + (Math.random() - 0.5) * 0.1; // From 0.95 to 1.05
+			const scale = Math.random() * 0.7 + 0.1; // From 0.1 to 0.8
+			particle.scale[x] = scale;
+			particle.scale[y] = 1.0;
+			particle.scale[z] = scale;
+		});
 	}
 
 // Event handling

@@ -1,8 +1,8 @@
 [ ] Graphics
-	[ ] Particles
-		[ ] Instancing
 	[ ] Volumetric Fog
 	[ ] Bloom
+	[x] Particles
+		[x] Instancing
 	[x] Fix textures binding (should be better way to do so)
 	[x] Framebuffers & Render passes (NEW RENDERING APPROACH!)
 	[x] Shadows

@@ -7,10 +7,11 @@ const draw_method_type = {
 };
 
 class attribute_layout {
-	constructor(data = { count: 0, type: gl.FLOAT, normalized: false }) {
+	constructor(data = { count: 0, type: gl.FLOAT, normalized: false, divisor: null }) {
 		this.type = data.type;
 		this.count = data.count;
 		this.normalized = data.normalized != null ? data.normalized : false;
+		this.divisor = data.divisor;
 	}
 
 	bytes_count() {
@@ -125,9 +126,6 @@ class mesh {
 	_construct_buffers(buffer_infos) {
 		gl.bindVertexArray(this.vao);
 
-
-		const stride = this._accumulate_stride(buffer_infos);
-		var offset = 0;
 		var last_attribute_id = 0;
 		for (const info of buffer_infos) {
 			const buffer = gl.createBuffer();
@@ -138,23 +136,22 @@ class mesh {
 				gl.bufferData(info.target, info.binary, info.usage);
 			}
 
-			var attribute_sizes = new Array(info.layout.length);
-			for (var i = 0; i < info.layout.length; i++) {
-				const attribute = info.layout[i];
-				attribute_sizes[i] = attribute.bytes_count()
-			}
-
+			var offset = 0;
 			for (var i = 0; i < info.layout.length; ++i, ++last_attribute_id) {
 				const attribute = info.layout[i];
 				gl.vertexAttribPointer(last_attribute_id,
 					attribute.count,
 					attribute.type,
 					attribute.normalized,
-					stride,
+					info.stride,
 					offset
 				);
 				gl.enableVertexAttribArray(last_attribute_id);
-				offset += attribute_sizes[i];
+				if (attribute.divisor != null) {
+					gl.vertexAttribDivisor(last_attribute_id, attribute.divisor);
+				}
+
+				offset += attribute.bytes_count();
 			}
 
 			this.buffers[info.name] = {
@@ -165,11 +162,4 @@ class mesh {
 		gl.bindVertexArray(null);
 	}
 
-	_accumulate_stride(buffer_infos) {
-		var stride = 0;
-		for (const info of buffer_infos) {
-			stride += info.stride;
-		}
-		return stride;
-	}
 };
