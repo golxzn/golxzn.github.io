@@ -98,8 +98,8 @@ class pipeline {
 			return program;
 		}
 
-		console.error(`[pipeline][${this._name}] Failed to link program:`,
-			gl.getProgramInfoLog(program));
+		console.error(`[pipeline][${this._name}] Failed to link program!`);
+		console.error("[pipeline]" + gl.getProgramInfoLog(program));
 		gl.deleteProgram(program);
 		return null;
 	}
@@ -117,8 +117,8 @@ class pipeline {
 			[gl.VERTEX_SHADER]: "VERTEX",
 			[gl.FRAGMENT_SHADER]: "FRAGMENT"
 		}
-		console.error(`[pipeline][${this._name}] Failed to compile the ${type_names[type]} shader:`,
-			gl.getShaderInfoLog(shader));
+		console.error(`[pipeline][${this._name}] Failed to compile the ${type_names[type]} shader:`)
+		console.error("[pipeline]", gl.getShaderInfoLog(shader));
 		gl.deleteShader(shader);
 		return null;
 	}

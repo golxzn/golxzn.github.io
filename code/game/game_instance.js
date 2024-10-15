@@ -102,21 +102,18 @@ class game_instance {
 			x1: -50.0, z1: -50.0,
 			x2:  50.0, z2:  50.0
 		};
-		const get_random = function(from, to) {
-			return (Math.random() * (to - from)) + from;
-		}
 
 		// Spawn particles
 		const x = 0;
 		const y = 1;
 		const z = 2;
 		snow.transform_all_particles((id, particle) => {
-			particle.offsets[x] = get_random(spawn_rectangle.x1, spawn_rectangle.x2);
-			particle.offsets[y] = get_random(10, 12);
-			particle.offsets[z] = get_random(spawn_rectangle.z1, spawn_rectangle.z2);
+			particle.offsets[x] = golxzn.get_random(spawn_rectangle.x1, spawn_rectangle.x2);
+			particle.offsets[y] = golxzn.get_random(20, 22);
+			particle.offsets[z] = golxzn.get_random(spawn_rectangle.z1, spawn_rectangle.z2);
 
 			particle.rotation[x] = 0;
-			particle.rotation[y] = golxzn.math.to_radians(get_random(0, 180));
+			particle.rotation[y] = golxzn.math.to_radians(golxzn.get_random(0, 180));
 			particle.rotation[z] = 0;
 
 			// const scale = 1.0 + (Math.random() - 0.5) * 0.1; // From 0.95 to 1.05
