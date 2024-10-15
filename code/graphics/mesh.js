@@ -97,7 +97,7 @@ class draw_method {
 };
 
 class mesh {
-	constructor(textures, material, details = { pipeline: null, buffer_infos: [], draw_method: null }) {
+	constructor(textures, material, details = { pipeline: null, buffer_infos: [], draw_method: null, settings: null }) {
 		this.vao = gl.createVertexArray();
 		this.buffers = {};
 		this.draw_method = details.draw_method;
@@ -106,11 +106,40 @@ class mesh {
 		this.textures = textures;
 		this.material = material;
 
+		this.draw = (graphics) => { this._draw(graphics); }
+		if (details.settings != null) {
+			this.enable_settings = details.settings.enable == null ? [] : details.settings.enable;
+			this.disable_settings = details.settings.disable == null ? [] : details.settings.disable;
+			if (this.enable_settings.length + this.disable_settings.length > 0) {
+				this.draw = (graphics) => { this._draw_with_settings(graphics); }
+			}
+		}
+
 		this._construct_buffers(details.buffer_infos);
 	}
 
-	draw(graphics) {
+	_draw(graphics) {
 		this.draw_method.draw(graphics, this);
+	}
+
+	_draw_with_settings(graphics) {
+		var previous_disabled = []
+		for (var i = 0; i < this.enable_settings.length; ++i) {
+			const param = this.enable_settings[i];
+			if (!gl.isEnabled(param)) previous_disabled.push(param);
+			gl.enable(param);
+		}
+		var previous_enabled = []
+		for (var i = 0; i < this.disable_settings.length; ++i) {
+			const param = this.disable_settings[i];
+			if (gl.isEnabled(param)) previous_enabled.push(param);
+			gl.disable(param);
+		}
+
+		this.draw_method.draw(graphics, this);
+
+		previous_disabled.forEach(value => gl.disable(value));
+		previous_enabled.forEach(value => gl.enable(value));
 	}
 
 	update_buffer_data(name, data, offset = 0) {

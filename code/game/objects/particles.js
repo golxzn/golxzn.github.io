@@ -64,6 +64,9 @@ class particles extends model_object {
 				target_buffer: "ebo",
 				instances_count: instance_count
 			}),
+			settings: {
+				disable: [gl.CULL_FACE]
+			},
 			buffer_infos: [
 				new buffer_info({
 					name: "vbo",

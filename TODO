@@ -1,6 +1,7 @@
 [ ] Graphics
 	[ ] Volumetric Fog
 	[ ] Bloom
+	[x] Move face culling to per mesh level
 	[x] Particles
 		[x] Instancing
 	[x] Fix textures binding (should be better way to do so)
