@@ -1,7 +1,7 @@
 
 class particles extends model_object {
-	constructor(name, textures, count) {
-		const m = new mesh(textures, null, particles._particles_info(count));
+	constructor(name, textures, count, pipeline = ["3D", "PARTICLES"]) {
+		const m = new mesh(textures, null, particles._particles_info(count, pipeline));
 		super(name, new model([m]));
 
 		this.mesh = m;
@@ -53,9 +53,9 @@ class particles extends model_object {
 		this.mesh.update_buffer_data("rotations", this.rotations);
 	}
 
-	static _particles_info(instance_count) {
+	static _particles_info(instance_count, pipeline) {
 		return {
-			pipeline: ["3D", "PARTICLES"],
+			pipeline: pipeline,
 			draw_method: new draw_method({
 				type: draw_method_type.instanced_elements,
 				mode: gl.TRIANGLE_STRIP,

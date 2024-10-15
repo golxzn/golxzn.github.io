@@ -10,6 +10,10 @@ class pipeline_manager {
 		}
 
 		const fragment_code = pipeline_manager._get_shader_text(name, dimensions, "frag");
+		if (fragment_code == null) {
+			console.error(`[game][pipeline_manager] Cannot find fragment code for "${dimensions}.${name}"`);
+			return null;
+		}
 		const pipeline_instance = new pipeline(name, {
 			[gl.VERTEX_SHADER  ]: pipeline_manager._get_shader_text(name, dimensions, "vert"),
 			[gl.FRAGMENT_SHADER]: fragment_code

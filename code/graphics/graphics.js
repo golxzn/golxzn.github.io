@@ -49,7 +49,7 @@ class graphics {
 		this.render_passes = {
 			spotlight_shadow: new render_pass("Spotlight Shadows", new framebuffer([1024, 1024], [ {
 				type: attachment_type.texture_array,
-				layers: 16, // TODO: Set MAX_SPOT_LIGHT_COUNTS
+				layers: SHADERS_COMMON.MAX_SPOT_LIGHT_COLORS,
 				format: gl.DEPTH_COMPONENT,
 				internal: gl.DEPTH_COMPONENT32F,
 				attachment: gl.DEPTH_ATTACHMENT,
@@ -215,8 +215,10 @@ class graphics {
 		for (var i = 0; i < this.spot_lights.length; i++) {
 			const light = this.spot_lights[i];
 			light.apply(pipeline, `u_spot_lights[${i}]`);
+			const transform_name = `u_spot_light_transform[${i}]`;
+			if (!pipeline.uniform_location(transform_name)) continue;
 
-			pipeline.set_uniform(`u_spot_light_transform[${i}]`, golxzn.math.mat4.multiply(
+			pipeline.set_uniform(transform_name, golxzn.math.mat4.multiply(
 				light.view(),
 				light.projection()
 			));
