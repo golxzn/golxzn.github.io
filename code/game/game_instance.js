@@ -94,34 +94,38 @@ class game_instance {
 		// PARTICLES
 
 		const particles_count = 50000;
-		var snow = this.scene_manager.add_object(new particles(
+		this.scene_manager.add_object(new falling_snow(
 			"snow-particles", { u_diffuse: "assets/textures/lain.jpg" }, particles_count
-		))
+		));
 
-		const spawn_rectangle = {
-			x1: -50.0, z1: -50.0,
-			x2:  50.0, z2:  50.0
-		};
+		// var snow = this.scene_manager.add_object(new particles(
+		// 	"snow-particles", { u_diffuse: "assets/textures/lain.jpg" }, particles_count
+		// ));
 
-		// Spawn particles
-		const x = 0;
-		const y = 1;
-		const z = 2;
-		snow.transform_all_particles((id, particle) => {
-			particle.offsets[x] = golxzn.get_random(spawn_rectangle.x1, spawn_rectangle.x2);
-			particle.offsets[y] = golxzn.get_random(20, 22);
-			particle.offsets[z] = golxzn.get_random(spawn_rectangle.z1, spawn_rectangle.z2);
+		// const spawn_rectangle = {
+		// 	x1: -50.0, z1: -50.0,
+		// 	x2:  50.0, z2:  50.0
+		// };
 
-			particle.rotation[x] = 0;
-			particle.rotation[y] = golxzn.math.to_radians(golxzn.get_random(0, 180));
-			particle.rotation[z] = 0;
+		// // Spawn particles
+		// const x = 0;
+		// const y = 1;
+		// const z = 2;
+		// snow.transform_all_particles((id, particle) => {
+		// 	particle.offsets[x] = golxzn.get_random(spawn_rectangle.x1, spawn_rectangle.x2);
+		// 	particle.offsets[y] = golxzn.get_random(20, 22);
+		// 	particle.offsets[z] = golxzn.get_random(spawn_rectangle.z1, spawn_rectangle.z2);
 
-			// const scale = 1.0 + (Math.random() - 0.5) * 0.1; // From 0.95 to 1.05
-			const scale = Math.random() * 0.7 + 0.1; // From 0.1 to 0.8
-			particle.scale[x] = scale;
-			particle.scale[y] = 1.0;
-			particle.scale[z] = scale;
-		});
+		// 	particle.rotation[x] = 0;
+		// 	particle.rotation[y] = golxzn.math.to_radians(golxzn.get_random(0, 180));
+		// 	particle.rotation[z] = 0;
+
+		// 	// const scale = 1.0 + (Math.random() - 0.5) * 0.1; // From 0.95 to 1.05
+		// 	const scale = Math.random() * 0.7 + 0.1; // From 0.1 to 0.8
+		// 	particle.scale[x] = scale;
+		// 	particle.scale[y] = 1.0;
+		// 	particle.scale[z] = scale;
+		// });
 	}
 
 // Event handling

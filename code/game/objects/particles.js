@@ -1,12 +1,10 @@
 
 class particles extends model_object {
-	constructor(name, textures, count, refresh_time = 0.1) {
+	constructor(name, textures, count) {
 		const m = new mesh(textures, null, particles._particles_info(count));
 		super(name, new model([m]));
 
 		this.mesh = m;
-		this.refresh_time = refresh_time;
-		this.refresh_timer = refresh_time;
 		this.count = count;
 		this.offsets = new Float32Array(count * 3);
 		this.scales = new Float32Array(count * 3);
@@ -42,11 +40,7 @@ class particles extends model_object {
 	}
 
 	update(delta) {
-		this.refresh_timer += delta;
-		if (this.refresh_timer >= this.refresh_time) {
-			this.refresh_timer = 0;
-			this.sync_buffers();
-		}
+		this.sync_buffers();
 	}
 
 	sync_buffers() {
