@@ -21,11 +21,15 @@ class particles extends model_object {
 		ids.forEach((id) => { method(id, this.get_particle(id)); });
 	}
 
-	filter_particles(method, count = null) {
+	filter_particles(method) {
 		var matches = [];
+		const pusher = [
+			(_) => {},
+			(value) => { matches.push(value) },
+		];
+
 		for (var i = 0; i < this.count; ++i) {
-			if (method(i, this.get_particle(i))) matches.push(i);
-			if (count != null && matches.length >= count) break;
+			pusher[method(i, this.get_particle(i))](i);
 		}
 		return matches;
 	}

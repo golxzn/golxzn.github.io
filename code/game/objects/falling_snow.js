@@ -20,7 +20,9 @@ class snow_properties {
 		this.zone = data.zone == null ? DEFAULT_SNOW_PROPERTIES.zone : data.zone;
 		this.speed = data.speed == null ? DEFAULT_SNOW_PROPERTIES.speed : data.speed;
 		this.scale = data.scale == null ? DEFAULT_SNOW_PROPERTIES.scale : data.scale;
-		this.direction = data.direction == null ? DEFAULT_SNOW_PROPERTIES.direction : data.direction;
+		this.direction = golxzn.math.normalize(
+			data.direction == null ? DEFAULT_SNOW_PROPERTIES.direction : data.direction
+		);
 
 		snow_properties._fix_missing_fields(this.zone, DEFAULT_SNOW_PROPERTIES.zone);
 		snow_properties._fix_missing_fields(this.speed, DEFAULT_SNOW_PROPERTIES.speed);
@@ -48,7 +50,7 @@ class falling_snow extends particles {
 
 		// Respawn particles
 		const dead_particles = this.filter_particles((_, particle) => { return this._out_of_zone(particle) });
-		this.transform_particles(dead_particles, (_, particle) => { this._spawn(particle) });
+		this.transform_particles(dead_particles, (_, particle) => { this._respawn(particle) });
 
 		// update buffers
 		super.update(delta);
@@ -56,13 +58,10 @@ class falling_snow extends particles {
 
 	_move(particle, delta) {
 		const speed = golxzn.get_random(this.properties.speed.min, this.properties.speed.max);
-		const next_position = golxzn.math.sum(
-			particle.offsets,
-			golxzn.math.scale(this.properties.direction, speed * delta)
-		);
-		for (var i = 0; i < next_position.length; ++i) {
-			particle.offsets[i] = next_position[i];
-		}
+		const distance = speed * delta;
+		particle.offsets[0] += this.properties.direction[0] * distance;
+		particle.offsets[1] += this.properties.direction[1] * distance;
+		particle.offsets[2] += this.properties.direction[2] * distance;
 	}
 
 	_out_of_zone(particle) {
@@ -70,10 +69,9 @@ class falling_snow extends particles {
 		const offset = particle.offsets;
 		const zone = this.properties.zone;
 
-		// is inside
-		return offset[x] < zone.x1 || offset[x] > zone.x2
-			|| offset[y] < zone.y1 || offset[y] > zone.y2
-			|| offset[z] < zone.z1 || offset[z] > zone.z2;
+		return offset[x] < zone.x1 | offset[x] > zone.x2
+			 | offset[y] < zone.y1 | offset[y] > zone.y2
+			 | offset[z] < zone.z1 | offset[z] > zone.z2;
 	}
 
 	_spawn(particle) {
@@ -91,6 +89,10 @@ class falling_snow extends particles {
 		particle.scale[x] = golxzn.get_random(scale.min[x], scale.max[x]);
 		particle.scale[y] = golxzn.get_random(scale.min[y], scale.max[y]);
 		particle.scale[z] = golxzn.get_random(scale.min[z], scale.max[z]);
+	}
+
+	_respawn(particle) {
+		particle.offsets[1] = this.properties.zone.y2;
 	}
 
 };
