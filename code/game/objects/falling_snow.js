@@ -1,8 +1,8 @@
 
 const DEFAULT_SNOW_PROPERTIES = {
 	zone: {
-		x1: -20, y1: -1, z1: -20, // LEFT BOTTOM FRONT CORNER
-		x2:  20, y2: 25, z2:  20, // RIGHT TOP BACK CORNER
+		x1: -50, y1: -2, z1: -50, // LEFT BOTTOM FRONT CORNER
+		x2:  50, y2: 40, z2:  50, // RIGHT TOP BACK CORNER
 	},
 	speed: {
 		min: 1.0,
@@ -12,7 +12,7 @@ const DEFAULT_SNOW_PROPERTIES = {
 		min: [0.05, 0.05, 0.05],
 		max: [0.15, 0.15, 0.15]
 	},
-	direction: [0.0, -1.0, 0.0]
+	direction: [0.0, -1.0, 0.5]
 };
 
 class snow_properties {
@@ -38,7 +38,7 @@ class snow_properties {
 
 class falling_snow extends particles {
 	constructor(name, textures, count, properties = new snow_properties()) {
-		super(name, textures, count);
+		super(name, textures, count, ["3D", "PARTICLES_LIGHTING"]);
 		this.properties = properties;
 
 		this.transform_all_particles((_, particle) => { this._spawn(particle) });
@@ -62,6 +62,7 @@ class falling_snow extends particles {
 		particle.offsets[0] += this.properties.direction[0] * distance;
 		particle.offsets[1] += this.properties.direction[1] * distance;
 		particle.offsets[2] += this.properties.direction[2] * distance;
+		particle.rotation[1] = particle.rotation[1] + delta;
 	}
 
 	_out_of_zone(particle) {
@@ -92,7 +93,11 @@ class falling_snow extends particles {
 	}
 
 	_respawn(particle) {
-		particle.offsets[1] = this.properties.zone.y2;
+		const x = 0, y = 1, z = 2;
+		const zone = this.properties.zone;
+		particle.offsets[x] = golxzn.get_random(zone.x1, zone.x2);
+		particle.offsets[y] = zone.y2;
+		particle.offsets[z] = golxzn.get_random(zone.z1, zone.z2);
 	}
 
 };
