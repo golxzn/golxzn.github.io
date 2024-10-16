@@ -9,8 +9,8 @@ const DEFAULT_SNOW_PROPERTIES = {
 		max: 2.0
 	},
 	scale: {
-		min: [0.05, 0.05, 0.05],
-		max: [0.15, 0.15, 0.15]
+		min: [0.005, 0.005, 0.005],
+		max: [0.008, 0.008, 0.008]
 	},
 	direction: [0.0, -1.0, 0.5]
 };
@@ -46,7 +46,9 @@ class falling_snow extends particles {
 
 	update(delta) {
 		// Move particles
-		this.transform_all_particles((_, particle) => { this._move(particle, delta) });
+		const falling_speed = golxzn.get_random(this.properties.speed.min, this.properties.speed.max);
+		const distance = falling_speed * delta;
+		this.transform_all_particles((_, particle) => { this._move(particle, distance, delta) });
 
 		// Respawn particles
 		const dead_particles = this.filter_particles((_, particle) => { return this._out_of_zone(particle) });
@@ -56,13 +58,15 @@ class falling_snow extends particles {
 		super.update(delta);
 	}
 
-	_move(particle, delta) {
-		const speed = golxzn.get_random(this.properties.speed.min, this.properties.speed.max);
-		const distance = speed * delta;
+	_move(particle, distance, delta) {
+		// const speed = golxzn.get_random(this.properties.speed.min, this.properties.speed.max);
+		// const distance = speed * delta;
 		particle.offsets[0] += this.properties.direction[0] * distance;
 		particle.offsets[1] += this.properties.direction[1] * distance;
 		particle.offsets[2] += this.properties.direction[2] * distance;
-		particle.rotation[1] = particle.rotation[1] + delta;
+		particle.rotation[0] += delta;
+		particle.rotation[1] += delta;
+		particle.rotation[2] += delta;
 	}
 
 	_out_of_zone(particle) {

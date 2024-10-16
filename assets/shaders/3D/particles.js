@@ -3,8 +3,8 @@ Object.assign(SHADERS["3D"], { PARTICLES : {
 
 vert : /* glsl */ `#version 300 es
 
-layout(location = 0) in vec3 a_position;
-layout(location = 1) in vec3 a_normal;
+layout(location = 0) in vec2 a_position;
+layout(location = 1) in vec2 a_normal;
 layout(location = 2) in vec2 a_uv;
 layout(location = 3) in vec3 a_offset;
 layout(location = 4) in vec3 a_scales;
@@ -31,7 +31,7 @@ mat4 make_rotation_matrix(vec3 rotations) {
 }
 
 void main() {
-	vec4 position = make_rotation_matrix(a_rotations) * vec4(a_position, 1.0);
+	vec4 position = make_rotation_matrix(a_rotations) * vec4(a_position, 0.0, 1.0);
 	gl_Position = u_mvp * (position * vec4(a_scales, 1.0) + vec4(a_offset, 1.0));
 	f_uv = a_uv;
 }

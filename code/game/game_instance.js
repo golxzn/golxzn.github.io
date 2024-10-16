@@ -40,19 +40,19 @@ class game_instance {
 		cube.transform = m4.translate(cube.transform, [0.0, 0.5, 0.0]);
 
 		// LIGHTING
-		const directional_power = [0.03, 0.034, 0.042];
+		const directional_power = [0.19, 0.23, 0.31];
 		const directional_properties = {
 			ambient: directional_power,
 			diffuse: directional_power,
 			specular: directional_power
 		};
-		graphics.directional_lights = new DirectionalLight([0.0, -1.0, 0.0], directional_properties);
+		graphics.directional_lights = new DirectionalLight([0.0, -1.0, -1.0], directional_properties);
 
 		const attenuation = [ 1.0, 0.09, 0.032 ];
 		const rgb = [
-			[1.0, 0.0, 0.0],
-			[0.0, 1.0, 0.0],
-			[0.0, 0.0, 1.0]
+			// [1.0, 0.0, 0.0],
+			// [0.0, 1.0, 0.0],
+			// [0.0, 0.0, 1.0]
 		];
 
 		for (const color of rgb) {
@@ -66,36 +66,41 @@ class game_instance {
 			]), m4.scale(m4.translate(m4.make_identity(), pos), [0.25, 0.25, 0.25])));
 		}
 
-		const spot_color1 = [0.9, 0.1, 0.9]
+
+
+
+		const spot_color = [0.96, 0.72, 0.36];
+		const spot_limits = {
+			inner: Math.cos(golxzn.math.to_radians(29.5)),
+			outer: Math.cos(golxzn.math.to_radians(55.5))
+		};
 		graphics.spot_lights.push(new SpotLight(
-			[-8.0, 8.0, 0.0], // position
-			[1.0, -1.0, 0.0], // direction
+			[-8.0, 12.0, -8.0], // position
+			[0.5, -1.0, 0.0], // direction
 			[1.0, 0.007, 0.0002], // attenuation
-			{ inner: Math.cos(golxzn.math.to_radians(20.5)), outer: Math.cos(golxzn.math.to_radians(22.5)) },
-			{ ambient: spot_color1, diffuse: spot_color1, specular: spot_color1 }
+			spot_limits,
+			{ ambient: spot_color, diffuse: spot_color, specular: spot_color }
 		));
 		this.scene_manager.add_object(new model_object("spot", new model([
-			new mesh({}, null, primitives.make_cube_colored(spot_color1))
+			new mesh({}, null, primitives.make_cube_colored(spot_color))
 		]), m4.scale(m4.translate(m4.make_identity(), graphics.spot_lights[0].position), [0.25, 0.25, 0.25])));
 
-		const spot_color2 = [0.5, 0.1, 0.9];
 		graphics.spot_lights.push(new SpotLight(
-			[0.0, 8.0, 8.0], // position
-			[0.0, -1.0, -1.0], // direction
+			[-8.0, 12.0, 8.0], // position
+			[0.5, -1.0, 0.0], // direction
 			[1.0, 0.007, 0.0002], // attenuation
-			{ inner: Math.cos(golxzn.math.to_radians(12.5)), outer: Math.cos(golxzn.math.to_radians(14.5)) },
-			{ ambient: spot_color2, diffuse: spot_color2, specular: spot_color2 }
+			spot_limits,
+			{ ambient: spot_color, diffuse: spot_color, specular: spot_color }
 		));
 		this.scene_manager.add_object(new model_object("spot2", new model([
-			new mesh({}, null, primitives.make_cube_colored(spot_color2))
+			new mesh({}, null, primitives.make_cube_colored(spot_color))
 		]), m4.scale(m4.translate(m4.make_identity(), graphics.spot_lights[1].position), [0.25, 0.25, 0.25])));
 
 
 		// PARTICLES
-
 		const particles_count = 50000;
 		this.scene_manager.add_object(new falling_snow(
-			"snow-particles", { u_diffuse: "assets/textures/lain.jpg" }, particles_count
+			"snow-particles", {}, particles_count
 		));
 
 		// var snow = this.scene_manager.add_object(new particles(

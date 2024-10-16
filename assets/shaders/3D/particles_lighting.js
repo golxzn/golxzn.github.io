@@ -3,17 +3,15 @@ Object.assign(SHADERS["3D"], { PARTICLES_LIGHTING : {
 
 vert : /* glsl */ `#version 300 es
 
-layout(location = 0) in vec3 a_position;
-layout(location = 1) in vec3 a_normal;
-layout(location = 2) in vec2 a_uv;
-layout(location = 3) in vec3 a_offset;
-layout(location = 4) in vec3 a_scales;
-layout(location = 5) in vec3 a_rotations;
+layout(location = 0) in vec2 a_position; // [x, y]
+layout(location = 1) in vec2 a_normal;   // [z, -]
+layout(location = 2) in vec3 a_offset;
+layout(location = 3) in vec3 a_scales;
+layout(location = 4) in vec3 a_rotations;
 
 out vec3 f_position;
-out vec3 f_normal;
 out vec3 f_to_view;
-out vec2 f_uv;
+out vec3 f_normal;
 
 uniform mat4 u_mvp;
 uniform mat4 u_model;
@@ -37,11 +35,10 @@ mat3 make_rotation_matrix(vec3 rotations) {
 
 void main() {
 	mat3 rotation_matrix = make_rotation_matrix(a_rotations);
-	f_position = (rotation_matrix * a_position) * a_scales + a_offset;
+	f_position = (rotation_matrix * vec3(a_position, 0.0)) * a_scales + a_offset;
 	gl_Position = u_mvp * vec4(f_position, 1.0);
 	f_to_view = u_view_position - f_position;
-	f_normal = a_normal;
-	f_uv = a_uv;
+	f_normal = u_normal_matrix * rotation_matrix * vec3(0.0, 0.0, a_normal.x);
 }
 `,
 
@@ -52,28 +49,24 @@ precision mediump float;
 ${SHADERS_COMMON.LIGHTING_CONSTANTS}
 
 in vec3 f_position;
-in vec3 f_normal;
 in vec3 f_to_view;
-in vec2 f_uv;
+in vec3 f_normal;
 
 out vec4 frag_color;
 
 ${SHADERS_COMMON.LIGHTING_STRUCTURES}
+${SHADERS_COMMON.MATERIAL_STRUCTURE}
 
 uniform DirectionalLight u_dir_light;
 uniform int              u_point_lights_count;
 uniform PointLight       u_point_lights[MAX_POINT_LIGHT_COLORS];
 uniform int              u_spot_lights_count;
 uniform SpotLight        u_spot_lights[MAX_SPOT_LIGHT_COLORS];
-// uniform Material         u_material;
-
-uniform sampler2D u_diffuse;
+uniform Material         u_material;
 
 ${SHADERS_COMMON.LIGHTING_UTILITIES}
 
 void main() {
-	const float u_material_specular = 32.0;
-	vec4 texel = texture(u_diffuse, f_uv);
 	vec3 normal = normalize(f_normal);
 	vec3 to_view = normalize(f_to_view);
 	vec3 to_light = normalize(-u_dir_light.direction);
@@ -81,7 +74,7 @@ void main() {
 	// Directional Light
 	vec3 ambient = u_dir_light.properties.ambient;
 	vec3 diffuse = u_dir_light.properties.diffuse * calc_diffuse(to_light, normal);
-	vec3 specular = u_dir_light.properties.specular * calc_specular(to_light, to_view, normal, u_material_specular);
+	vec3 specular = u_dir_light.properties.specular * calc_specular(to_light, to_view, normal, u_material.shininess);
 
 	// Point Light
 	#pragma optionNV(unroll)
@@ -95,7 +88,7 @@ void main() {
 
 		ambient += point.properties.ambient * att;
 		diffuse += point.properties.diffuse * calc_diffuse(to_light, normal) * att;
-		specular += point.properties.specular * calc_specular(to_light, to_view, normal, u_material_specular) * att;
+		specular += point.properties.specular * calc_specular(to_light, to_view, normal, u_material.shininess) * att;
 	}
 
 	// Spot light
@@ -114,14 +107,14 @@ void main() {
 		float intensity = (spot_intensity(spot_factor, spot.limits) / att);
 		ambient += spot.properties.ambient * intensity;
 		diffuse += spot.properties.diffuse * diffuse_component * intensity;
-		specular += spot.properties.specular * calc_specular(to_light, to_view, normal, u_material_specular) * intensity;
+		specular += spot.properties.specular * calc_specular(to_light, to_view, normal, u_material.shininess) * intensity;
 	}
 
-	ambient *= texel.rgb;
-	diffuse *= texel.rgb;
-	specular *= u_material_specular;
+	ambient *= u_material.ambient;
+	diffuse *= u_material.diffuse;
+	specular *= u_material.specular;
 
-	frag_color = vec4(ambient + diffuse + specular, texel.a);
+	frag_color = vec4(ambient + diffuse + specular, 1.0);
 
 }
 `

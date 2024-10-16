@@ -44,6 +44,15 @@ struct SpotLight {
 
 `,
 
+MATERIAL_STRUCTURE: /* glsl */ `
+struct Material {
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+	float shininess;
+};
+`,
+
 LIGHTING_UTILITIES: /* glsl */ `
 float attenuation(vec3 attenuation, float dist) {
 	return attenuation.r + attenuation.g * dist + attenuation.b * dist * dist;

@@ -53,13 +53,7 @@ in vec2 f_uv;
 out vec4 frag_color;
 
 ${SHADERS_COMMON.LIGHTING_STRUCTURES}
-
-struct Material {
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
-	float shininess;
-};
+${SHADERS_COMMON.MATERIAL_STRUCTURE}
 
 uniform DirectionalLight u_dir_light;
 uniform int              u_point_lights_count;
