@@ -1,18 +1,18 @@
 
 const DEFAULT_SNOW_PROPERTIES = {
 	zone: {
-		x1: -50, y1: -2, z1: -50, // LEFT BOTTOM FRONT CORNER
-		x2:  50, y2: 40, z2:  50, // RIGHT TOP BACK CORNER
+		x1: -30, y1: -2, z1: -30, // LEFT BOTTOM FRONT CORNER
+		x2:  30, y2: 20, z2:  30, // RIGHT TOP BACK CORNER
 	},
 	speed: {
 		min: 1.0,
-		max: 2.0
+		max: 1.2
 	},
 	scale: {
 		min: [0.005, 0.005, 0.005],
 		max: [0.008, 0.008, 0.008]
 	},
-	direction: [0.0, -1.0, 0.5]
+	direction: [0.4, -1.0, 0.0]
 };
 
 class snow_properties {

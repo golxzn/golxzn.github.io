@@ -1,4 +1,4 @@
-const CLEAR_COLOR = [0.04, 0.04, 0.08, 1.0];
+const CLEAR_COLOR = [0.01, 0.014, 0.022, 1.0];
 
 let handle;
 let last_time = 0;

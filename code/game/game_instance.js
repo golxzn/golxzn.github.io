@@ -34,29 +34,32 @@ class game_instance {
 		));
 		grnd.transform = m4.translate(grnd.transform, [0.0, -1.0, 0.0]);
 
-		const cube = this.scene_manager.add_object(new rotating_cube(
-			"cube", "assets/textures/lain.jpg", 1
-		));
-		cube.transform = m4.translate(cube.transform, [0.0, 0.5, 0.0]);
+		for (var i = 0; i < 6; ++i) {
+			const cube = this.scene_manager.add_object(new rotating_cube(
+				`cube_${i}`, "assets/textures/lain.jpg", i * 0.5
+			));
+			cube.transform = m4.translate(cube.transform, [0.0, 0.5 + 2.1 * i, 0.0]);
+		}
 
 		// LIGHTING
-		const directional_power = [0.19, 0.23, 0.31];
+		// const directional_power = [0.1, 0.14, 0.22];
+		const directional_power = [0.01, 0.014, 0.022];
 		const directional_properties = {
 			ambient: directional_power,
 			diffuse: directional_power,
 			specular: directional_power
 		};
-		graphics.directional_lights = new DirectionalLight([0.0, -1.0, -1.0], directional_properties);
+		graphics.directional_lights = new DirectionalLight([-1.0, -1.0, -1.0], directional_properties);
 
 		const attenuation = [ 1.0, 0.09, 0.032 ];
 		const rgb = [
-			// [1.0, 0.0, 0.0],
-			// [0.0, 1.0, 0.0],
-			// [0.0, 0.0, 1.0]
+			[1.0, 0.0, 0.0],
+			[0.0, 1.0, 0.0],
+			[0.0, 0.0, 1.0]
 		];
 
 		for (const color of rgb) {
-			const pos = golxzn.math.scale(color, 5.0);
+			const pos = golxzn.math.scale(color, 25.0);
 			graphics.point_lights.push(new PointLight(
 				pos, attenuation, { ambient: color, diffuse: color, specular: color }
 			));
@@ -67,34 +70,30 @@ class game_instance {
 		}
 
 
-
-
 		const spot_color = [0.96, 0.72, 0.36];
 		const spot_limits = {
 			inner: Math.cos(golxzn.math.to_radians(29.5)),
 			outer: Math.cos(golxzn.math.to_radians(55.5))
 		};
-		graphics.spot_lights.push(new SpotLight(
-			[-8.0, 12.0, -8.0], // position
-			[0.5, -1.0, 0.0], // direction
-			[1.0, 0.007, 0.0002], // attenuation
-			spot_limits,
-			{ ambient: spot_color, diffuse: spot_color, specular: spot_color }
-		));
-		this.scene_manager.add_object(new model_object("spot", new model([
-			new mesh({}, null, primitives.make_cube_colored(spot_color))
-		]), m4.scale(m4.translate(m4.make_identity(), graphics.spot_lights[0].position), [0.25, 0.25, 0.25])));
+		const spot_properties = {
+			ambient: spot_color,
+			diffuse: spot_color,
+			specular: spot_color
+		};
 
-		graphics.spot_lights.push(new SpotLight(
-			[-8.0, 12.0, 8.0], // position
-			[0.5, -1.0, 0.0], // direction
-			[1.0, 0.007, 0.0002], // attenuation
-			spot_limits,
-			{ ambient: spot_color, diffuse: spot_color, specular: spot_color }
-		));
-		this.scene_manager.add_object(new model_object("spot2", new model([
-			new mesh({}, null, primitives.make_cube_colored(spot_color))
-		]), m4.scale(m4.translate(m4.make_identity(), graphics.spot_lights[1].position), [0.25, 0.25, 0.25])));
+		for (var i = 0; i < 3; ++i) {
+			const position = [-8.0, 16.0, i * 12.0 - 12.0]; // position
+
+			graphics.spot_lights.push(new SpotLight(
+				position,
+				[0.4, -1.0, 0.0], // direction
+				[1.0, 0.007, 0.0002], // attenuation
+				spot_limits, spot_properties
+			));
+			this.scene_manager.add_object(new model_object(`spot_${i}`, new model([
+				new mesh({}, null, primitives.make_cube_colored(spot_color))
+			]), m4.scale(m4.translate(m4.make_identity(), position), [0.25, 0.25, 0.25])));
+		}
 
 
 		// PARTICLES
