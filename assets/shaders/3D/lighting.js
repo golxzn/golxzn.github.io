@@ -100,16 +100,18 @@ void main() {
 		SpotLight spot = u_spot_lights[i];
 
 		to_light = spot.position - f_position;
-		float att = attenuation(spot.attenuation, length(to_light));
+		float distance_to_light = length(to_light);
 		to_light = normalize(to_light);
 
 		float spot_factor = dot(normalize(spot.direction), -to_light);
 		if (spot_factor < spot.limits.outer) continue;
 
+		float att = attenuation(spot.attenuation, distance_to_light);
 		float diffuse_component = calc_diffuse(to_light, normal);
-		// float bias = max(0.001 * (1.0 - diffuse_component), 0.0001);
-		float shadow = 1.0 - calc_shadow(f_spotlight_positions[i], i, 0.0001, 1);
+		float bias = max(0.0005 * (1.0 - diffuse_component), 0.0001);
+		float shadow = 1.0 - calc_shadow(f_spotlight_positions[i], i, bias, 2);
 		float intensity = shadow * (spot_intensity(spot_factor, spot.limits) / att);
+
 		ambient += spot.properties.ambient * intensity;
 		diffuse += spot.properties.diffuse * diffuse_component * intensity;
 		specular += spot.properties.specular * calc_specular(to_light, to_view, normal, u_material.shininess) * intensity;
