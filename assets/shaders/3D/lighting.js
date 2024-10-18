@@ -50,7 +50,8 @@ in vec3 f_normal;
 in vec3 f_to_view;
 in vec2 f_uv;
 
-out vec4 frag_color;
+layout(location = 0) out vec4 frag_color;
+layout(location = 1) out vec4 bright_color;
 
 ${SHADERS_COMMON.LIGHTING_STRUCTURES}
 ${SHADERS_COMMON.MATERIAL_STRUCTURE}
@@ -121,7 +122,11 @@ void main() {
 	diffuse *= u_material.diffuse * texel;
 	specular *= u_material.specular;
 
-	frag_color = vec4(ambient + diffuse + specular, 1.0);
+	vec3 color = ambient + diffuse + specular;
+	float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
+
+	frag_color = vec4(color, 1.0);
+	bright_color = brightness > 1.0 ? frag_color : vec4(0.0, 0.0, 0.0, 1.0);
 }
 `
 

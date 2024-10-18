@@ -22,6 +22,7 @@ class framebuffer {
 	constructor(size, attachments, parameters = null) {
 		this.id = gl.createFramebuffer();
 		this.size = size;
+		this.draw_buffers = [];
 		this.textures = [];
 		this.texture_arrays = [];
 		this.render_buffers = [];
@@ -49,6 +50,7 @@ class framebuffer {
 	bind(target = null) {
 		gl.bindFramebuffer(this._default_or(target), this.id);
 		gl.viewport(0, 0, this.size[0], this.size[1]);
+		gl.drawBuffers(this.draw_buffers);
 	}
 
 	unbind(target = null) {
@@ -89,6 +91,7 @@ class framebuffer {
 		}
 
 		gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment.attachment, gl.TEXTURE_2D, texture, 0);
+		this.draw_buffers.push(attachment.attachment);
 		return texture;
 	}
 

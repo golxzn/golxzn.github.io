@@ -1,7 +1,8 @@
 [ ] Graphics
 	[ ] HDR
-	[ ] Bloom
 	[ ] Volumetric Fog
+	[ ] Render Graph
+	[x] Bloom
 	[x] Move face culling to per mesh level
 	[x] Particles
 		[x] Instancing
@@ -44,3 +45,4 @@
 [ ] Optimization
 	[ ] Transform feedback for particles
 	[ ] Stencil Shadow Volume
+	[ ] LOD

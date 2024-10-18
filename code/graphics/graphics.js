@@ -1,27 +1,4 @@
 
-const BLIT_TEXTURE_VERTEX_SHADER_CODE = /* glsl */ `#version 300 es
-layout(location = 0) in vec2 a_position;
-
-out vec2 f_uv;
-
-void main() {
-	gl_Position = vec4(a_position, 0.0, 1.0);
-	f_uv = (a_position + vec2(1.0)) * 0.5;
-}
-`;
-
-const BLIT_TEXTURE_FRAGMENT_SHADER_CODE = /* glsl */ `#version 300 es
-precision mediump float;
-in vec2 f_uv;
-out vec4 frag_color;
-
-uniform sampler2D u_screen;
-
-void main() {
-	frag_color = texture(u_screen, f_uv);
-}
-`;
-
 class graphics {
 	constructor(canvas) {
 		if (!gl) {
@@ -74,8 +51,9 @@ class graphics {
 				}
 			}, pipelines.load("3D", "DEPTH")),
 
-			color: new render_pass("Color Render Pass", new framebuffer([canvas.width, canvas.height], [
+			color: new render_pass("Color", new framebuffer([canvas.width, canvas.height], [
 				{ type: attachment_type.texture,      format: gl.RGBA,             attachment: gl.COLOR_ATTACHMENT0 },
+				{ type: attachment_type.texture,      format: gl.RGBA,             attachment: gl.COLOR_ATTACHMENT1 },
 				{ type: attachment_type.renderbuffer, format: gl.DEPTH24_STENCIL8, attachment: gl.DEPTH_STENCIL_ATTACHMENT  },
 			]), [
 				gl.CULL_FACE,
@@ -90,14 +68,21 @@ class graphics {
 				},
 				unbind: function(pass, graphics) {
 				}
-			} )
+			} ),
+
+			bloom: new render_pass("Bloom", new framebuffer([canvas.width, canvas.height], [
+				{ type: attachment_type.texture,  format: gl.RGBA, attachment: gl.COLOR_ATTACHMENT0 },
+			]), [], {
+				bind: function(pass, graphics) {
+					gl.clear(gl.COLOR_BUFFER_BIT);
+				},
+				unbind: function(pass, graphics) {
+				}
+			}, pipelines.load("3D", "BLOOM"))
 		};
 		this._current_render_pass = null;
 
-		this.blit_texture_pipeline = new pipeline("screen", {
-			[gl.VERTEX_SHADER  ]: BLIT_TEXTURE_VERTEX_SHADER_CODE,
-			[gl.FRAGMENT_SHADER]: BLIT_TEXTURE_FRAGMENT_SHADER_CODE
-		})
+		this.blit_texture_pipeline = pipelines.load("3D", "BLIT_SCREEN");
 		this.blit_mesh = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
@@ -116,6 +101,8 @@ class graphics {
 	render(instance) {
 		this.projection_stack = [this.active_camera.make_projection()];
 		this.view_stack = [this.active_camera.make_view()];
+
+		// TODO:!!!! RENDER GRAPH
 
 		// Spotlights Shadows
 		const shadow_pass = this.render_passes.spotlight_shadow;
@@ -154,9 +141,38 @@ class graphics {
 		instance.render(this);
 		color_pass.unbind(this);
 
+
+		// Bloom
+		const uniforms = {
+			u_direction: SETTINGS.graphics.bloom.direction,
+			u_weights: SETTINGS.graphics.bloom.weights
+		};
+
+		const bloom_pass = this.render_passes.bloom;
+		this._current_render_pass = bloom_pass;
+		bloom_pass.bind(this);
+
+		// First call to take the original color texture
+		this._blit_on_quad(bloom_pass.pipeline, { u_bloom: color_pass.framebuffer.texture(1) }, uniforms);
+
+		for (var i = 1; i < 10; ++i) {
+			const bloom_texture = bloom_pass.framebuffer.texture();
+			this._blit_on_quad(bloom_pass.pipeline, { u_bloom: bloom_texture }, uniforms);
+		}
+		bloom_pass.unbind(this);
+
+
+		// Blit on screen
 		gl.clear(gl.COLOR_BUFFER_BIT);
 		gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-		this._blit_on_quad(color_pass.framebuffer.texture());
+		this._blit_on_quad(
+			this.blit_texture_pipeline, { // todo replace it
+				u_screen: color_pass.framebuffer.texture(0),
+				u_bloom: bloom_pass.framebuffer.texture(0),
+			}, {
+				u_exposure: SETTINGS.graphics.exposure
+			}
+		);
 	}
 
 	set_active_camera(camera) {
@@ -340,7 +356,7 @@ class graphics {
 	}
 
 
-	_blit_on_quad(texture) {
+	_blit_on_quad(pipeline, textures, uniforms) {
 		// Blit on screen
 		// gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 		// gl.clear(gl.COLOR_BUFFER_BIT);
@@ -349,9 +365,17 @@ class graphics {
 		gl.cullFace(gl.FRONT);
 		gl.frontFace(gl.CW);
 
-		this.blit_texture_pipeline.use();
-		texture.bind();
-		this.blit_texture_pipeline.set_uniform("u_screen", 0, { as_integer: true });
+		pipeline.use();
+		for (const [name, value] of Object.entries(uniforms)) {
+			pipeline.set_uniform(name, value);
+		}
+
+		var bind_id = 0;
+		for (const [name, texture] of Object.entries(textures)) {
+			texture.bind(bind_id);
+			pipeline.set_uniform(name, bind_id, { as_integer: true });
+			++bind_id;
+		}
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
 		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

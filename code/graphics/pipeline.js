@@ -47,6 +47,9 @@ class pipeline {
 				case 2:
 					gl.uniform2fv(location, data);
 					break;
+				default:
+					gl.uniform1fv(location, data);
+					break;
 			}
 
 		} else if (typeof(value) == 'number') {
