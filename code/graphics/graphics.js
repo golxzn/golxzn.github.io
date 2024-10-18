@@ -23,8 +23,9 @@ class graphics {
 		this.spotlight_shadow_map_texture = null;
 
 		this.active_pass = 0;
+		this.render_size = golxzn.math.scale([canvas.width, canvas.height], SETTINGS.graphics.render_scale);
 		this.render_passes = {
-			spotlight_shadow: new render_pass("Spotlight Shadows", new framebuffer([1024, 1024], [ {
+			spotlight_shadow: new render_pass("Spotlight Shadows", new framebuffer(SETTINGS.graphics.shadow_resolution, [ {
 				type: attachment_type.texture_array,
 				layers: SHADERS_COMMON.MAX_SPOT_LIGHT_COLORS,
 				format: gl.DEPTH_COMPONENT,
@@ -51,7 +52,7 @@ class graphics {
 				}
 			}, pipelines.load("3D", "DEPTH")),
 
-			color: new render_pass("Color", new framebuffer([canvas.width, canvas.height], [
+			color: new render_pass("Color", new framebuffer(this.render_size, [
 				{ type: attachment_type.texture,      format: gl.RGBA,             attachment: gl.COLOR_ATTACHMENT0 },
 				{ type: attachment_type.texture,      format: gl.RGBA,             attachment: gl.COLOR_ATTACHMENT1 },
 				{ type: attachment_type.renderbuffer, format: gl.DEPTH24_STENCIL8, attachment: gl.DEPTH_STENCIL_ATTACHMENT  },
@@ -70,7 +71,7 @@ class graphics {
 				}
 			} ),
 
-			bloom: new render_pass("Bloom", new framebuffer([canvas.width, canvas.height], [
+			bloom: new render_pass("Bloom", new framebuffer(this.render_size, [
 				{ type: attachment_type.texture,  format: gl.RGBA, attachment: gl.COLOR_ATTACHMENT0 },
 			]), [], {
 				bind: function(pass, graphics) {
@@ -357,10 +358,6 @@ class graphics {
 
 
 	_blit_on_quad(pipeline, textures, uniforms) {
-		// Blit on screen
-		// gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-		// gl.clear(gl.COLOR_BUFFER_BIT);
-
 		gl.enable(gl.CULL_FACE);
 		gl.cullFace(gl.FRONT);
 		gl.frontFace(gl.CW);

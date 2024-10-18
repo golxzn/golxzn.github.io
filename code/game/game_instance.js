@@ -43,7 +43,8 @@ class game_instance {
 
 		// LIGHTING
 		// const directional_power = [0.1, 0.14, 0.22];
-		const directional_power = [0.01, 0.014, 0.022];
+		// const directional_power = [0.02, 0.028, 0.044];
+		const directional_power = [0.1, 0.14, 0.22];
 		const directional_properties = {
 			ambient: directional_power,
 			diffuse: directional_power,
