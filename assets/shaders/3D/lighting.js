@@ -19,7 +19,7 @@ out vec2 f_uv;
 uniform mat4 u_mvp;
 uniform mat4 u_model;
 uniform mat3 u_normal_matrix;
-uniform vec3 u_view_position;
+uniform mediump vec3 u_view_position;
 
 uniform mediump int u_spot_lights_count;
 uniform mat4 u_spot_light_transform[MAX_SPOT_LIGHT_COLORS];
@@ -56,12 +56,21 @@ layout(location = 1) out vec4 bright_color;
 ${SHADERS_COMMON.LIGHTING_STRUCTURES}
 ${SHADERS_COMMON.MATERIAL_STRUCTURE}
 
+struct FogInfo {
+	vec3 color;
+	float min_distance;
+	float max_distance;
+};
+
 uniform DirectionalLight u_dir_light;
 uniform int              u_point_lights_count;
 uniform PointLight       u_point_lights[MAX_POINT_LIGHT_COLORS];
 uniform int              u_spot_lights_count;
 uniform SpotLight        u_spot_lights[MAX_SPOT_LIGHT_COLORS];
 uniform Material         u_material;
+uniform vec3             u_view_position;
+
+/* uniform */ const FogInfo u_fog = FogInfo(vec3(0.01, 0.014, 0.022), 0.0, 30.0);
 
 uniform mediump sampler2DArray u_spotlight_shadow_map; // shadow map ALWAYS FIRST!!!!
 uniform sampler2D u_diffuse;
@@ -122,7 +131,10 @@ void main() {
 	diffuse *= u_material.diffuse * texel;
 	specular *= u_material.specular;
 
-	vec3 color = ambient + diffuse + specular;
+	float dist = length(u_view_position - f_position);
+	float fog_factor = clamp((u_fog.max_distance - dist) / (u_fog.max_distance - u_fog.min_distance), 0.0, 1.0);
+
+	vec3 color = mix(u_fog.color, ambient + diffuse + specular, fog_factor);
 	float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
 
 	frag_color = vec4(color, 1.0);

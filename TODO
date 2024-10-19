@@ -1,9 +1,9 @@
 [ ] Graphics
-	[ ] Distance Fog
 	[ ] Render Graph
 	[ ] Normal & Parallax Mapping
 	[ ] HDR
 	[ ] Volumetric Fog
+	[x] Distance Fog
 	[x] Bloom
 	[x] Move face culling to per mesh level
 	[x] Particles

@@ -1,4 +1,3 @@
-const CLEAR_COLOR = [0.01, 0.014, 0.022, 1.0];
 
 let handle;
 let last_time = 0;
@@ -44,7 +43,7 @@ function start() {
 		"scene"   : new scene_manager()
 	});
 	renderer = new graphics(display);
-	renderer.set_clear_color(CLEAR_COLOR);
+	renderer.set_clear_color(SETTINGS.graphics.clear_color);
 	service_provider().set("graphics", renderer); // Requires pipeline manager
 
 	loading = new loading_screen((state) => {
