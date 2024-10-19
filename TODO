@@ -1,7 +1,9 @@
 [ ] Graphics
+	[ ] Distance Fog
+	[ ] Render Graph
+	[ ] Normal & Parallax Mapping
 	[ ] HDR
 	[ ] Volumetric Fog
-	[ ] Render Graph
 	[x] Bloom
 	[x] Move face culling to per mesh level
 	[x] Particles
@@ -18,7 +20,7 @@
 	[x] UV scaling (make ground repeated mirrored)
 
 [ ] Models
-	[ ] glb/obj loading
+	[ ] glb loading
 	[ ] Animations
 
 [ ] Physics
