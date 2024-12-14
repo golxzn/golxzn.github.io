@@ -8,9 +8,9 @@
 
 #overlay {
 	opacity: 0.0;
-	background-color: #1F1F28;
-	color: #FF9E3B;
-	text-shadow: #ff9d3ba1 1px 0 10px;
+	background-color: #010101;
+	color: #816c80;
+	text-shadow: #1e161e 1px 0 10px;
 	left: 0px;
 	top: 0px;
 	pointer-events: none;
@@ -49,7 +49,7 @@
 .progress {
 	height: 15px;
 	width: 0%; /* Set progress percentage here */
-	background-color: #FF9E3B;
+	background-color: #816c80;
 	border-radius: 20px;
 	text-align: center;
 	line-height: 30px;
