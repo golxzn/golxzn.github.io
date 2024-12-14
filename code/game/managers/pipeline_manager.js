@@ -9,15 +9,20 @@ class pipeline_manager {
 			return this._pipelines[name];
 		}
 
-		const fragment_code = pipeline_manager._get_shader_text(name, dimensions, "frag");
-		if (fragment_code == null) {
+		const shader_data = pipeline_manager._find_shader(name, dimensions);
+		if (shader_data == null) {
+			console.error(`[game][pipeline_manager] Cannot find a "${dimensions}.${name}" shader`);
+			return null;
+		}
+
+		if (shader_data.frag == null) {
 			console.error(`[game][pipeline_manager] Cannot find fragment code for "${dimensions}.${name}"`);
 			return null;
 		}
 		const pipeline_instance = new pipeline(name, {
-			[gl.VERTEX_SHADER  ]: pipeline_manager._get_shader_text(name, dimensions, "vert"),
-			[gl.FRAGMENT_SHADER]: fragment_code
-		}, pipeline_manager._check_lighting_support(fragment_code));
+			[gl.VERTEX_SHADER  ]: shader_data.vert,
+			[gl.FRAGMENT_SHADER]: shader_data.frag
+		}, shader_data.properties);
 
 		if (pipeline_instance != null && pipeline_instance.valid()) {
 			this._pipelines[name] = pipeline_instance;
@@ -31,16 +36,12 @@ class pipeline_manager {
 		return name in this._pipelines && this._pipelines[name] != null;
 	}
 
-	static _check_lighting_support(code) {
-		return code.includes("LightProperties");
-	}
-
-	static _get_shader_text(name, dimensions, type) {
+	static _find_shader(name, dimensions) {
 		if (!(dimensions in SHADERS)) return null;
 
 		const dim = SHADERS[dimensions];
 		if (!(name in dim)) return null;
 
-		return dim[name][type];
+		return dim[name];
 	}
 };

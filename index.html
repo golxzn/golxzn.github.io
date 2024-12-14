@@ -22,6 +22,21 @@
 		</div>
 	</div>
 
+
+<!------------------------- CORE --------------------------->
+
+	<script src="code/math/common.js"></script>
+	<script src="code/math/vector.js"></script>
+	<script src="code/math/matrix.js"></script>
+
+	<script src="code/core/settings.js"></script>
+	<script src="code/core/utils.js"></script>
+	<script src="code/core/opengl.js"></script>
+
+	<script src="code/core/mouse_info.js"></script>
+	<script src="code/core/keyboard_info.js"></script>
+	<script src="code/core/service_provider.js"></script>
+
 <!------------------------ SHADERS ------------------------->
 
 	<script src="assets/shaders/namespace.js"></script>
@@ -31,22 +46,12 @@
 	<script src="assets/shaders/3D/primitive.js"></script>
 	<script src="assets/shaders/3D/lighting.js"></script>
 	<script src="assets/shaders/3D/particles.js"></script>
-	<script src="assets/shaders/3D/particles_lighting.js"></script>
+	<script src="assets/shaders/3D/snow_particles_lighting.js"></script>
 	<script src="assets/shaders/3D/blit_screen.js"></script>
 
 <!------------------------ SOURCES ------------------------->
 
-	<script src="code/math/common.js"></script>
-	<script src="code/math/vector.js"></script>
-	<script src="code/math/matrix.js"></script>
-
-	<script src="code/core/settings.js"></script>
-	<script src="code/core/utils.js"></script>
-	<script src="code/core/opengl.js"></script>
-	<script src="code/core/mouse_info.js"></script>
-	<script src="code/core/keyboard_info.js"></script>
-	<script src="code/core/service_provider.js"></script>
-
+	<script src="code/graphics/buffer.js"></script>
 	<script src="code/graphics/framebuffer.js"></script>
 	<script src="code/graphics/render_pass.js"></script>
 	<script src="code/graphics/graphics.js"></script>
@@ -67,8 +72,9 @@
 	<script src="code/game/objects/object_base.js"></script>
 	<script src="code/game/objects/ground.js"></script>
 	<script src="code/game/objects/rotating_cube.js"></script>
-	<script src="code/game/objects/particles/cpu_particles.js"></script>
-	<script src="code/game/objects/particles/falling_snow.js"></script>
+	<script src="code/game/objects/particles/cpu/particles.js"></script>
+	<script src="code/game/objects/particles/snow_properties.js"></script>
+	<script src="code/game/objects/particles/cpu/falling_snow.js"></script>
 
 	<script src="code/game/loading_screen.js"></script>
 	<script src="code/game/game_instance.js"></script>

@@ -27,12 +27,16 @@ class model {
 		}
 	}
 
+	begin_draw_group(graphics) {}
+	end_draw_group(graphics) {}
+
 	draw(graphics) {
 		const resources = get_service("resource");
 
 		for (const group of this.groups) {
 			graphics.push_pipeline(group.pipeline);
 			graphics.set_engine_uniforms();
+			this.begin_draw_group(graphics);
 
 			for (const mesh of group.meshes) {
 				if (mesh.material != null) {
@@ -44,6 +48,7 @@ class model {
 
 				mesh.draw(graphics);
 			}
+			this.end_draw_group(graphics);
 
 			graphics.pop_pipeline();
 		}

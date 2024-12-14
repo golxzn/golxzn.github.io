@@ -1,5 +1,9 @@
 Object.assign(SHADERS["3D"], { LIGHTING : {
 
+properties : {
+	has_lighting: true,
+},
+
 //============================================ VERTEX ============================================//
 
 vert : /* glsl */ `#version 300 es

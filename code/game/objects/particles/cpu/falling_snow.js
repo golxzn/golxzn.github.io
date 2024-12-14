@@ -1,45 +1,8 @@
 
-const DEFAULT_SNOW_PROPERTIES = {
-	zone: {
-		x1: -30, y1: -2, z1: -30, // LEFT BOTTOM FRONT CORNER
-		x2:  30, y2: 20, z2:  30, // RIGHT TOP BACK CORNER
-	},
-	speed: {
-		min: 1.0,
-		max: 1.2
-	},
-	scale: {
-		min: [0.005, 0.005, 0.005],
-		max: [0.008, 0.008, 0.008]
-	},
-	direction: [0.4, -1.0, 0.0]
-};
-
-class snow_properties {
-	constructor(data = DEFAULT_SNOW_PROPERTIES) {
-		this.zone = data.zone == null ? DEFAULT_SNOW_PROPERTIES.zone : data.zone;
-		this.speed = data.speed == null ? DEFAULT_SNOW_PROPERTIES.speed : data.speed;
-		this.scale = data.scale == null ? DEFAULT_SNOW_PROPERTIES.scale : data.scale;
-		this.direction = golxzn.math.normalize(
-			data.direction == null ? DEFAULT_SNOW_PROPERTIES.direction : data.direction
-		);
-
-		snow_properties._fix_missing_fields(this.zone, DEFAULT_SNOW_PROPERTIES.zone);
-		snow_properties._fix_missing_fields(this.speed, DEFAULT_SNOW_PROPERTIES.speed);
-		snow_properties._fix_missing_fields(this.scale, DEFAULT_SNOW_PROPERTIES.scale);
-	}
-
-	static _fix_missing_fields(target, defaults) {
-		for (const field of Object.keys(defaults)) {
-			if (!Object.hasOwn(target, field)) target[field] = 0.0;
-		}
-	}
-};
-
-class falling_snow extends cpu_particles {
+class cpu_falling_snow extends cpu_particles {
 	constructor(name, textures, count, properties = new snow_properties()) {
-		const pipeline = ["3D", "PARTICLES_LIGHTING"]
-		super(name, count, new mesh(textures, "none", falling_snow._make_mesh(count, pipeline)));
+		const pipeline = ["3D", "SNOW_PARTICLES_LIGHTING"];
+		super(name, count, new mesh(textures, "none", cpu_falling_snow._make_mesh(count, pipeline)));
 		this.properties = properties;
 
 		this.transform_all_particles((_, particle) => { this._spawn(particle) });
@@ -110,7 +73,6 @@ class falling_snow extends cpu_particles {
 			pipeline: pipeline,
 			draw_method: new draw_method({
 				type: draw_method_type.instanced_array,
-				// mode: gl.TRIANGLE_FAN,
 				mode: gl.TRIANGLES,
 				target_buffer: "vbo",
 				instances_count: instance_count
@@ -156,23 +118,6 @@ class falling_snow extends cpu_particles {
 						// 0xB7, 0x00, 0x7F, 0x00, // 10                \/
 						// 0x93, 0x40, 0x7F, 0x00, // 11                 7
 						// 0xDB, 0x40, 0x7F, 0x00  // 12
-
-					// STAR 4 outer vertices
-						// 0x00, 0x00, 0x7F, 0x00, // 0
-						// 0x00, 0x7F, 0x7F, 0x00, // 1
-						// 0x20, 0x20, 0x7F, 0x00, // 2
-						// 0x7F, 0x00, 0x7F, 0x00, // 3
-						// 0x20, 0xE0, 0x7F, 0x00, // 4
-						// 0x00, 0x81, 0x7F, 0x00, // 5
-						// 0xE0, 0xE0, 0x7F, 0x00, // 6
-						// 0x81, 0x00, 0x7F, 0x00, // 7
-						// 0xE0, 0x20, 0x7F, 0x00, // 8
-
-					//  [ x ] [ y ] [nz ] [off]
-						// 0xC0, 0xC0, 0x7F, 0x00, // cube, triangle strip
-						// 0x40, 0xC0, 0x7F, 0x00,
-						// 0xC0, 0x40, 0x7F, 0x00,
-						// 0x40, 0x40, 0x7F, 0x00
 					])
 				}),
 				new buffer_info({
@@ -198,16 +143,7 @@ class falling_snow extends cpu_particles {
 						new attribute_layout({ count: 3, type: gl.FLOAT, divisor: 1 })
 					],
 					count: instance_count
-				})/*,
-				new buffer_info({
-					name: "ebo",
-					target: gl.ELEMENT_ARRAY_BUFFER,
-					usage: gl.STATIC_DRAW,
-					// binary: new Uint16Array([0, 1, 2, 3]) // cube
-					// binary: new Uint16Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 1]) // star 4 vert
-					// binary: new Uint16Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1]) // star 6 vert
-					binary: new Uint16Array([0, 1, 2, 3, 4, 5]) // gl.TRIANGLE
-				})*/
+				})
 			]
 		}
 	}

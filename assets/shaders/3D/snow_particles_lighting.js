@@ -1,5 +1,9 @@
 
-Object.assign(SHADERS["3D"], { PARTICLES_LIGHTING : {
+Object.assign(SHADERS["3D"], { SNOW_PARTICLES_LIGHTING : {
+
+properties : {
+	has_lighting: true,
+},
 
 vert : /* glsl */ `#version 300 es
 

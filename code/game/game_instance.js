@@ -99,7 +99,7 @@ class game_instance {
 
 		// PARTICLES
 		const particles_count = 50000;
-		this.scene_manager.add_object(new falling_snow(
+		this.scene_manager.add_object(new cpu_falling_snow(
 			"snow-particles", {}, particles_count
 		));
 

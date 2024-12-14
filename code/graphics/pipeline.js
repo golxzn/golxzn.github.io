@@ -1,9 +1,20 @@
 
+const DEFAULT_PROPERTIES = {
+	has_lighting: false,
+	transform_feedback: null,
+};
+
 class pipeline {
-	constructor(name, shaders, has_lighting = false) {
+	constructor(name, shaders, properties = DEFAULT_PROPERTIES) {
 		this._name = name;
+		this._properties = properties == null ? DEFAULT_PROPERTIES : properties;
+		for (const [key, value] of Object.entries(DEFAULT_PROPERTIES)) {
+			if (!Object.hasOwn(this._properties, key)) {
+				this._properties[key] = value;
+			}
+		}
+
 		this._program = this._make_program(shaders);
-		this._lighting_support = has_lighting;
 	}
 
 	valid() {
@@ -11,7 +22,10 @@ class pipeline {
 	}
 
 	lighting_support() {
-		return this._lighting_support;
+		return this._properties.has_lighting;
+	}
+	transform_feedback_support() {
+		return this._properties.transform_feedback != null;
 	}
 
 	attribute_location(attribute_name) {
@@ -23,7 +37,7 @@ class pipeline {
 	}
 
 	set_uniform(uniform_name, value, options = { transpose: false, as_integer: false }) {
-		const location = this.uniform_location(uniform_name);
+		const location = pipeline._is_string(uniform_name) ? this.uniform_location(uniform_name) : uniform_name;
 		if (location == null) {
 			console.error(`[pipeline][${this._name}] Could not find a "${uniform_name}" uniform location!`);
 			return;
@@ -96,6 +110,9 @@ class pipeline {
 			gl.attachShader(program, shader);
 		}
 
+		if (this._properties.transform_feedback != null) {
+			this._enable_transform_feedback(program, this._properties.transform_feedback);
+		}
 		gl.linkProgram(program);
 		if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
 			return program;
@@ -105,6 +122,10 @@ class pipeline {
 		console.error("[pipeline]" + gl.getProgramInfoLog(program));
 		gl.deleteProgram(program);
 		return null;
+	}
+
+	_enable_transform_feedback(program, info) {
+		gl.transformFeedbackVaryings(program, info.varyings, info.buffer_mode);
 	}
 
 	_compile_shader(source_code, type) {
@@ -124,5 +145,9 @@ class pipeline {
 		console.error("[pipeline]", gl.getShaderInfoLog(shader));
 		gl.deleteShader(shader);
 		return null;
+	}
+
+	static _is_string(value) {
+		return typeof value === 'string' || value instanceof String;
 	}
 };

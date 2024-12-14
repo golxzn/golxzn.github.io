@@ -200,13 +200,15 @@ class graphics {
 	set_engine_uniforms() {
 		const pipeline = this.current_pipeline();
 		pipeline.set_uniform("u_mvp", this.model_view_projection());
-		if (pipeline.uniform_location("u_model")) {
-			pipeline.set_uniform("u_model", this.current_transform());
+		const u_model_location = pipeline.uniform_location("u_model");
+		if (u_model_location ) {
+			pipeline.set_uniform(u_model_location, this.current_transform());
 			pipeline.set_uniform("u_view_position", this.active_camera.position)
 		}
 
-		if (pipeline.uniform_location("u_normal_matrix")) {
-			pipeline.set_uniform("u_normal_matrix",
+		const u_normal_matrix_location = pipeline.uniform_location("u_normal_matrix");
+		if (u_normal_matrix_location) {
+			pipeline.set_uniform(u_normal_matrix_location,
 				golxzn.math.mat3.inverse(golxzn.math.mat3.build_from(this.current_transform())),
 				{ transpose: true }
 			);
@@ -221,9 +223,10 @@ class graphics {
 
 		this.directional_lights.apply(pipeline, "u_dir_light");
 
-		if (pipeline.uniform_location('u_point_lights_count') == null) return;
+		const u_point_lights_count_location = pipeline.uniform_location('u_point_lights_count');
+		if (u_point_lights_count_location == null) return;
 
-		pipeline.set_uniform('u_point_lights_count', this.point_lights.length, { as_integer: true });
+		pipeline.set_uniform(u_point_lights_count_location, this.point_lights.length, { as_integer: true });
 		for (var i = 0; i < this.point_lights.length; i++) {
 			this.point_lights[i].apply(pipeline, `u_point_lights[${i}]`);
 		}
@@ -232,10 +235,10 @@ class graphics {
 		for (var i = 0; i < this.spot_lights.length; i++) {
 			const light = this.spot_lights[i];
 			light.apply(pipeline, `u_spot_lights[${i}]`);
-			const transform_name = `u_spot_light_transform[${i}]`;
-			if (!pipeline.uniform_location(transform_name)) continue;
+			const transform_location = pipeline.uniform_location(`u_spot_light_transform[${i}]`);
+			if (transform_location == null) continue;
 
-			pipeline.set_uniform(transform_name, golxzn.math.mat4.multiply(
+			pipeline.set_uniform(transform_location, golxzn.math.mat4.multiply(
 				light.view(),
 				light.projection()
 			));
@@ -275,9 +278,10 @@ class graphics {
 
 	apply_texture(texture, name) {
 		const pipeline = this.current_pipeline();
-		if (pipeline.uniform_location(name) != null) {
+		const location = pipeline.uniform_location(name);
+		if (location != null) {
 			texture.bind(this.bound_textures);
-			this.current_pipeline().set_uniform(name, this.bound_textures, { as_integer: true });
+			pipeline.set_uniform(location, this.bound_textures, { as_integer: true });
 			++this.bound_textures;
 		}
 	}
@@ -292,41 +296,60 @@ class graphics {
 		}
 	}
 
-	draw_mesh(mesh) {
-		gl.bindVertexArray(mesh.vao);
-		gl.drawElements(mesh.draw_mode, mesh.elements_count, gl.UNSIGNED_SHORT, 0);
-	}
-
-
 //============================== draw buffers ==============================//
 
 	draw_array(draw_info, mesh_instance) {
-		const vbo = mesh_instance.buffers[draw_info.target_buffer];
-		gl.bindVertexArray(mesh_instance.vao);
+		const vbo = mesh_instance.vao.get_buffer(draw_info.target_buffer);
+		mesh_instance.vao.bind();
 		gl.drawArrays(draw_info.mode, 0, vbo.info.count);
-		gl.bindVertexArray(null);
+		mesh_instance.vao.unbind();
+	}
+
+	draw_array_transform_feedback(draw_info, mesh_instance) {
+		const vbo = mesh_instance.vao.get_buffer(draw_info.target_buffer);
+		// We should get this buffer from another VAO!
+		const tb = mesh_instance.vao.get_buffer(draw_info.output_buffer);
+		mesh_instance.vao.bind();
+		gl.bindBufferBase(draw_info.mode, 0, tb);
+		gl.beginTransformFeedback(draw_info.mode)
+		gl.drawArrays(draw_info.mode, 0, vbo.info.count);
+		gl.endTransformFeedback();
+		gl.bindBufferBase(draw_info.mode, 0, null);
+		mesh_instance.vao.unbind();
 	}
 
 	draw_elements(draw_info, mesh_instance) {
-		const ebo = mesh_instance.buffers[draw_info.target_buffer];
-		gl.bindVertexArray(mesh_instance.vao);
+		const ebo = mesh_instance.vao.get_buffer(draw_info.target_buffer);
+		mesh_instance.vao.bind();
 		gl.drawElements(draw_info.mode, ebo.info.count, gl.UNSIGNED_SHORT, 0);
-		gl.bindVertexArray(null);
+		mesh_instance.vao.unbind();
 	}
 
 	draw_instanced_array(draw_info, mesh_instance) {
-		const vbo = mesh_instance.buffers[draw_info.target_buffer];
-		gl.bindVertexArray(mesh_instance.vao);
+		const vbo = mesh_instance.vao.get_buffer(draw_info.target_buffer);
+		mesh_instance.vao.bind();
 		gl.drawArraysInstanced(draw_info.mode, 0, vbo.info.count, draw_info.instances_count);
-		gl.bindVertexArray(null);
+		mesh_instance.vao.unbind();
+	}
+
+	draw_instanced_array_transform_feedback(draw_info, mesh_instance) {
+		const vbo = mesh_instance.vao.get_buffer(draw_info.target_buffer);
+		const tb = mesh_instance.vao.get_buffer(draw_info.output_buffer);
+		mesh_instance.vao.bind();
+		gl.bindBufferBase(draw_info.mode, 0, tb);
+		gl.beginTransformFeedback(draw_info.mode)
+		gl.drawArraysInstanced(draw_info.mode, 0, vbo.info.count, draw_info.instances_count);
+		gl.endTransformFeedback();
+		gl.bindBufferBase(draw_info.mode, 0, null);
+		mesh_instance.vao.unbind();
 	}
 
 	draw_instanced_elements(draw_info, mesh_instance) {
-		const ebo = mesh_instance.buffers[draw_info.target_buffer];
-		gl.bindVertexArray(mesh_instance.vao);
+		const ebo = mesh_instance.vao.get_buffer(draw_info.target_buffer);
+		mesh_instance.vao.bind();
 		gl.drawElementsInstanced(draw_info.mode, ebo.info.count, gl.UNSIGNED_SHORT, 0,
 			draw_info.instances_count);
-		gl.bindVertexArray(null);
+		mesh_instance.vao.unbind();
 	}
 
 //==========================================================================//
