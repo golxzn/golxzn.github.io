@@ -9,7 +9,7 @@ class game_instance {
 		this.scene_manager = get_service("scene");
 		this.paused = true;
 
-		this.camera = new flying_camera([0.0, 3.0, -5.0]);
+		this.camera = new flying_camera([0.0, 20.0, -20.0]);
 		graphics.set_active_camera(this.camera);
 
 		this._load_demo_scene(graphics);
@@ -43,8 +43,7 @@ class game_instance {
 
 		// LIGHTING
 		// const directional_power = [0.1, 0.14, 0.22];
-		// const directional_power = [0.02, 0.028, 0.044];
-		const directional_power = [0.1, 0.14, 0.22];
+		const directional_power = [0.02, 0.028, 0.044];
 		const directional_properties = {
 			ambient: directional_power,
 			diffuse: directional_power,
@@ -60,7 +59,7 @@ class game_instance {
 		];
 
 		for (const color of rgb) {
-			const pos = golxzn.math.scale(color, 25.0);
+			const pos = golxzn.math.scale(color, 15.0);
 			graphics.point_lights.push(new PointLight(
 				pos, attenuation, { ambient: color, diffuse: color, specular: color }
 			));
@@ -73,8 +72,8 @@ class game_instance {
 
 		const spot_color = [0.96, 0.72, 0.36];
 		const spot_limits = {
-			inner: Math.cos(golxzn.math.to_radians(29.5)),
-			outer: Math.cos(golxzn.math.to_radians(55.5))
+			inner: Math.cos(golxzn.math.to_radians(18.0)),
+			outer: Math.cos(golxzn.math.to_radians(19.5))
 		};
 		const spot_properties = {
 			ambient: spot_color,
@@ -82,18 +81,30 @@ class game_instance {
 			specular: spot_color
 		};
 
-		for (var i = 0; i < 3; ++i) {
-			const position = [-8.0, 16.0, i * 12.0 - 12.0]; // position
+		const distance_from_center = 16.0;
+		const light_height = 16.0;
+		const light_count = SHADERS_COMMON.MAX_SPOT_LIGHT_COLORS;
+		const angle = 2.0 * Math.PI / light_count;
 
-			graphics.spot_lights.push(new SpotLight(
-				position,
-				[0.4, -1.0, 0.0], // direction
-				[1.0, 0.007, 0.0002], // attenuation
-				spot_limits, spot_properties
+		for (var i = 0; i < light_count; ++i) {
+			const position = [
+				distance_from_center * Math.cos(i * angle),
+				light_height,
+				distance_from_center * Math.sin(i * angle)
+			];
+			const direction = golxzn.math.normalize(golxzn.math.vec3.negative(position));
+
+			var light = new SpotLight(
+				position, direction, [1.0, 0.007, 0.0002], spot_limits, spot_properties
+			);
+
+			graphics.spot_lights.push(light);
+
+			this.scene_manager.add_object(new floating_cube(`spot_${i}`,
+				new model([ new mesh({}, null, primitives.make_cube_colored(spot_color)) ]),
+				m4.scale(m4.translate(m4.make_identity(), position), [0.25, 0.25, 0.25]),
+				1.0, 0.08, light, i * (Math.PI / 4.0)
 			));
-			this.scene_manager.add_object(new model_object(`spot_${i}`, new model([
-				new mesh({}, null, primitives.make_cube_colored(spot_color))
-			]), m4.scale(m4.translate(m4.make_identity(), position), [0.25, 0.25, 0.25])));
 		}
 
 
@@ -102,35 +113,6 @@ class game_instance {
 		this.scene_manager.add_object(new cpu_falling_snow(
 			"snow-particles", {}, particles_count
 		));
-
-		// var snow = this.scene_manager.add_object(new particles(
-		// 	"snow-particles", { u_diffuse: "assets/textures/lain.jpg" }, particles_count
-		// ));
-
-		// const spawn_rectangle = {
-		// 	x1: -50.0, z1: -50.0,
-		// 	x2:  50.0, z2:  50.0
-		// };
-
-		// // Spawn particles
-		// const x = 0;
-		// const y = 1;
-		// const z = 2;
-		// snow.transform_all_particles((id, particle) => {
-		// 	particle.offsets[x] = golxzn.get_random(spawn_rectangle.x1, spawn_rectangle.x2);
-		// 	particle.offsets[y] = golxzn.get_random(20, 22);
-		// 	particle.offsets[z] = golxzn.get_random(spawn_rectangle.z1, spawn_rectangle.z2);
-
-		// 	particle.rotation[x] = 0;
-		// 	particle.rotation[y] = golxzn.math.to_radians(golxzn.get_random(0, 180));
-		// 	particle.rotation[z] = 0;
-
-		// 	// const scale = 1.0 + (Math.random() - 0.5) * 0.1; // From 0.95 to 1.05
-		// 	const scale = Math.random() * 0.7 + 0.1; // From 0.1 to 0.8
-		// 	particle.scale[x] = scale;
-		// 	particle.scale[y] = 1.0;
-		// 	particle.scale[z] = scale;
-		// });
 	}
 
 // Event handling

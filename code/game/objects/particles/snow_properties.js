@@ -1,8 +1,8 @@
 
 const DEFAULT_SNOW_PROPERTIES = {
 	zone: {
-		x1: -30, y1: -2, z1: -30, // LEFT BOTTOM FRONT CORNER
-		x2:  30, y2: 20, z2:  30, // RIGHT TOP BACK CORNER
+		x1: -40, y1: -2, z1: -40, // LEFT BOTTOM FRONT CORNER
+		x2:  40, y2: 20, z2:  40, // RIGHT TOP BACK CORNER
 	},
 	speed: {
 		min: 1.0,

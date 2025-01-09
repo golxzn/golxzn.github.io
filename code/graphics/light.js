@@ -105,6 +105,7 @@ class SpotLight extends PointLight {
 		this._direction = golxzn.math.normalize(direction);
 		this._limits = limits == null ? DEFAULT_SPOT_LIMITS : limits;
 		this._view = null;
+		this._view_proj = null;
 		this._projection = golxzn.math.mat4.make_perspective(
 			this._limits.outer * 2,
 			1.0,
@@ -115,11 +116,13 @@ class SpotLight extends PointLight {
 	set position(value) {
 		this._position = value;
 		this._view = null;
+		this._view_proj = null;
 	}
 	get position() { return this._position; }
 	set direction(value) {
 		this._direction = golxzn.math.normalize(value);
 		this._view = null;
+		this._view_proj = null;
 	}
 	get direction() { return this._direction; }
 
@@ -144,4 +147,18 @@ class SpotLight extends PointLight {
 		return this._view;
 	}
 	projection() { return this._projection; }
+
+	view_projection() {
+		if (this._view_proj == null) {
+			this._view_proj = golxzn.math.mat4.multiply(this.view(), this.projection());
+		}
+		return this._view_proj;
+	}
+
+	view_projection_position() {
+		return golxzn.math.mat4.multiply_vec4(
+			this.view_projection(),
+			this._position.concat(1.0)
+		);
+	}
 }

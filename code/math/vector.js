@@ -6,6 +6,10 @@ Object.assign(golxzn.math, {
 				lhv[2] * rhv[0] - lhv[0] * rhv[2],
 				lhv[0] * rhv[1] - lhv[1] * rhv[0]
 			];
+		},
+
+		negative : function(vector) {
+			return [-vector[0], -vector[1], -vector[2]];
 		}
 	},
 
@@ -21,6 +25,13 @@ Object.assign(golxzn.math, {
 		return Math.sqrt(this.length_squared(vector));
 	},
 
+	negative : function(vector) {
+		var result = Array(vector.length).fill(0.0);
+		for (var i = 0; i < vector.length; i++) {
+			result[i] = -vector[i];
+		}
+		return result;
+	},
 
 	scale : function(vector, scalar) {
 		var result = Array(vector.length).fill(0.0);

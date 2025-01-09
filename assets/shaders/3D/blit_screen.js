@@ -2,6 +2,7 @@
 Object.assign(SHADERS["3D"], { BLIT_SCREEN : {
 
 vert: /* glsl */ `#version 300 es
+#pragma vscode_glsllint_stage: vert
 layout(location = 0) in vec2 a_position;
 
 out vec2 f_uv;
@@ -15,34 +16,20 @@ void main() {
 
 
 
-
-
 frag: /* glsl */ `#version 300 es
+#pragma vscode_glsllint_stage: frag
 precision mediump float;
+
 in vec2 f_uv;
 out vec4 frag_color;
 
 #define WEIGHTS_COUNT 5
 
-uniform float u_exposure;
-
 uniform sampler2D u_screen;
 uniform sampler2D u_bloom;
 
-vec3 tone_mapping(vec3 color, float exposure) {
-	return vec3(1.0) - exp(-color * exposure);
-}
-
-vec3 gamma_correction(vec3 color) {
-	const float gamma = 1.0 / 2.2;
-	return pow(color, vec3(gamma));
-}
-
 void main() {
-    vec3 color = texture(u_screen, f_uv).rgb + texture(u_bloom, f_uv).rgb;// + bloom(u_bloom, u_direction, u_weights);
-	color = tone_mapping(color, u_exposure);
-	// color = gamma_correction(color);
-	frag_color = vec4(color, 1.0);
+	frag_color = vec4(texture(u_screen, f_uv).rgb + texture(u_bloom, f_uv).rgb, 1.0);
 }
 `
 

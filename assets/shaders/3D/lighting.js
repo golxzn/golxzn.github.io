@@ -1,7 +1,7 @@
 Object.assign(SHADERS["3D"], { LIGHTING : {
 
 properties : {
-	has_lighting: true,
+	flags: PIPELINE_FLAGS.lighting_support | PIPELINE_FLAGS.material_support
 },
 
 //============================================ VERTEX ============================================//

@@ -1,13 +1,14 @@
-
 const DEFAULT_PROPERTIES = {
-	has_lighting: false,
+	flags: PIPELINE_FLAGS.nothing,
 	transform_feedback: null,
 };
+Object.freeze(DEFAULT_PROPERTIES);
 
 class pipeline {
 	constructor(name, shaders, properties = DEFAULT_PROPERTIES) {
 		this._name = name;
 		this._properties = properties == null ? DEFAULT_PROPERTIES : properties;
+		this._texture_counter = 0;
 		for (const [key, value] of Object.entries(DEFAULT_PROPERTIES)) {
 			if (!Object.hasOwn(this._properties, key)) {
 				this._properties[key] = value;
@@ -17,15 +18,36 @@ class pipeline {
 		this._program = this._make_program(shaders);
 	}
 
+	use() {
+		gl.useProgram(this._program);
+	}
+
+	unuse() {
+		gl.useProgram(null);
+	}
+
 	valid() {
 		return this._program != null;
 	}
 
-	lighting_support() {
-		return this._properties.has_lighting;
+	support(flag) {
+		return (this._properties.flags & flag) == flag;
 	}
+
 	transform_feedback_support() {
 		return this._properties.transform_feedback != null;
+	}
+
+	push_texture(name) {
+		this.set_uniform(name, this._texture_counter++, { as_integer: true });
+	}
+
+	pop_texture(count = 1) {
+		this._texture_counter = Math.max(0, this._texture_counter - count);
+	}
+
+	pushed_textures_count() {
+		return this._texture_counter;
 	}
 
 	attribute_location(attribute_name) {
@@ -91,10 +113,6 @@ class pipeline {
 		return null;
 	}
 
-	use() {
-		gl.useProgram(this._program);
-	}
-
 // private:
 	_make_program(shaders) {
 		const program = gl.createProgram();
@@ -143,6 +161,7 @@ class pipeline {
 		}
 		console.error(`[pipeline][${this._name}] Failed to compile the ${type_names[type]} shader:`)
 		console.error("[pipeline]", gl.getShaderInfoLog(shader));
+		console.error("[pipeline]", source_code);
 		gl.deleteShader(shader);
 		return null;
 	}

@@ -19,67 +19,106 @@ class graphics {
 		this.point_lights = [];
 		this.spot_lights = [];
 
-		this.bound_textures = 0;
 		this.spotlight_shadow_map_texture = null;
 
 		this.active_pass = 0;
 		this.render_size = golxzn.math.scale([canvas.width, canvas.height], SETTINGS.graphics.render_scale);
+
+/*
+ [scene]                                          +--------[quad]--------+
+ |                                                |           |          |
+ |  +--------------------------+     +--------------+  +------------+  +------------+
+ +->| GEOMETRY PASS (G-Buffer) |--+  | SHADING PASS |->| BLOOM PASS |->| BLIT  PASS |
+ |  +--------------------------+  |  +--------------+  +------------+  +------------+
+ |                                +--> pos/norm/clr |
+ |  +--------------------------+     |              |
+ +->| DIRECTION SHADOW (DEPTH) |-----> dir_shadows  |
+ |  +--------------------------+     |              |
+ +->| SPOTLIGHT SHADOW (DEPTH) |-----> spot_shadows |
+ |  +--------------------------+     |              |
+ +->| POINTS SHADOW (DEPTH)    |-----> dir_shadows  |
+    +--------------------------+     +--------------+
+
+TODO:
+- [ ] Bind textures to programs once during initialization;
+*/
+		const bind_cull_face = (pass, graphics) => {
+			gl.cullFace(gl.FRONT);
+			gl.frontFace(gl.CCW);
+			gl.depthFunc(gl.LEQUAL);
+			gl.depthMask(true);
+		};
+
 		this.render_passes = {
-			spotlight_shadow: new render_pass("Spotlight Shadows", new framebuffer(SETTINGS.graphics.shadow_resolution, [ {
-				type: attachment_type.texture_array,
-				layers: SHADERS_COMMON.MAX_SPOT_LIGHT_COLORS,
-				format: gl.DEPTH_COMPONENT,
-				internal: gl.DEPTH_COMPONENT32F,
-				attachment: gl.DEPTH_ATTACHMENT,
-				data_type: gl.FLOAT,
-				parameters: {
-					[gl.TEXTURE_MIN_FILTER]: gl.NEAREST,
-					[gl.TEXTURE_MAG_FILTER]: gl.NEAREST,
-					[gl.TEXTURE_WRAP_S]: gl.CLAMP_TO_EDGE,
-					[gl.TEXTURE_WRAP_T]: gl.CLAMP_TO_EDGE,
-				}
-			} ]), [
-				gl.CULL_FACE,
-				gl.DEPTH_TEST
-			], {
-				bind: function(pass, graphics) {
-					gl.cullFace(gl.FRONT);
-					gl.frontFace(gl.CCW);
-					gl.depthFunc(gl.LEQUAL);
-					gl.depthMask(true);
+			geometry: new render_pass("Geometry",
+				new framebuffer(this.render_size, [
+					{ name: "u_position", type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT0, storage: true },
+					{ name: "u_normal",   type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT1, storage: true },
+					{ name: "u_diffuse",  type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT2, storage: true },
+					{ type: attachment_type.renderbuffer, format: gl.DEPTH_COMPONENT16, attachment: gl.DEPTH_ATTACHMENT  }, // was gl.DEPTH24_STENCIL8
+				], pipelines.load("3D", "LIGHTING_DEFERRED")),
+				[ gl.CULL_FACE, gl.DEPTH_TEST ], {
+					bind: function(pass, graphics) {
+						bind_cull_face(pass, graphics);
+						gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+					},
+					unbind: (pass, graphics) => { }
 				},
-				unbind: function(pass, graphics) {
-				}
-			}, pipelines.load("3D", "DEPTH")),
+				pipelines.load("3D", "GEOMETRY")
+			),
 
-			color: new render_pass("Color", new framebuffer(this.render_size, [
-				{ type: attachment_type.texture,      format: gl.RGBA,             attachment: gl.COLOR_ATTACHMENT0 },
-				{ type: attachment_type.texture,      format: gl.RGBA,             attachment: gl.COLOR_ATTACHMENT1 },
-				{ type: attachment_type.renderbuffer, format: gl.DEPTH24_STENCIL8, attachment: gl.DEPTH_STENCIL_ATTACHMENT  },
-			]), [
-				gl.CULL_FACE,
-				gl.DEPTH_TEST
-			], {
-				bind: function(pass, graphics) {
-					gl.cullFace(gl.FRONT);
-					gl.frontFace(gl.CCW);
-					gl.depthFunc(gl.LEQUAL);
-					gl.depthMask(true);
-					gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+			spotlight_shadow: new render_pass("Spotlight Shadows",
+				new framebuffer(SETTINGS.graphics.shadow_resolution, [ {
+					name: "u_spotlight_shadow_map",
+					type: attachment_type.texture_array,
+					layers: SHADERS_COMMON.MAX_SPOT_LIGHT_COLORS,
+					format: gl.DEPTH_COMPONENT,
+					internal: gl.DEPTH_COMPONENT32F,
+					attachment: gl.DEPTH_ATTACHMENT,
+					data_type: gl.FLOAT,
+					parameters: {
+						[gl.TEXTURE_MIN_FILTER]: gl.NEAREST,
+						[gl.TEXTURE_MAG_FILTER]: gl.NEAREST,
+						[gl.TEXTURE_WRAP_S]: gl.CLAMP_TO_EDGE,
+						[gl.TEXTURE_WRAP_T]: gl.CLAMP_TO_EDGE,
+					}
+				} ], pipelines.load("3D", "LIGHTING_DEFERRED")),
+				[ gl.CULL_FACE, gl.DEPTH_TEST ], {
+					bind: bind_cull_face,
+					unbind: (pass, graphics) => { }
 				},
-				unbind: function(pass, graphics) {
-				}
-			} ),
+				pipelines.load("3D", "DEPTH")
+			),
 
-			bloom: new render_pass("Bloom", new framebuffer(this.render_size, [
-				{ type: attachment_type.texture,  format: gl.RGBA, attachment: gl.COLOR_ATTACHMENT0 },
-			]), [], {
-				bind: function(pass, graphics) {
-					gl.clear(gl.COLOR_BUFFER_BIT);
+			shading: new render_pass("Shading",
+				new framebuffer(this.render_size, [
+					{ type: attachment_type.texture,      format: gl.RGBA,             attachment: gl.COLOR_ATTACHMENT0 },
+					{ type: attachment_type.texture,      format: gl.RGBA,             attachment: gl.COLOR_ATTACHMENT1 },
+					{ type: attachment_type.renderbuffer, format: gl.DEPTH24_STENCIL8, attachment: gl.DEPTH_STENCIL_ATTACHMENT  },
+				]), [ gl.CULL_FACE, gl.DEPTH_TEST ], {
+					bind: function(pass, graphics) {
+						gl.enable(gl.CULL_FACE);
+						gl.cullFace(gl.FRONT);
+						gl.frontFace(gl.CW);
+						gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+					},
+					unbind: (pass, graphics) => { }
 				},
-				unbind: function(pass, graphics) {
-				}
-			}, pipelines.load("3D", "BLOOM"))
+				pipelines.load("3D", "LIGHTING_DEFERRED")
+			),
+
+			bloom: new render_pass("Bloom",
+				new framebuffer(this.render_size, [
+					{ name: 'u_bloom', type: attachment_type.texture,  format: gl.RGBA, attachment: gl.COLOR_ATTACHMENT0 },
+				]), [], {
+					bind: function(pass, graphics) {
+						gl.clear(gl.COLOR_BUFFER_BIT);
+					},
+					unbind: function(pass, graphics) {
+					}
+				},
+				pipelines.load("3D", "BLOOM")
+			),
 		};
 		this._current_render_pass = null;
 
@@ -104,6 +143,12 @@ class graphics {
 		this.view_stack = [this.active_camera.make_view()];
 
 		// TODO:!!!! RENDER GRAPH
+		// Geometry pass
+		const geometry_pass = this.render_passes.geometry;
+		this._current_render_pass = geometry_pass;
+		geometry_pass.bind(this);
+		instance.render(this);
+		geometry_pass.unbind(this);
 
 		// Spotlights Shadows
 		const shadow_pass = this.render_passes.spotlight_shadow;
@@ -136,12 +181,23 @@ class graphics {
 		// TODO
 
 		// Color pass
-		const color_pass = this.render_passes.color;
-		this._current_render_pass = color_pass;
-		color_pass.bind(this);
-		instance.render(this);
-		color_pass.unbind(this);
+		const shading_pass = this.render_passes.shading;
+		shading_pass.bind(this);
+		this._current_render_pass = shading_pass;
+		for (var i = 0; i < geometry_pass.texture_count(); ++i) {
+			geometry_pass.texture(i).bind(i);
+		}
 
+		// this._blit_on_quad(this.shading_pass.pipeline);
+		this.set_engine_lighting_uniforms();
+		this.current_pipeline().set_uniform("u_exposure", SETTINGS.graphics.exposure);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
+		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+		// instance.render(this);
+		this.reset_engine_lighting_uniforms();
+
+		shading_pass.unbind(this);
 
 		// Bloom
 		const uniforms = {
@@ -154,10 +210,9 @@ class graphics {
 		bloom_pass.bind(this);
 
 		// First call to take the original color texture
-		this._blit_on_quad(bloom_pass.pipeline, { u_bloom: color_pass.framebuffer.texture(1) }, uniforms);
-
-		for (var i = 1; i < 10; ++i) {
-			const bloom_texture = bloom_pass.framebuffer.texture();
+		this._blit_on_quad(bloom_pass.pipeline, { u_bloom: shading_pass.texture(1) }, uniforms);
+		for (var i = 1; i < 5; ++i) {
+			const bloom_texture = bloom_pass.texture();
 			this._blit_on_quad(bloom_pass.pipeline, { u_bloom: bloom_texture }, uniforms);
 		}
 		bloom_pass.unbind(this);
@@ -168,11 +223,9 @@ class graphics {
 		gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 		this._blit_on_quad(
 			this.blit_texture_pipeline, { // todo replace it
-				u_screen: color_pass.framebuffer.texture(0),
-				u_bloom: bloom_pass.framebuffer.texture(0),
-			}, {
-				u_exposure: SETTINGS.graphics.exposure
-			}
+				u_screen: shading_pass.texture(0),
+				u_bloom: bloom_pass.texture(0),
+			}, {}
 		);
 	}
 
@@ -187,23 +240,22 @@ class graphics {
 	}
 
 	push_pipeline(pipeline) {
-		this.bound_textures = 0;
-		this.pipeline_stack.push(pipeline);
-		const pass = this.current_render_pass();
-		if (pass.has_pipeline()) {
-			pass.pipeline.use();
-		} else {
-			pipeline.use();
-		}
+		const new_pipeline = pipeline == null ? this.current_pipeline() : pipeline;
+
+		this.pipeline_stack.push(new_pipeline);
+		new_pipeline.use();
 	}
 
 	set_engine_uniforms() {
 		const pipeline = this.current_pipeline();
 		pipeline.set_uniform("u_mvp", this.model_view_projection());
 		const u_model_location = pipeline.uniform_location("u_model");
-		if (u_model_location ) {
+		if (u_model_location) {
 			pipeline.set_uniform(u_model_location, this.current_transform());
-			pipeline.set_uniform("u_view_position", this.active_camera.position)
+		}
+		const u_view_position = pipeline.uniform_location("u_view_position");
+		if (u_view_position) {
+			pipeline.set_uniform(u_view_position, golxzn.math.vec3.negative(this.active_camera.position));
 		}
 
 		const u_normal_matrix_location = pipeline.uniform_location("u_normal_matrix");
@@ -213,9 +265,13 @@ class graphics {
 				{ transpose: true }
 			);
 		}
-		if (pipeline.lighting_support()) {
+		if (pipeline.support(PIPELINE_FLAGS.lighting_support)) {
 			this.set_engine_lighting_uniforms();
 		}
+	}
+
+	reset_engine_uniforms() {
+		this.reset_engine_lighting_uniforms();
 	}
 
 	set_engine_lighting_uniforms() {
@@ -234,14 +290,16 @@ class graphics {
 		pipeline.set_uniform('u_spot_lights_count', this.spot_lights.length, { as_integer: true });
 		for (var i = 0; i < this.spot_lights.length; i++) {
 			const light = this.spot_lights[i];
-			light.apply(pipeline, `u_spot_lights[${i}]`);
-			const transform_location = pipeline.uniform_location(`u_spot_light_transform[${i}]`);
-			if (transform_location == null) continue;
-
-			pipeline.set_uniform(transform_location, golxzn.math.mat4.multiply(
-				light.view(),
-				light.projection()
-			));
+			// const transform_location = pipeline.uniform_location(`u_spotlight_positions[${i}]`);
+			// if (transform_location != null) {
+			// 	light.apply(pipeline, `u_spot_lights[${i}]`);
+			// 	pipeline.set_uniform(transform_location, light.view_projection_position());
+			// }
+			const transform_location = pipeline.uniform_location(`u_spotlight_vp[${i}]`);
+			if (transform_location != null) {
+				light.apply(pipeline, `u_spot_lights[${i}]`);
+				pipeline.set_uniform(transform_location, light.view_projection());
+			}
 		}
 
 		if (this.spotlight_shadow_map_texture) {
@@ -249,14 +307,22 @@ class graphics {
 		}
 	}
 
+	reset_engine_lighting_uniforms() {
+		const pipeline = this.current_pipeline();
+		if (!pipeline.support(PIPELINE_FLAGS.lighting_support)) return;
+
+		if (this.spotlight_shadow_map_texture && pipeline.uniform_location('u_point_lights_count') != null) {
+			this.remove_textures(1); // u_spotlight_shadow_map
+		}
+
+	}
+
 	current_pipeline() {
-		const pass = this.current_render_pass();
-		return pass.has_pipeline() ? pass.pipeline : this.pipeline_stack.at(-1);
+		return this.pipeline_stack.at(-1);
 	}
 
 	pop_pipeline() {
-		this.bound_textures = 0;
-		this.pipeline_stack.pop();
+		this.pipeline_stack.pop().unuse();
 	}
 
 	push_transform(matrix) {
@@ -275,24 +341,34 @@ class graphics {
 		this.transform_stack.pop();
 	}
 
+	apply_material(material) {
+		const pipeline = this.current_pipeline();
+		if (!pipeline.support(PIPELINE_FLAGS.material_support)) return;
+
+		const u_material_ambient = pipeline.uniform_location("u_material.ambient");
+		if (u_material_ambient != null) {
+			pipeline.set_uniform(u_material_ambient, material.ambient);
+			pipeline.set_uniform("u_material.diffuse", material.diffuse);
+			pipeline.set_uniform("u_material.specular", material.specular);
+			pipeline.set_uniform("u_material.shininess", material.shininess);
+		}
+	}
 
 	apply_texture(texture, name) {
 		const pipeline = this.current_pipeline();
 		const location = pipeline.uniform_location(name);
 		if (location != null) {
-			texture.bind(this.bound_textures);
-			pipeline.set_uniform(location, this.bound_textures, { as_integer: true });
-			++this.bound_textures;
+			texture.bind(pipeline.pushed_textures_count());
+			pipeline.push_texture(location);
+			return true;
 		}
+		return false;
 	}
 
-	apply_material(material) {
-		const pipeline = this.current_pipeline();
-		if (pipeline.uniform_location("u_material.ambient") != null) {
-			pipeline.set_uniform("u_material.ambient", material.ambient);
-			pipeline.set_uniform("u_material.diffuse", material.diffuse);
-			pipeline.set_uniform("u_material.specular", material.specular);
-			pipeline.set_uniform("u_material.shininess", material.shininess);
+	remove_textures(count = 1) {
+		if (count != 0) {
+			const pipeline = this.current_pipeline();
+			pipeline.pop_texture(count);
 		}
 	}
 

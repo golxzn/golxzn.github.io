@@ -19,7 +19,7 @@ function make_texture_proxy(texture, type) {
 }
 
 class framebuffer {
-	constructor(size, attachments, parameters = null) {
+	constructor(size, attachments, out_pipeline = null) {
 		this.id = gl.createFramebuffer();
 		this.size = size;
 		this.draw_buffers = [];
@@ -39,11 +39,42 @@ class framebuffer {
 			}
 		}
 		this.unbind();
+
+		if (out_pipeline == null) {
+			return;
+		}
+
+		out_pipeline.use();
+		for (const attachment of attachments) {
+			if (!('name' in attachment)) {
+				continue;
+			}
+
+			switch (attachment.type) {
+				case attachment_type.texture:
+					out_pipeline.push_texture(attachment.name);
+					break;
+
+				case attachment_type.texture_array:
+					out_pipeline.push_texture(attachment.name);
+					break;
+
+				default: break;
+			}
+		}
+		out_pipeline.unuse();
 	}
 
 	destroy() {
-		this.textures.forEach(texture => gl.deleteTexture(texture));
-		this.render_buffers.forEach(renderbuffer => gl.deleteRenderbuffer(renderbuffer));
+		for (const [name, texture] of Object.entries(this.textures)) {
+			gl.deleteTexture(texture);
+		}
+		for (const [name, texture] of Object.entries(this.texture_arrays)) {
+			gl.deleteTexture(texture);
+		}
+		for (const [name, renderbuffer] of Object.entries(this.render_buffers)) {
+			gl.deleteRenderbuffer(renderbuffer);
+		}
 		gl.deleteFramebuffer(this.id);
 	}
 
@@ -74,16 +105,21 @@ class framebuffer {
 
 	_make_texture(attachment) {
 		const texture = gl.createTexture();
-		const internal_format = attachment.internal == undefined
-			? attachment.format
-			: attachment.internal;
-		const data_type = attachment.data_type == undefined ? gl.UNSIGNED_BYTE : attachment.data_type;
-
 		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texImage2D(gl.TEXTURE_2D, 0,
-			internal_format, this.size[0], this.size[1], 0,
-			attachment.format, data_type, null
-		);
+
+		if (!attachment.storage) {
+			const internal_format = attachment.internal == undefined
+				? attachment.format
+				: attachment.internal;
+
+			const data_type = attachment.data_type == undefined ? gl.UNSIGNED_BYTE : attachment.data_type;
+			gl.texImage2D(gl.TEXTURE_2D, 0,
+				internal_format, this.size[0], this.size[1], 0,
+				attachment.format, data_type, null
+			);
+		} else {
+			gl.texStorage2D(gl.TEXTURE_2D, 1, attachment.format, this.size[0], this.size[1]);
+		}
 
 		const params = this._default_parameters_or(attachment.parameters);
 		for (const [parameter, value] of Object.entries(params)) {

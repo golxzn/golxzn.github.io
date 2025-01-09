@@ -6,6 +6,8 @@ let loading = null;
 let game = null;
 
 function instantiate_game(display, renderer) {
+	gl.getExtension("EXT_color_buffer_float");
+
 	let instance = new game_instance(display, renderer);
 
 	document.onkeydown = (event) => instance.on_key_down(event);

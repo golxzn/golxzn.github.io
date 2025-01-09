@@ -4,6 +4,10 @@ class object_base {
 		this.name = name;
 		this.transform = transform;
 	}
+
+	position() {
+		return this.transform.slice(12, 15);
+	}
 }
 
 class model_object extends object_base {

@@ -165,6 +165,15 @@ Object.assign(golxzn.math, {
 				s[2], u[2], -f[2], 0.0,
 				-dot(s, eye), -dot(u, eye), dot(f, eye), 1.0
 			]
+		},
+
+		multiply_vec4(m, v) {
+			return [
+				m[ 0] * v[0] + m[ 1] * v[1] + m[ 2] * v[2] + m[ 3] * v[3],
+				m[ 4] * v[0] + m[ 5] * v[1] + m[ 6] * v[2] + m[ 7] * v[3],
+				m[ 8] * v[0] + m[ 9] * v[1] + m[10] * v[2] + m[11] * v[3],
+				m[12] * v[0] + m[13] * v[1] + m[14] * v[2] + m[15] * v[3]
+			];
 		}
 	},
 

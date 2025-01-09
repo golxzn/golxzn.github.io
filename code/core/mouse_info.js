@@ -13,6 +13,7 @@ class mouse_info {
 		this.button_timestamp = Array(MOUSE_BUTTON_COUNT).fill(0);
 		this.last_press_pos = [0, 0];
 		this.current_press_pos = [0, 0];
+		this.last_scroll = [0, 0];
 		this.position = position
 		this.delta = [0, 0];
 	}
@@ -50,6 +51,10 @@ class mouse_info {
 		this.button_pressed[event.button] = false;
 		this.button_timestamp[event.button] = Date.now();
 		this._update_info(event);
+	}
+
+	on_scroll(event) {
+		this.last_scroll = [event.deltaX, event.deltaY];
 	}
 
 	_update_info(event) {

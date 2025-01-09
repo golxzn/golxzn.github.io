@@ -25,7 +25,16 @@ class render_pass {
 		return this.pipeline != null;
 	}
 
+	texture_count() {
+		return this.framebuffer.textures.length;
+	}
+
+	texture(id = 0) {
+		return this.framebuffer.texture(id);
+	}
+
 	bind(graphics) {
+		if (this.has_pipeline()) graphics.push_pipeline(this.pipeline);
 		this.framebuffer.bind();
 		this.settings.forEach(param => gl.enable(param));
 		this.callbacks.bind(this, graphics);
@@ -35,5 +44,6 @@ class render_pass {
 		this.callbacks.unbind(this, graphics);
 		this.settings.forEach(param => gl.disable(param));
 		this.framebuffer.unbind();
+		if (this.has_pipeline()) graphics.pop_pipeline();
 	}
 };
