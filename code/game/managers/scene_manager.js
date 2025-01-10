@@ -1,10 +1,19 @@
-const OBJECT_TYPE_DRAWABLE  = 1;
-const OBJECT_TYPE_UPDATABLE = 2;
+
+const OBJECT_TYPE = {
+	DRAWABLE: 1,
+	UPDATABLE: 2,
+	GIZMOS: 4,
+
+	ALL: 0xFF
+};
+Object.freeze(OBJECT_TYPE);
+
 
 class scene_manager {
 	constructor() {
 		this.updatable_objects = new Set();
 		this.drawable_objects = new Set();
+		this.gizmos_objects = new Set();
 	}
 
 	update(delta) {
@@ -15,6 +24,9 @@ class scene_manager {
 		this.drawable_objects.forEach(object => object.draw(g));
 	}
 
+	render_gizmos(g) {
+		this.gizmos_objects.forEach(object => object.draw_gizmos(g));
+	}
 
 	add_object(object) {
 		if (typeof object.name !== "string" || object.name == '') {
@@ -28,6 +40,9 @@ class scene_manager {
 		if (typeof object.update === "function") {
 			this.updatable_objects.add(object);
 		}
+		if (typeof object.draw_gizmos === "function") {
+			this.gizmos_objects.add(object);
+		}
 		return object;
 	}
 
@@ -38,9 +53,12 @@ class scene_manager {
 		if (typeof object.update === "function") {
 			this.updatable_objects.delete(object);
 		}
+		if (typeof object.draw_gizmos === "function") {
+			this.gizmos_objects.delete(object);
+		}
 	}
 
-	find_object(name, type = OBJECT_TYPE_DRAWABLE | OBJECT_TYPE_UPDATABLE) {
+	find_object(name, type = OBJECT_TYPE.ALL) {
 		const search = function(container) {
 			for (var value of container) {
 				if (value.name == name) return value;
@@ -48,14 +66,19 @@ class scene_manager {
 			return null;
 		}
 
-		if ((type & OBJECT_TYPE_DRAWABLE) == OBJECT_TYPE_DRAWABLE) {
-			const found = search(this.drawable_objects);
-			if (found != null) return found;
+		const associated_types = {
+			[OBJECT_TYPE.DRAWABLE]: this.drawable_objects,
+			[OBJECT_TYPE.UPDATABLE]: this.updatable_objects,
+			[OBJECT_TYPE.GIZMOS]: this.gizmos_objects
+		};
+
+		for (const key in Object.keys(OBJECT_TYPE)) {
+			if (type & OBJECT_TYPE[key]) {
+				const found = search(associated_types[OBJECT_TYPE[key]]);
+				if (found != null) return found;
+			}
 		}
-		if ((type & OBJECT_TYPE_UPDATABLE) == OBJECT_TYPE_UPDATABLE) {
-			const found = search(this.updatable_objects);
-			if (found != null) return found;
-		}
+
 		return null;
 	}
 

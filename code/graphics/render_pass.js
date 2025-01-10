@@ -33,6 +33,12 @@ class render_pass {
 		return this.framebuffer.texture(id);
 	}
 
+	bind_all_textures() {
+		for (var i = 0; i < this.texture_count(); ++i) {
+			this.texture(i).bind(i);
+		}
+	}
+
 	bind(graphics) {
 		if (this.has_pipeline()) graphics.push_pipeline(this.pipeline);
 		this.framebuffer.bind();

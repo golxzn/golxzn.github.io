@@ -107,6 +107,16 @@ TODO:
 				pipelines.load("3D", "LIGHTING_DEFERRED")
 			),
 
+			// gizmos: new render_pass("Gizmos",
+			// 	new framebuffer(this.render_size, [
+			// 		{ name: 'u_gizmo', type: attachment_type.texture, format: gl.RGBA, attachment: gl.COLOR_ATTACHMENT0 },
+			// 	]), [ gl.CULL_FACE, gl.DEPTH_TEST ], {
+			// 		bind: bind_cull_face,
+			// 		unbind: function(pass, graphics) {}
+			// 	},
+			// 	pipelines.load("3D", "PRIMITIVE")
+			// ),
+
 			bloom: new render_pass("Bloom",
 				new framebuffer(this.render_size, [
 					{ name: 'u_bloom', type: attachment_type.texture,  format: gl.RGBA, attachment: gl.COLOR_ATTACHMENT0 },
@@ -138,24 +148,39 @@ TODO:
 		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 	}
 
+
 	render(instance) {
 		this.projection_stack = [this.active_camera.make_projection()];
 		this.view_stack = [this.active_camera.make_view()];
 
 		// TODO:!!!! RENDER GRAPH
-		// Geometry pass
-		const geometry_pass = this.render_passes.geometry;
-		this._current_render_pass = geometry_pass;
+		/*
+		var render_graph_iterator = this.render_graph.begin();
+		while (render_graph_iterator != this.render_graph.end()) {
+			var node = render_graph_iterator.node();
+			var pass = node.pass();
+			pass.bind(this);
+			// RESOLVE DEPENDENCIES ???
+			node.render(this);
+			pass.unbind(this);
+			render_graph_iterator = render_graph_iterator.next()
+		}
+		*/
+
+	//======================================= Geometry pass =======================================//
+		const geometry_pass = this.set_current_render_pass(this.render_passes.geometry);
 		geometry_pass.bind(this);
 		instance.render(this);
 		geometry_pass.unbind(this);
 
-		// Spotlights Shadows
-		const shadow_pass = this.render_passes.spotlight_shadow;
+	//==================================== Directional Shadows ====================================//
+		// TODO: Implement Directional Shadows. It's not that hard, but I'm not sure it's necessary.
+
+	//==================================== Spotlights  Shadows ====================================//
+		const shadow_pass = this.set_current_render_pass(this.render_passes.spotlight_shadow);
 		const depth_framebuffer = shadow_pass.framebuffer;
 		const spotlight_shadow_maps = depth_framebuffer.texture_array();
 
-		this._current_render_pass = shadow_pass;
 		for (var i = 0; i < this.spot_lights.length; ++i) {
 			const spotlight = this.spot_lights[i];
 			this.push_view(spotlight.view());
@@ -177,48 +202,47 @@ TODO:
 		spotlight_shadow_maps.unbind();
 		this.spotlight_shadow_map_texture = spotlight_shadow_maps;
 
-		// Point lights Shadows
-		// TODO
+	//==================================== PointLights Shadows ====================================//
+		// TODO: Maybe we could make an array of cube maps for each point light :thonk:
 
-		// Color pass
-		const shading_pass = this.render_passes.shading;
+	//=======================================  Color  Pass  =======================================//
+		const shading_pass = this.set_current_render_pass(this.render_passes.shading);
 		shading_pass.bind(this);
-		this._current_render_pass = shading_pass;
-		for (var i = 0; i < geometry_pass.texture_count(); ++i) {
-			geometry_pass.texture(i).bind(i);
-		}
+		geometry_pass.bind_all_textures();
 
-		// this._blit_on_quad(this.shading_pass.pipeline);
 		this.set_engine_lighting_uniforms();
-		this.current_pipeline().set_uniform("u_exposure", SETTINGS.graphics.exposure);
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
-		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-		// instance.render(this);
+		this._blit_on_quad(shading_pass.pipeline, {}, { u_exposure: SETTINGS.graphics.exposure });
 		this.reset_engine_lighting_uniforms();
 
 		shading_pass.unbind(this);
 
-		// Bloom
-		const uniforms = {
+	//========================================== GIZMOS ==========================================//
+		// const gizmos_pass = this.set_current_render_pass(this.render_passes.gizmos);
+		// We need to render into shading_pass.texture(0) and copy depth buffer from geometry pass
+
+
+		// gizmos_pass.bind(this);
+		// instance.render_gizmos(this);
+		// gizmos_pass.unbind(this);
+
+	//==========================================  Bloom ==========================================//
+		const bloom_uniforms = {
 			u_direction: SETTINGS.graphics.bloom.direction,
 			u_weights: SETTINGS.graphics.bloom.weights
 		};
 
-		const bloom_pass = this.render_passes.bloom;
-		this._current_render_pass = bloom_pass;
+		const bloom_pass = this.set_current_render_pass(this.render_passes.bloom);
 		bloom_pass.bind(this);
 
-		// First call to take the original color texture
-		this._blit_on_quad(bloom_pass.pipeline, { u_bloom: shading_pass.texture(1) }, uniforms);
-		for (var i = 1; i < 5; ++i) {
-			const bloom_texture = bloom_pass.texture();
-			this._blit_on_quad(bloom_pass.pipeline, { u_bloom: bloom_texture }, uniforms);
+		var bloom_texture = shading_pass.texture(1);
+		for (var i = 0; i < 5; ++i) {
+			this._blit_on_quad(bloom_pass.pipeline, { u_bloom: bloom_texture }, bloom_uniforms);
+			bloom_texture = bloom_pass.texture();
 		}
 		bloom_pass.unbind(this);
 
 
-		// Blit on screen
+	//======================================= Blit  screen =======================================//
 		gl.clear(gl.COLOR_BUFFER_BIT);
 		gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 		this._blit_on_quad(
@@ -233,6 +257,11 @@ TODO:
 		this.active_camera = camera;
 		this.active_camera.aspect = this.aspect_ratio();
 		this._mvp = null;
+	}
+
+	set_current_render_pass(pass) {
+		this._current_render_pass = pass;
+		return pass;
 	}
 
 	current_render_pass() {

@@ -24,6 +24,10 @@ class game_instance {
 		this.scene_manager.render(g);
 	}
 
+	render_gizmos(g) {
+		this.scene_manager.render_gizmos(g);
+	}
+
 	_load_demo_scene(graphics) {
 		const m4 = golxzn.math.mat4;
 
@@ -64,7 +68,7 @@ class game_instance {
 				pos, attenuation, { ambient: color, diffuse: color, specular: color }
 			));
 
-			this.scene_manager.add_object(new model_object(color.toString(), new model([
+			this.scene_manager.add_object(new gizmos_object(color.toString(), new model([
 				new mesh({}, null, primitives.make_cube_colored(color))
 			]), m4.scale(m4.translate(m4.make_identity(), pos), [0.25, 0.25, 0.25])));
 		}

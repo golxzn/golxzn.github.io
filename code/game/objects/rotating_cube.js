@@ -19,7 +19,7 @@ class rotating_cube extends model_object {
 	}
 };
 
-class floating_cube extends model_object {
+class floating_cube extends gizmos_object {
 	constructor(name, model, transform, speed, amplitude, light, time = 0.0) {
 		super(name, model, transform);
 
