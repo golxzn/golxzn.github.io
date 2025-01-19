@@ -32,13 +32,21 @@ class attribute_layout {
 	}
 };
 
+class buffer_view {
+	constructor(data = { offset: 0, length: 0 }) {
+		this.offset = data.offset;
+		this.length = data.length;
+	}
+};
+
 class buffer_info {
-	constructor(data = { name: "", target: null, usage: null, layout: [], binary: null, count: null }) {
+	constructor(data = { name: "", target: null, usage: null, layout: [], views: [], binary: null, count: null }) {
 		this.name = data.name;
 		this.target = data.target != null ? data.target : gl.ARRAY_BUFFER;
 		this.usage = data.usage != null ? data.usage : gl.STATIC_DRAW;
 		this.layout = data.layout != null ? data.layout : [];
 		this.binary = data.binary;
+		this.views = data.views != null ? data.views : [];
 		this.stride = 0;
 
 		for (const info of this.layout) {
@@ -60,7 +68,11 @@ class buffer_info {
 class buffer {
 	constructor(info, obj = null) {
 		this.info = info;
-		this.handle = this._construct_buffer(this.info, obj);
+		if (info.views.length == 0) {
+			this.handle = this._construct_buffer(this.info, obj);
+		} else {
+			this.handle = this._construct_buffer_with_views(this.info, obj);
+		}
 	}
 
 	sub_data(data, offset = 0) {
@@ -74,6 +86,21 @@ class buffer {
 		var attribute_id = obj != null ? obj.last_attribute_id : 0;
 		for (var i = 0, offset = 0; i < info.layout.length; ++i, ++attribute_id) {
 			offset += this._setup_attribute(attribute_id, info.layout[i], info.stride, offset);
+		}
+
+		if (obj != null) obj.last_attribute_id = attribute_id;
+
+		return buffer;
+	}
+
+	_construct_buffer_with_views(info, obj) {
+		const buffer = this._make_buffer_with_data(info);
+
+		var attribute_id = obj != null ? obj.last_attribute_id : 0;
+		for (var i = 0; i < info.layout.length; ++i, ++attribute_id) {
+			const view = info.views[i];
+			const attribute = info.layout[i];
+			this._setup_attribute(attribute_id, attribute, attribute.bytes_count(), view.offset);
 		}
 
 		if (obj != null) obj.last_attribute_id = attribute_id;

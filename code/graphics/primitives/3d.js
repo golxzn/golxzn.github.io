@@ -17,9 +17,63 @@ const primitives = {
 				new attribute_layout({ count: 4, type: gl.UNSIGNED_BYTE,  normalized: true }),
 				new attribute_layout({ count: 2, type: gl.FLOAT,          normalized: false })
 			];
+
+			case "3D_SEQUENTIAL": return [
+				new attribute_layout({ count: 3, type: gl.FLOAT,          normalized: false }),
+				new attribute_layout({ count: 4, type: gl.BYTE,           normalized: true }),
+				new attribute_layout({ count: 2, type: gl.UNSIGNED_SHORT, normalized: true })
+			];
 		}
 		return [];
 	},
+
+	make_plane_sequential() {
+		return {
+			// pipeline: ["3D", "LIGHTING"],
+			draw_method: new draw_method({
+				type: draw_method_type.elements,
+				mode: gl.TRIANGLE_STRIP,
+				target_buffer: "ebo"
+			}),
+			buffer_infos: [
+				new buffer_info({
+					name: "vbo",
+					layout: primitives.get_layout_for("3D_SEQUENTIAL"),
+					views: [
+						new buffer_view({ offset: 0, length: 48 }),
+						new buffer_view({ offset: 48, length: 16 }),
+						new buffer_view({ offset: 64, length: 16 }),
+					],
+					binary: new Uint8Array([
+					//  [         x          ]  [         y          ]  [         z          ]
+						0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xBF,
+						0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xBF,
+						0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F,
+						0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F,
+
+
+					//  [ normal 3 + offset  ]
+						0x00, 0x7F, 0x00, 0x00,
+						0x00, 0x7F, 0x00, 0x00,
+						0x00, 0x7F, 0x00, 0x00,
+						0x00, 0x7F, 0x00, 0x00,
+
+					//  [         UV          ]
+						0x00, 0x00, 0x00, 0x00,
+						0x00, 0x00, 0xFF, 0xFF,
+						0xFF, 0xFF, 0x00, 0x00,
+						0xFF, 0xFF, 0xFF, 0xFF
+					])
+				}),
+				new buffer_info({
+					name: "ebo",
+					target: gl.ELEMENT_ARRAY_BUFFER,
+					binary: new Uint16Array([ 0, 1, 2, 3 ])
+				})
+			]
+		}
+	},
+
 
 	make_plane() {
 		return {
