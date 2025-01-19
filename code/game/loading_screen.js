@@ -5,6 +5,8 @@ const LOADING_SPEED      = 2.0;
 
 const PRELOAD_TEXTURES = [
 	"assets/textures/asphalt.jpg",
+	"assets/textures/lain.jpg"
+];
 Object.freeze(PRELOAD_TEXTURES);
 
 class progress_counter {
