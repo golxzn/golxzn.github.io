@@ -21,6 +21,7 @@ class service_provider_singleton {
 		}
 
 		this.services[service_name] = service
+		return service;
 	}
 
 	static instance() {

@@ -1,0 +1,13 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "chrome",
+			"name": "[golxzn]",
+			"request": "launch",
+			"url": "http://localhost:8080",
+			"cleanUp": "wholeBrowser",
+			"disableNetworkCache": true
+		}
+	]
+}

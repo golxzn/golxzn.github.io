@@ -33,7 +33,7 @@ function instantiate_game(display, renderer) {
 	return instance;
 }
 
-function start() {
+async function start() {
 	display.width = window.innerWidth;
 	display.height = window.innerHeight;
 
@@ -44,9 +44,9 @@ function start() {
 		"resource": new resource_manager(),
 		"scene"   : new scene_manager()
 	});
-	renderer = new graphics(display);
+	// Requires pipeline manager
+	const renderer = service_provider().set("graphics", new graphics(display));
 	renderer.set_clear_color(SETTINGS.graphics.clear_color);
-	service_provider().set("graphics", renderer); // Requires pipeline manager
 
 	loading = new loading_screen((state) => {
 		switch (state) {

@@ -40,9 +40,9 @@ class model {
 			this.begin_draw_group(graphics);
 
 			for (const mesh of group.meshes) {
-				if (mesh.material != null) {
-					graphics.apply_material(resources.get_material(mesh.material));
-				}
+				// if (mesh.material != null) {
+				// 	graphics.apply_material(resources.get_material(mesh.material));
+				// }
 				var applied_textures_count = 0;
 				for (const [name, texture_id] of Object.entries(mesh.textures)) {
 					applied_textures_count += +graphics.apply_texture(

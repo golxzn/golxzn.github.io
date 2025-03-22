@@ -17,10 +17,24 @@ Object.assign(golxzn.math, {
 			return matrix;
 		},
 
+		set_translation : function(matrix, offset) {
+			matrix[12] = offset[0];
+			matrix[13] = offset[1];
+			matrix[14] = offset[2];
+			return matrix;
+		},
+
 		scale : function(matrix, scale) {
 			matrix[0] *= scale[0];
 			matrix[5] *= scale[1];
 			matrix[10] *= scale[2];
+			return matrix;
+		},
+
+		set_scale : function(matrix, scale) {
+			matrix[0] = scale[0];
+			matrix[5] = scale[1];
+			matrix[10] = scale[2];
 			return matrix;
 		},
 
@@ -127,6 +141,10 @@ Object.assign(golxzn.math, {
 			]
 
 			return this.multiply(matrix, rotate_matrix);
+		},
+
+		apply_quaternion : function(matrix, quaternion) {
+
 		},
 
 		make_orthographic : function(left, right, bottom, top, near, far) {
