@@ -45,7 +45,7 @@ async function start() {
 		"scene"   : new scene_manager()
 	});
 	// Requires pipeline manager
-	const renderer = service_provider().set("graphics", new graphics(display));
+	renderer = service_provider().set("graphics", new graphics(display));
 	renderer.set_clear_color(SETTINGS.graphics.clear_color);
 
 	loading = new loading_screen((state) => {

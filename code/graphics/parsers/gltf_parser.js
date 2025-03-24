@@ -75,19 +75,7 @@ class gltf_loader {
 		for (const prim of created_mesh.primitives) {
 			const info = mesh_info.primitives[prim.id];
 			prim.material = this.parse_material(info.material);
-
-			// It seems like primitive could actually hold more than 1 buffer,
-			// but docs said "no", so let's take the first valid buffer and pray
-			// it works
-			const attributes = info.attributes;
-			for (const [_name, id] of Object.entries(attributes)) {
-				prim.set_buffer_data(
-					this._get_buffer(gltf.bufferViews[gltf.accessors[id].bufferView].buffer)
-				);
-			}
-
-			prim.setup_attributes(attributes, gltf.accessors, gltf.bufferViews);
-			created_mesh.unbind()
+			prim.setup(info.attributes, gltf.accessors, gltf.bufferViews, this._buffers);
 		}
 		created_mesh.unbind();
 
@@ -160,8 +148,18 @@ class gltf_loader {
 	}
 
 	async _preload_textures() {
+		const gltf = this.gltf;
+		const paths = [];
+		for (var i = 0; i < gltf.textures.length; ++i) {
+			const texture_info = gltf.textures[i];
+			const image = gltf.images[texture_info.source];
+			paths.push({
+				path: this.directory + image.uri,
+				sampler: gltf.samplers[texture_info.sampler]
+			});
+		}
+
 		const resources = get_service("resource");
-		const paths = this.gltf.images.map((image) => this.directory + image.uri);
 		this._textures = await resources.preload_textures(paths);
 	}
 

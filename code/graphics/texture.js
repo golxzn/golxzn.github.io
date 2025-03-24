@@ -1,12 +1,20 @@
 
-const DEFAULT_LEVEL           = 0;
-const DEFAULT_WIDTH           = 1;
-const DEFAULT_HEIGHT          = 1;
-const DEFAULT_BORDER          = 0;
-const DEFAULT_PIXELS          = new Uint8Array([0, 0, 255, 255]);
+const DEFAULT_LEVEL  = 0;
+const DEFAULT_WIDTH  = 1;
+const DEFAULT_HEIGHT = 1;
+const DEFAULT_BORDER = 0;
+const DEFAULT_PIXELS = new Uint8Array([0, 0, 255, 255]);
+
+const DEFAULT_SAMPLER = {
+	wrapS: gl.REPEAT,
+	wrapT: gl.REPEAT,
+	magFilter: gl.LINEAR,
+	minFilter: gl.LINEAR_MIPMAP_LINEAR
+};
+Object.freeze(DEFAULT_SAMPLER);
 
 class texture {
-	constructor(image) {
+	constructor(image, sampler = DEFAULT_SAMPLER) {
 		this._target = gl.TEXTURE_2D;
 		this._texture = this._make_texture();
 		this._width = image.width;
@@ -23,16 +31,16 @@ class texture {
 			image
 		);
 
-		gl.texParameteri(this._target, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
-		gl.texParameteri(this._target, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
-		gl.texParameteri(this._target, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-		if (!texture._support_mipmap(image)) {
-			gl.texParameteri(this._target, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-		} else {
-			gl.texParameteri(this._target, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-			gl.generateMipmap(this._target);
-		}
+		this.set_sampler(sampler)
+		this.unbind();
+	}
 
+	set_sampler(sampler) {
+		this.bind();
+		gl.texParameteri(this._target, gl.TEXTURE_WRAP_S, sampler.wrapS || DEFAULT_SAMPLER.wrapS);
+		gl.texParameteri(this._target, gl.TEXTURE_WRAP_T, sampler.wrapT || DEFAULT_SAMPLER.wrapT);
+		gl.texParameteri(this._target, gl.TEXTURE_MAG_FILTER, sampler.magFilter || DEFAULT_SAMPLER.magFilter);
+		gl.texParameteri(this._target, gl.TEXTURE_MIN_FILTER, sampler.minFilter || DEFAULT_SAMPLER.minFilter);
 		this.unbind();
 	}
 
@@ -65,13 +73,5 @@ class texture {
 
 		gl.bindTexture(this._target, null);
 		return texture;
-	}
-
-	static _support_mipmap(image) {
-		return texture._is_power_of_2(image.width) && texture._is_power_of_2(image.height);
-	}
-
-	static _is_power_of_2(value) {
-		return (value & (value - 1)) === 0;
 	}
 };

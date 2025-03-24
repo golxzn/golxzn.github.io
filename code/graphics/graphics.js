@@ -44,7 +44,7 @@ TODO:
 */
 		const bind_cull_face = (pass, graphics) => {
 			gl.cullFace(gl.FRONT);
-			gl.frontFace(gl.CCW);
+			gl.frontFace(gl.CW);
 			gl.depthFunc(gl.LEQUAL);
 			gl.depthMask(true);
 		};
@@ -53,10 +53,12 @@ TODO:
 			geometry: new render_pass("Geometry",
 				new framebuffer(this.render_size, [
 					{ name: "u_position", type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT0, storage: true },
-					{ name: "u_normal",   type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT1, storage: true },
-					{ name: "u_diffuse",  type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT2, storage: true },
+					{ name: "u_albedo",   type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT1, storage: true },
+					{ name: "u_normal",   type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT2, storage: true },
+					{ name: "u_ambient_occlusion",  type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT3, storage: true },
+					{ name: "u_metallic_roughness", type: attachment_type.texture, format: gl.RG8, attachment: gl.COLOR_ATTACHMENT4, storage: true },
 					{ type: attachment_type.renderbuffer, format: gl.DEPTH_COMPONENT16, attachment: gl.DEPTH_ATTACHMENT  }, // was gl.DEPTH24_STENCIL8
-				], pipelines.load("3D", "LIGHTING_DEFERRED")),
+				], pipelines.load("3D", "PBR")),
 				[ gl.CULL_FACE, gl.DEPTH_TEST ], {
 					bind: function(pass, graphics) {
 						bind_cull_face(pass, graphics);
@@ -64,7 +66,7 @@ TODO:
 					},
 					unbind: (pass, graphics) => { }
 				},
-				pipelines.load("3D", "GEOMETRY")
+				pipelines.load("3D", "PBR_GEOMETRY")
 			),
 
 			spotlight_shadow: new render_pass("Spotlight Shadows",
@@ -82,7 +84,7 @@ TODO:
 						[gl.TEXTURE_WRAP_S]: gl.CLAMP_TO_EDGE,
 						[gl.TEXTURE_WRAP_T]: gl.CLAMP_TO_EDGE,
 					}
-				} ], pipelines.load("3D", "LIGHTING_DEFERRED")),
+				} ], pipelines.load("3D", "PBR")),
 				[ gl.CULL_FACE, gl.DEPTH_TEST ], {
 					bind: bind_cull_face,
 					unbind: (pass, graphics) => { }
@@ -99,12 +101,12 @@ TODO:
 					bind: function(pass, graphics) {
 						gl.enable(gl.CULL_FACE);
 						gl.cullFace(gl.FRONT);
-						gl.frontFace(gl.CW);
+						gl.frontFace(gl.CCW);
 						gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 					},
 					unbind: (pass, graphics) => { }
 				},
-				pipelines.load("3D", "LIGHTING_DEFERRED")
+				pipelines.load("3D", "PBR")
 			),
 
 			// gizmos: new render_pass("Gizmos",
@@ -300,7 +302,9 @@ TODO:
 	}
 
 	reset_engine_uniforms() {
-		this.reset_engine_lighting_uniforms();
+		if (!this.current_pipeline().support(PIPELINE_FLAGS.lighting_support)) {
+			this.reset_engine_lighting_uniforms();
+		}
 	}
 
 	set_engine_lighting_uniforms() {
@@ -338,8 +342,6 @@ TODO:
 
 	reset_engine_lighting_uniforms() {
 		const pipeline = this.current_pipeline();
-		if (!pipeline.support(PIPELINE_FLAGS.lighting_support)) return;
-
 		if (this.spotlight_shadow_map_texture && pipeline.uniform_location('u_point_lights_count') != null) {
 			this.remove_textures(1); // u_spotlight_shadow_map
 		}

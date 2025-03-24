@@ -10,11 +10,11 @@ class resource_manager {
 		this.materials = this._load_default_materials(); /// @todo remove it
 	}
 
-	async preload_textures(paths, progress_callback = (loaded, total) => {}) {
+	async preload_textures(info, progress_callback = (loaded, total) => {}) {
 		let loaded_count = 0;
-		const total = paths.length;
-		return await Promise.all(paths.map(async (path) => {
-			const texture = await this.load_texture(path);
+		const total = info.length;
+		return await Promise.all(info.map(async (info) => {
+			const texture = await this.load_texture(info.path, info.sampler);
 			progress_callback(loaded_count++, total);
 			return texture;
 		}));
@@ -68,7 +68,7 @@ class resource_manager {
 	 * @param {String} path
 	 * @param {boolean} [force_reload=false] Reload content
 	 **/
-	async load_texture(path, force_reload = false) {
+	async load_texture(path, sampler, force_reload = false) {
 		if (!force_reload && this.has_texture(path)) {
 			return this.get_texture(path);
 		}
@@ -83,7 +83,7 @@ class resource_manager {
 			img.src = this._make_url(path);
 		});
 
-		const tex = new texture(image);
+		const tex = new texture(image, sampler);
 		this.textures[path] = tex;
 		return tex;
 	}

@@ -76,5 +76,5 @@ class transform {
 		this._scale = value;
 		this.dirty_flags |= TRANSFORM_DIRTY.SCALE;
 	}
-	get scale() { return this.scale; }
+	get scale() { return this._scale; }
 };

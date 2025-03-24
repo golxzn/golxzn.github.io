@@ -2,8 +2,8 @@ const ALBEDO_NAME = 'u_material.albedo'
 const NORMAL_NAME = 'u_material.normal'
 const METALLIC_ROUGHNESS_NAME = 'u_material.metallic_roughness'
 const AMBIENT_OCCLUSION_NAME = 'u_material.ambient_occlusion'
-const METALLIC_FACTOR = 'u_metallic_factor'
-const ROUGHNESS_FACTOR = 'u_roughness_factor'
+const METALLIC_FACTOR = 'u_material.metallic_factor'
+const ROUGHNESS_FACTOR = 'u_material.roughness_factor'
 
 class material {
 	constructor(info = {
@@ -18,8 +18,9 @@ class material {
 		this.normal = info.normal;
 		this.metallic_roughness = info.metallic_roughness;
 		this.ambient_occlusion = info.ambient_occlusion;
-		this.metallic_factor = info.metallic_factor || 1;
-		this.roughness_factor = info.roughness_factor || 1;
+
+		this.metallic_factor = 0.0 + (info.metallic_factor != null ? info.metallic_factor : 1.0);
+		this.roughness_factor = 0.0 + (info.roughness_factor != null ? info.roughness_factor : 1.0);
 	}
 
 	/** @param {graphics} g  */
@@ -38,7 +39,7 @@ class material {
 	}
 
 	_set_if_exists(pipeline, name, variable) {
-		const location = pipeline.attribute_location(name)
+		const location = pipeline.uniform_location(name)
 		if (location != null) {
 			pipeline.set_uniform(location, variable);
 		}

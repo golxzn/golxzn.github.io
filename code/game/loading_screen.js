@@ -4,9 +4,9 @@ const DISAPPEAR_DURATION = 0.75;
 const LOADING_SPEED      = 2.0;
 
 const PRELOAD_TEXTURES = [
-	"assets/textures/asphalt.jpg",
-	"assets/textures/lain.jpg",
-	"assets/models/street-lamp-pillar/pillar_diffuse.png"
+	{ path: "assets/textures/asphalt.jpg", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/textures/lain.jpg", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/models/street-lamp-pillar/pillar_diffuse.png", sampler: DEFAULT_SAMPLER },
 ];
 Object.freeze(PRELOAD_TEXTURES);
 

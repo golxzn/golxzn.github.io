@@ -45,21 +45,21 @@ class node {
 
 	/** @param {graphics} g  */
 	pre_draw(g) {
-		g.push_transform(this.transform.matrix());
+		g.push_transform(this.transform.matrix);
 	}
 
 	/** @param {graphics} g  */
 	draw(g) {
+		this.pre_draw(g);
 		if (this.mesh) this.mesh.draw(g);
+		this.draw_children(g);
+		this.post_draw(g);
 	}
 
 	/** @param {graphics} g  */
 	draw_children(g) {
 		for (const child of this.children) {
-			child.pre_draw(g);
 			child.draw(g);
-			child.draw_children(g);
-			child.post_draw(g);
 		}
 	}
 
