@@ -9,7 +9,7 @@ class game_instance {
 		this.scene_manager = get_service("scene");
 		this.paused = true;
 
-		this.camera = new flying_camera([0.0, 20.0, -20.0]);
+		this.camera = new flying_camera([0.0, 5.0, -10.0]);
 		graphics.set_active_camera(this.camera);
 
 		this._load_demo_scene(graphics);
@@ -32,18 +32,33 @@ class game_instance {
 		const m4 = golxzn.math.mat4;
 
 		// GAME OBJECTS
-
-		const grnd = this.scene_manager.add_object(new ground(
-			"ground", "assets/textures/asphalt.jpg", [10.0, 1.0, 10.0]
-		));
-		grnd.transform = m4.translate(grnd.transform, [0.0, -1.0, 0.0]);
-
-		for (var i = 0; i < 6; ++i) {
-			const cube = this.scene_manager.add_object(new rotating_cube(
-				`cube_${i}`, "assets/textures/lain.jpg", i * 0.5
-			));
-			cube.transform = m4.translate(cube.transform, [0.0, 0.5 + 2.1 * i, 0.0]);
+		const res = get_service("resource");
+		const load_model = (path) => {
+			if (!res.has_model(path)) {
+				res.load_model(path).then((model) => {
+					this.scene_manager.add_object(model);
+				});
+			} else {
+				this.scene_manager.add_object(res.get_model(path));
+			}
 		}
+
+		load_model("assets/models/ground/ground.gltf");
+		load_model("assets/models/street-lamp-pillar/street-lamp-pillar.gltf")
+
+
+
+		// const grnd = this.scene_manager.add_object(new ground(
+		// 	"ground", "assets/textures/asphalt.jpg", [10.0, 1.0, 10.0]
+		// ));
+		// grnd.transform = m4.translate(grnd.transform, [0.0, -1.0, 0.0]);
+
+		// for (var i = 0; i < 6; ++i) {
+		// 	const cube = this.scene_manager.add_object(new rotating_cube(
+		// 		`cube_${i}`, "assets/textures/lain.jpg", i * 0.5
+		// 	));
+		// 	cube.transform = m4.translate(cube.transform, [0.0, 0.5 + 2.1 * i, 0.0]);
+		// }
 
 		// LIGHTING
 		// const directional_power = [0.1, 0.14, 0.22];
@@ -63,18 +78,19 @@ class game_instance {
 		];
 
 		for (const color of rgb) {
-			const pos = golxzn.math.scale(color, 15.0);
+			const pos = golxzn.math.scale(color, 1.0);
 			graphics.point_lights.push(new PointLight(
 				pos, attenuation, { ambient: color, diffuse: color, specular: color }
 			));
 
-			this.scene_manager.add_object(new gizmos_object(color.toString(), new model([
-				new mesh({}, null, primitives.make_cube_colored(color))
-			]), m4.scale(m4.translate(m4.make_identity(), pos), [0.25, 0.25, 0.25])));
+			// this.scene_manager.add_object(new gizmos_object(color.toString(), new model([
+			// 	new mesh({}, null, primitives.make_cube_colored(color))
+			// ]), m4.scale(m4.translate(m4.make_identity(), pos), [0.25, 0.25, 0.25])));
 		}
 
 
-		const spot_color = [0.96, 0.72, 0.36];
+		// const spot_color = [0.96, 0.72, 0.36];
+		const spot_color = [0.96, 0.20, 0.20];
 		const spot_limits = {
 			inner: Math.cos(golxzn.math.to_radians(18.0)),
 			outer: Math.cos(golxzn.math.to_radians(19.5))
@@ -87,7 +103,7 @@ class game_instance {
 
 		const distance_from_center = 16.0;
 		const light_height = 16.0;
-		const light_count = SHADERS_COMMON.MAX_SPOT_LIGHT_COLORS;
+		const light_count = SHADERS_COMMON.MAX_SPOT_LIGHT_COLORS / 4;
 		const angle = 2.0 * Math.PI / light_count;
 
 		for (var i = 0; i < light_count; ++i) {
@@ -104,19 +120,19 @@ class game_instance {
 
 			graphics.spot_lights.push(light);
 
-			this.scene_manager.add_object(new floating_cube(`spot_${i}`,
-				new model([ new mesh({}, null, primitives.make_cube_colored(spot_color)) ]),
-				m4.scale(m4.translate(m4.make_identity(), position), [0.25, 0.25, 0.25]),
-				1.0, 0.08, light, i * (Math.PI / 4.0)
-			));
+			// this.scene_manager.add_object(new floating_cube(`spot_${i}`,
+			// 	new model([ new mesh({}, null, primitives.make_cube_colored(spot_color)) ]),
+			// 	m4.scale(m4.translate(m4.make_identity(), position), [0.25, 0.25, 0.25]),
+			// 	1.0, 0.08, light, i * (Math.PI / 4.0)
+			// ));
 		}
 
 
 		// PARTICLES
-		const particles_count = 50000;
-		this.scene_manager.add_object(new cpu_falling_snow(
-			"snow-particles", {}, particles_count
-		));
+		// const particles_count = 50000;
+		// this.scene_manager.add_object(new cpu_falling_snow(
+		// 	"snow-particles", {}, particles_count
+		// ));
 	}
 
 // Event handling

@@ -12,6 +12,7 @@ Object.freeze(PRELOAD_TEXTURES);
 
 const PRELOAD_MODELS = [
 	"assets/models/street-lamp-pillar/street-lamp-pillar.gltf",
+	"assets/models/asus-laptop/ASUS Laptop.gltf",
 ];
 Object.freeze(PRELOAD_MODELS);
 

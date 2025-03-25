@@ -52,8 +52,8 @@ TODO:
 		this.render_passes = {
 			geometry: new render_pass("Geometry",
 				new framebuffer(this.render_size, [
-					{ name: "u_position", type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT0, storage: true },
-					{ name: "u_albedo",   type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT1, storage: true },
+					{ name: "u_albedo",   type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT0, storage: true },
+					{ name: "u_position", type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT1, storage: true },
 					{ name: "u_normal",   type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT2, storage: true },
 					{ name: "u_ambient_occlusion",  type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT3, storage: true },
 					{ name: "u_metallic_roughness", type: attachment_type.texture, format: gl.RG8, attachment: gl.COLOR_ATTACHMENT4, storage: true },

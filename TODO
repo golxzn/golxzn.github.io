@@ -1,9 +1,9 @@
 [ ] Graphics
-	[ ] PBR Materials & Lighting
 	[ ] Gizmos
 	[ ] Render Graph
 	[ ] Normal & Parallax Mapping
 	[ ] Volumetric Fog
+	[x] PBR Materials & Lighting
 	[-] HDR
 	[x] Distance Fog
 	[x] Bloom
@@ -24,6 +24,10 @@
 [ ] Models
 	[ ] glb loading
 	[ ] Animations
+	[x] gltf loading
+
+[ ] Systems
+	[x] Nodes & Scene Managers
 
 [ ] Physics
 	[ ] Collisions

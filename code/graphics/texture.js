@@ -37,10 +37,14 @@ class texture {
 
 	set_sampler(sampler) {
 		this.bind();
+		const min_filter = sampler.minFilter || DEFAULT_SAMPLER.minFilter;
 		gl.texParameteri(this._target, gl.TEXTURE_WRAP_S, sampler.wrapS || DEFAULT_SAMPLER.wrapS);
 		gl.texParameteri(this._target, gl.TEXTURE_WRAP_T, sampler.wrapT || DEFAULT_SAMPLER.wrapT);
 		gl.texParameteri(this._target, gl.TEXTURE_MAG_FILTER, sampler.magFilter || DEFAULT_SAMPLER.magFilter);
-		gl.texParameteri(this._target, gl.TEXTURE_MIN_FILTER, sampler.minFilter || DEFAULT_SAMPLER.minFilter);
+		gl.texParameteri(this._target, gl.TEXTURE_MIN_FILTER, min_filter);
+		if (gl.LINEAR_MIPMAP_LINEAR == min_filter) {
+			gl.generateMipmap(this._target);
+		}
 		this.unbind();
 	}
 
