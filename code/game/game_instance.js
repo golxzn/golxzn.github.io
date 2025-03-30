@@ -28,47 +28,81 @@ class game_instance {
 		this.scene_manager.render_gizmos(g);
 	}
 
+	_load_model(path, on_load = (_obj) => {}) {
+		const push_to_scene_manager = (model) => {
+			on_load(model);
+			this.scene_manager.add_object(model);
+		};
+
+		const res = get_service("resource");
+		if (!res.has_model(path)) {
+			res.load_model(path).then(push_to_scene_manager);
+		} else {
+			push_to_scene_manager(res.get_model(path));
+		}
+	}
+
 	_load_demo_scene(graphics) {
 		const m4 = golxzn.math.mat4;
 
 		// GAME OBJECTS
-		const res = get_service("resource");
-		const load_model = (path) => {
-			if (!res.has_model(path)) {
-				res.load_model(path).then((model) => {
-					this.scene_manager.add_object(model);
+
+		/*
+		for (var i = -5; i < 5; ++i) {
+			for (var j = -5; j < 5; ++j) {
+				const x = i;
+				const y = j;
+				this._load_model("assets/models/street-lamp-pillar/street-lamp-pillar.gltf", (obj) => {
+					obj.transform.position = [ x, 0.0, y ];
+					// obj.transform.rotation = [ 0.258819, 0, 0, 0.9659258 ]; // 30 deg around X
 				});
-			} else {
-				this.scene_manager.add_object(res.get_model(path));
+			}
+		}
+		*/
+
+		this._load_model("assets/models/water-bottle/WaterBottle.gltf", (obj) => {
+			obj.transform.position = [ 0.0, 1.3, 3.0 ];
+			obj.transform.scale = [10.0, 10.0, 10.0];
+		});
+		this._load_model("assets/models/street-lamp-pillar/street-lamp-pillar.gltf", (obj) => {
+			obj.transform.position = [ 3.0, 0.0, -3.0 ];
+			// obj.transform.rotation = [ 0.258819, 0, 0, 0.9659258 ]; // 30 deg around X
+		});
+
+		this._load_model("assets/models/logitech-keyboard/Logitech Keyboard.gltf", (obj) => {
+			obj.transform.position = [ 3.0, 0.0, 0.0 ];
+			obj.transform.rotation = golxzn.math.quat.from_euler([ 0, Math.PI * 0.75, 0 ]);
+		});
+		this._load_model("assets/models/alpha-blend-mode-test/AlphaBlendModeTest.gltf", (obj) => {
+			obj.transform.position = [ -5.0, 0.0, 2.0 ];
+			obj.transform.rotation = golxzn.math.quat.from_euler([ 0, Math.PI * 1.25, 0 ]);
+		});
+		this._load_model("assets/models/ground/ground.gltf");
+		// this._load_model("assets/models/sponza/Sponza.gltf");
+
+
+		const setup_light_gizmo = (obj, color, position) => {
+			var base_color = color.slice(0);
+			while (base_color.length < 4) base_color.push(0.4);
+
+			var emissive_factor = color.slice(0);
+			while (emissive_factor.length >= 4) emissive_factor.pop();
+
+			obj.transform.position = position;
+			for (var primitive of obj.mesh.primitives) {
+				primitive.material.base_color_factor = base_color;
+				primitive.material.emissive_factor = emissive_factor;
 			}
 		}
 
-		load_model("assets/models/ground/ground.gltf");
-		load_model("assets/models/street-lamp-pillar/street-lamp-pillar.gltf")
-
-
-
-		// const grnd = this.scene_manager.add_object(new ground(
-		// 	"ground", "assets/textures/asphalt.jpg", [10.0, 1.0, 10.0]
-		// ));
-		// grnd.transform = m4.translate(grnd.transform, [0.0, -1.0, 0.0]);
-
-		// for (var i = 0; i < 6; ++i) {
-		// 	const cube = this.scene_manager.add_object(new rotating_cube(
-		// 		`cube_${i}`, "assets/textures/lain.jpg", i * 0.5
-		// 	));
-		// 	cube.transform = m4.translate(cube.transform, [0.0, 0.5 + 2.1 * i, 0.0]);
-		// }
-
 		// LIGHTING
 		// const directional_power = [0.1, 0.14, 0.22];
-		const directional_power = [0.02, 0.028, 0.044];
-		const directional_properties = {
-			ambient: directional_power,
-			diffuse: directional_power,
-			specular: directional_power
-		};
-		graphics.directional_lights = new DirectionalLight([-1.0, -1.0, -1.0], directional_properties);
+		const directional_color = [0.2, 0.28, 0.44];
+		graphics.directional_lights = new DirectionalLight([-1.0, -1.0, -1.0], {
+			color: directional_color,
+			intensity: 1.0
+		});
+
 
 		const attenuation = [ 1.0, 0.09, 0.032 ];
 		const rgb = [
@@ -78,32 +112,25 @@ class game_instance {
 		];
 
 		for (const color of rgb) {
-			const pos = golxzn.math.scale(color, 1.0);
-			graphics.point_lights.push(new PointLight(
-				pos, attenuation, { ambient: color, diffuse: color, specular: color }
-			));
+			const pos = golxzn.math.sum(golxzn.math.scale(color, 5.0), [0.0, 2.0, 0.0]);
+			graphics.point_lights.push(new PointLight(pos, attenuation, { color: color, intensity: 10.0 }));
 
-			// this.scene_manager.add_object(new gizmos_object(color.toString(), new model([
-			// 	new mesh({}, null, primitives.make_cube_colored(color))
-			// ]), m4.scale(m4.translate(m4.make_identity(), pos), [0.25, 0.25, 0.25])));
+			this._load_model("assets/models/gizmos/gizmos_sphere.gltf", (obj) => {
+				setup_light_gizmo(obj, color, pos);
+			});
 		}
 
 
-		// const spot_color = [0.96, 0.72, 0.36];
-		const spot_color = [0.96, 0.20, 0.20];
+		const spot_color = [0.96, 0.72, 0.36];
 		const spot_limits = {
 			inner: Math.cos(golxzn.math.to_radians(18.0)),
 			outer: Math.cos(golxzn.math.to_radians(19.5))
 		};
-		const spot_properties = {
-			ambient: spot_color,
-			diffuse: spot_color,
-			specular: spot_color
-		};
 
-		const distance_from_center = 16.0;
-		const light_height = 16.0;
-		const light_count = SHADERS_COMMON.MAX_SPOT_LIGHT_COLORS / 4;
+		const distance_from_center = 5.0;
+		const light_height = 10.0;
+		// const light_count = SHADERS_COMMON.MAX_SPOT_LIGHT_COLORS;
+		const light_count = 3;
 		const angle = 2.0 * Math.PI / light_count;
 
 		for (var i = 0; i < light_count; ++i) {
@@ -115,18 +142,14 @@ class game_instance {
 			const direction = golxzn.math.normalize(golxzn.math.vec3.negative(position));
 
 			var light = new SpotLight(
-				position, direction, [1.0, 0.007, 0.0002], spot_limits, spot_properties
+				position, direction, [1.0, 0.007, 0.0002], spot_limits, { color: spot_color }
 			);
 
 			graphics.spot_lights.push(light);
-
-			// this.scene_manager.add_object(new floating_cube(`spot_${i}`,
-			// 	new model([ new mesh({}, null, primitives.make_cube_colored(spot_color)) ]),
-			// 	m4.scale(m4.translate(m4.make_identity(), position), [0.25, 0.25, 0.25]),
-			// 	1.0, 0.08, light, i * (Math.PI / 4.0)
-			// ));
+			this._load_model("assets/models/gizmos/gizmos_sphere.gltf", (obj) => {
+				setup_light_gizmo(obj, spot_color, position);
+			});
 		}
-
 
 		// PARTICLES
 		// const particles_count = 50000;
@@ -163,11 +186,23 @@ class game_instance {
 		if (this.paused) return;
 
 		this.keyboard.on_key_up(event);
+		if (event.code == 'KeyP') {
+			this._load_model("assets/models/street-lamp-pillar/street-lamp-pillar.gltf", (obj) => {
+				obj.transform.position = [ (Math.random() - 0.5) * 5.0, 0.0, (Math.random() - 0.5) * 5.0 ];
+				// obj.transform.rotation = [ 0.258819, 0, 0, 0.9659258 ]; // 30 deg around X
+			});
+		}
 	}
 
 	on_key_down(event) {
 		if (this.paused) return;
 
 		this.keyboard.on_key_down(event);
+	}
+
+	on_wheel(event) {
+		if (this.paused) return;
+
+		this.camera.speed -= event.deltaY * 0.001;
 	}
 }

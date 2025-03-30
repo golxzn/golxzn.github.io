@@ -1,56 +1,89 @@
+const ATTRIBUTE_NAMES = [
+	"POSITION",
+	"NORMAL",
+	"TEXCOORD_0",
+	// "TEXCOORD_1",
+	"TANGENT",
+	// "WEIGHTS_0",
+	// "JOINTS_0",
+];
+Object.freeze(ATTRIBUTE_NAMES);
+
 class primitive {
 	constructor(id, info = { indices: 0, mode: gl.TRIANGLES }, material = null) {
 		this.id = id;
-		this.indices = info.indices || null;
-		this.indices_count = 0;
+		this.vao = gl.createVertexArray();
+		this.indices = info.indices;
+		this.vertex_count = 0;
 		this.material = material;
 		this.mode = info.mode || gl.TRIANGLES;
 		this.buffers = [];
+		this._draw_method = () => {
+			gl.drawArrays(this.mode, 0, this.vertex_count);
+		}
 	}
 
 	/** @param {graphics} g  */
 	draw(g) {
-		const applied_textures = this.material ? this.material.apply(g) : 0;
-		g.set_engine_uniforms();
-		// @todo Check if indices are null
-		gl.drawElements(this.mode, this.indices_count, gl.UNSIGNED_SHORT, 0);
-		g.remove_textures(applied_textures);
-		g.reset_engine_uniforms();
+		if (this.material) this.material.activate(g);
+
+		this.bind();
+		this._draw_method();
+		this.unbind();
+
+		if (this.material) this.material.deactivate(g);
 	}
 
 	setup(attributes, accessors, views, buffers) {
+		/// I assumed that there should'n be primitives which uses different buffers
+
+
+
 		const make_buffer = (view) => {
+			const target = view.target || gl.ARRAY_BUFFER;
 			const buffer = gl.createBuffer();
-			gl.bindBuffer(view.target, buffer);
-			gl.bufferData(view.target,
-				new DataView(buffers[view.buffer]),
+			gl.bindBuffer(target, buffer);
+			gl.bufferData(target,
+				new DataView(buffers[view.buffer], view.byteOffset, view.byteLength),
 				gl.STATIC_DRAW,
-				view.byteOffset,
+				0, // No need to pass offset since we made it in DataView
 				view.byteLength
 			);
 			return buffer;
 		}
 
-		const construct = (id) => {
+		const construct = (id, attribute_id) => {
 			const accessor = accessors[id];
 			const view = views[accessor.bufferView];
 			this.buffers.push(make_buffer(view));
-			this.setup_attribute(id, view, accessor);
+			this.setup_attribute(attribute_id, view, accessor);
 		}
 
-		for (const [_name, id] of Object.entries(attributes)) {
-			construct(id);
+		this.bind();
+		var attribute_id = 0;
+		for (const name of ATTRIBUTE_NAMES) {
+			if (name in attributes) {
+				const id = attributes[name];
+				construct(id, attribute_id++);
+				this.vertex_count = accessors[id].count; // Meh, but ok
+			}
 		}
 
 		if (this.indices != null) {
-			construct(this.indices);
-			this.indices_count = accessors[this.indices].count;
+			construct(this.indices, attribute_id);
+			const accessor = accessors[this.indices];
+			const indices_count = accessor.count;
+			const type = accessor.componentType;
+			this._draw_method = () => {
+				gl.drawElements(this.mode, indices_count, type, 0);
+			}
 		}
+		this.unbind();
 	}
 
 	setup_attribute(id, view, accessor) {
 		gl.vertexAttribPointer(id,
-			view.byteLength / accessor.count / primitive.type_size(accessor.componentType),
+			primitive.determine_count(accessor.type),
 			accessor.componentType,
 			accessor.normalized || false,
 			0, // view.byteStride || 0,
@@ -58,6 +91,21 @@ class primitive {
 			/// The reason the stride and offset are 0 is that we made a buffer for each view
 		);
 		gl.enableVertexAttribArray(id);
+	}
+
+	bind() { gl.bindVertexArray(this.vao); }
+	unbind() { gl.bindVertexArray(null); }
+
+	static determine_count(type) {
+		const c = type.charCodeAt(type.length - 1);
+		if (c >= 0x30 && c <= 0x39) {
+			const count = c - 0x30;
+			if (type.charAt(0) == 'M') {
+				return count * count;
+			}
+			return count;
+		}
+		return 1; // SCALAR OR WHATEVER
 	}
 
 	static type_size(type) {
@@ -84,18 +132,12 @@ class primitive {
 
 class mesh {
 	constructor(info = { name: "", primitives: [] }) {
-		this.vao = gl.createVertexArray();
 		this.name = info.name;
 		this.primitives = info.primitives;
 	}
 
 	/** @param {graphics} g  */
 	draw(g) {
-		this.bind();
 		this.primitives.forEach((prim) => prim.draw(g));
-		this.unbind();
 	}
-
-	bind() { gl.bindVertexArray(this.vao); }
-	unbind() { gl.bindVertexArray(null); }
 };

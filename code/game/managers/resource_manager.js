@@ -123,6 +123,15 @@ class resource_manager {
 			return this.get_model(path);
 		}
 
+		// if (path.endsWith("glb")) {
+		// 	const glb = await this.load_binary(path);
+		// 	const gltf = extract_gltf(glb);
+		// 	const binaries = extract_buffers(glb);
+		// store binaries to access through resman
+		// }
+		// if (path.endsWith("gltf")) {
+		// }
+
 		const gltf = await this.load_config(path);
 		if (gltf == null) return null;
 

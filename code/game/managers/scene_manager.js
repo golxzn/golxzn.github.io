@@ -29,11 +29,6 @@ class scene_manager {
 	}
 
 	add_object(object) {
-		if (typeof object.name !== "string" || object.name == '') {
-			console.warn("[scene_manager] Cannot add object! Object", object, "has no name!");
-			return null;
-		}
-
 		if (typeof object.draw === "function") {
 			this.drawable_objects.add(object);
 		}

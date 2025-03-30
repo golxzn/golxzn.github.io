@@ -11,8 +11,13 @@ const PRELOAD_TEXTURES = [
 Object.freeze(PRELOAD_TEXTURES);
 
 const PRELOAD_MODELS = [
+	// "assets/models/gizmos/gizmos_sphere.gltf",
+	"assets/models/sponza/Sponza.gltf",
+	"assets/models/ground/ground.gltf",
+	"assets/models/water-bottle/WaterBottle.gltf",
 	"assets/models/street-lamp-pillar/street-lamp-pillar.gltf",
-	"assets/models/asus-laptop/ASUS Laptop.gltf",
+	"assets/models/alpha-blend-mode-test/AlphaBlendModeTest.gltf",
+	"assets/models/logitech-keyboard/Logitech Keyboard.gltf"
 ];
 Object.freeze(PRELOAD_MODELS);
 

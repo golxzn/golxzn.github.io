@@ -51,6 +51,8 @@
 	[ ] WakeUp animation
 
 [ ] Optimization
+	[ ] INSTANCING!
+	[ ] Configure & Build pipeline for each mesh!
 	[ ] Transform feedback for particles
 	[ ] Stencil Shadow Volume
 	[ ] LOD

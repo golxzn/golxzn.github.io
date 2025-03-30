@@ -42,6 +42,8 @@ class graphics {
 TODO:
 - [ ] Bind textures to programs once during initialization;
 */
+
+		// gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 		const bind_cull_face = (pass, graphics) => {
 			gl.cullFace(gl.FRONT);
 			gl.frontFace(gl.CW);
@@ -52,12 +54,12 @@ TODO:
 		this.render_passes = {
 			geometry: new render_pass("Geometry",
 				new framebuffer(this.render_size, [
-					{ name: "u_albedo",   type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT0, storage: true },
+					{ name: "u_albedo",   type: attachment_type.texture, format: gl.RGBA8, attachment: gl.COLOR_ATTACHMENT0, storage: true },
 					{ name: "u_position", type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT1, storage: true },
 					{ name: "u_normal",   type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT2, storage: true },
-					{ name: "u_ambient_occlusion",  type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT3, storage: true },
-					{ name: "u_metallic_roughness", type: attachment_type.texture, format: gl.RG8, attachment: gl.COLOR_ATTACHMENT4, storage: true },
-					{ type: attachment_type.renderbuffer, format: gl.DEPTH_COMPONENT16, attachment: gl.DEPTH_ATTACHMENT  }, // was gl.DEPTH24_STENCIL8
+					{ name: "u_emissive", type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT3, storage: true },
+					{ name: "u_occlusion_roughness_metallic", type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT4, storage: true },
+					{ type: attachment_type.renderbuffer, format: gl.DEPTH_COMPONENT16, attachment: gl.DEPTH_ATTACHMENT  },
 				], pipelines.load("3D", "PBR")),
 				[ gl.CULL_FACE, gl.DEPTH_TEST ], {
 					bind: function(pass, graphics) {
@@ -135,19 +137,20 @@ TODO:
 		this._current_render_pass = null;
 
 		this.blit_texture_pipeline = pipelines.load("3D", "BLIT_SCREEN");
-		this.blit_mesh = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-			-1.0, -1.0,
-			 1.0, -1.0,
-			-1.0,  1.0,
-			 1.0,  1.0,
-		]), gl.STATIC_DRAW);
-		gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
-		gl.enableVertexAttribArray(0);
-		gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+		this.blit_mesh = (() => {
+			const buffer = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+				-1.0, -1.0,
+				1.0, -1.0,
+				-1.0,  1.0,
+				1.0,  1.0,
+			]), gl.STATIC_DRAW);
+			gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+			gl.enableVertexAttribArray(0);
+			gl.bindBuffer(gl.ARRAY_BUFFER, null);
+			return buffer;
+		})();
 	}
 
 
@@ -201,6 +204,7 @@ TODO:
 			this.pop_projection();
 			this.pop_view();
 		}
+
 		spotlight_shadow_maps.unbind();
 		this.spotlight_shadow_map_texture = spotlight_shadow_maps;
 
@@ -212,9 +216,11 @@ TODO:
 		shading_pass.bind(this);
 		geometry_pass.bind_all_textures();
 
+		this.set_engine_uniforms();
 		this.set_engine_lighting_uniforms();
 		this._blit_on_quad(shading_pass.pipeline, {}, { u_exposure: SETTINGS.graphics.exposure });
 		this.reset_engine_lighting_uniforms();
+		this.reset_engine_uniforms();
 
 		shading_pass.unbind(this);
 
@@ -234,14 +240,14 @@ TODO:
 		};
 
 		const bloom_pass = this.set_current_render_pass(this.render_passes.bloom);
-		bloom_pass.bind(this);
-
 		var bloom_texture = shading_pass.texture(1);
-		for (var i = 0; i < 5; ++i) {
+		for (var i = 0; i < SETTINGS.graphics.bloom.iterations; ++i) {
+			bloom_pass.bind(this);
 			this._blit_on_quad(bloom_pass.pipeline, { u_bloom: bloom_texture }, bloom_uniforms);
+			bloom_pass.unbind(this);
+
 			bloom_texture = bloom_pass.texture();
 		}
-		bloom_pass.unbind(this);
 
 
 	//======================================= Blit  screen =======================================//
@@ -279,33 +285,16 @@ TODO:
 
 	set_engine_uniforms() {
 		const pipeline = this.current_pipeline();
-		pipeline.set_uniform("u_mvp", this.model_view_projection());
-		const u_model_location = pipeline.uniform_location("u_model");
-		if (u_model_location) {
-			pipeline.set_uniform(u_model_location, this.current_transform());
-		}
-		const u_view_position = pipeline.uniform_location("u_view_position");
-		if (u_view_position) {
-			pipeline.set_uniform(u_view_position, golxzn.math.vec3.negative(this.active_camera.position));
-		}
 
-		const u_normal_matrix_location = pipeline.uniform_location("u_normal_matrix");
-		if (u_normal_matrix_location) {
-			pipeline.set_uniform(u_normal_matrix_location,
-				golxzn.math.mat3.inverse(golxzn.math.mat3.build_from(this.current_transform())),
-				{ transpose: true }
-			);
-		}
-		if (pipeline.support(PIPELINE_FLAGS.lighting_support)) {
-			this.set_engine_lighting_uniforms();
-		}
+		pipeline.try_set_uniform("u_mvp", () => this.model_view_projection());
+		pipeline.try_set_uniform("u_model", () => this.current_transform());
+		pipeline.try_set_uniform("u_view_position", () => golxzn.math.vec3.negative(this.active_camera.position));
+		pipeline.try_set_uniform("u_normal_matrix", () => {
+			return golxzn.math.mat3.inverse(golxzn.math.mat3.build_from(this.current_transform()));
+		}, { transpose: true });
 	}
 
-	reset_engine_uniforms() {
-		if (!this.current_pipeline().support(PIPELINE_FLAGS.lighting_support)) {
-			this.reset_engine_lighting_uniforms();
-		}
-	}
+	reset_engine_uniforms() { }
 
 	set_engine_lighting_uniforms() {
 		const pipeline = this.current_pipeline();
@@ -328,9 +317,9 @@ TODO:
 			// 	light.apply(pipeline, `u_spot_lights[${i}]`);
 			// 	pipeline.set_uniform(transform_location, light.view_projection_position());
 			// }
+			light.apply(pipeline, `u_spot_lights[${i}]`);
 			const transform_location = pipeline.uniform_location(`u_spotlight_vp[${i}]`);
 			if (transform_location != null) {
-				light.apply(pipeline, `u_spot_lights[${i}]`);
 				pipeline.set_uniform(transform_location, light.view_projection());
 			}
 		}
@@ -345,7 +334,6 @@ TODO:
 		if (this.spotlight_shadow_map_texture && pipeline.uniform_location('u_point_lights_count') != null) {
 			this.remove_textures(1); // u_spotlight_shadow_map
 		}
-
 	}
 
 	current_pipeline() {
@@ -357,7 +345,7 @@ TODO:
 	}
 
 	push_transform(matrix) {
-		this.transform_stack.push(golxzn.math.mat4.multiply(this.current_transform(), matrix));
+		this.transform_stack.push(golxzn.math.mat4.multiply(matrix, this.current_transform()));
 	}
 	push_view(view) { this.view_stack.push(view); }
 	push_projection(proj) { this.projection_stack.push(proj); }
@@ -507,6 +495,7 @@ TODO:
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
 		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
+		gl.disable(gl.CULL_FACE);
 	}
 
 };

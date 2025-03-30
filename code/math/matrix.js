@@ -143,10 +143,6 @@ Object.assign(golxzn.math, {
 			return this.multiply(matrix, rotate_matrix);
 		},
 
-		apply_quaternion : function(matrix, quaternion) {
-
-		},
-
 		make_orthographic : function(left, right, bottom, top, near, far) {
 			const width = right - left;
 			const height = top - bottom;
@@ -169,6 +165,24 @@ Object.assign(golxzn.math, {
 					0.0,   f,                             0.0,  0.0,
 					0.0, 0.0,     (near + far) * invert_range, -1.0,
 					0.0, 0.0, 2.0 * near * far * invert_range,  0.0
+			];
+		},
+
+		from_quaternion(quaternion) {
+			const x = quaternion[0];
+			const y = quaternion[1];
+			const z = quaternion[2];
+			const w = quaternion[3];
+
+			const xx = x * x, yy = y * y, zz = z * z;
+			const xy = x * y, xz = x * z, xw = x * w;
+			const yz = y * z, yw = y * w, zw = z * w;
+
+			return [
+				1 - 2 * (yy + zz), 2 * (xy - zw),     2 * (xz + yw),     0,
+				2 * (xy + zw),     1 - 2 * (xx + zz), 2 * (yz - xw),     0,
+				2 * (xz - yw),     2 * (yz + xw),     1 - 2 * (xx + yy), 0,
+				0,                 0,                 0,                 1
 			];
 		},
 

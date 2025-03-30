@@ -16,6 +16,35 @@ LIGHTING_CONSTANTS: /* glsl */ `
 #define MAX_SPOT_LIGHT_COLORS 16
 `,
 
+PBR_LIGHTING_STRUCTURES: /* glsl */ `
+
+struct DirectionalLight {
+	vec3 color;
+	vec3 direction;
+	float intensity;
+};
+
+struct PointLight {
+	vec3 color;
+	vec3 position;
+	vec3 attenuation; // [constant, linear, cubic]
+	float intensity;
+};
+
+struct Limits {
+	float inner;
+	float outer;
+};
+struct SpotLight {
+	vec3 color;
+	vec3 position;
+	vec3 attenuation; // [constant, linear, cubic]
+	vec3 direction;
+	float intensity;
+	Limits limits;
+};
+`,
+
 LIGHTING_STRUCTURES: /* glsl */ `
 
 struct LightProperties {
@@ -48,8 +77,8 @@ struct SpotLight {
 	vec3 direction;
 	Limits limits;
 };
-
 `,
+
 
 MATERIAL_STRUCTURE: /* glsl */ `
 struct Material {

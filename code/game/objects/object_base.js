@@ -18,7 +18,7 @@ class model_object extends object_base {
 
 	draw(/*_gizmos*/graphics) {
 		graphics.push_transform(this.transform);
-		this.model.draw(graphics);
+		if (this.model) this.model.draw(graphics);
 		graphics.pop_transform();
 	}
 }
@@ -32,7 +32,7 @@ class gizmos_object extends object_base {
 
 	draw/*_gizmos*/(graphics) {
 		graphics.push_transform(this.transform);
-		this.model.draw(graphics);
+		if (this.model) this.model.draw(graphics);
 		graphics.pop_transform();
 	}
 }

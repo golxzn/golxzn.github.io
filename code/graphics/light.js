@@ -1,18 +1,18 @@
+const DEFAULT_LIGHT_INFO = {
+	color: [1.0, 1.0, 1.0],
+	intensity: 1.0
+};
+Object.freeze(DEFAULT_LIGHT_INFO);
 
 class LightBase {
-	constructor(ambient = [1.0, 1.0, 1.0], diffuse = [1.0, 1.0, 1.0], specular = [1.0, 1.0, 1.0]) {
-		this.ambient = ambient;
-		this.diffuse = diffuse;
-		this.specular = specular;
+	constructor(info = DEFAULT_LIGHT_INFO) {
+		this.color = info.color || DEFAULT_LIGHT_INFO.color;
+		this.intensity = info.intensity != null ? info.intensity : DEFAULT_LIGHT_INFO.intensity;
 	}
 
 	apply(pipeline, name) {
-		const uniform_name = `${name}.properties`
-		if (pipeline.uniform_location(`${uniform_name}.ambient`) == null) return;
-
-		pipeline.set_uniform(`${uniform_name}.ambient`, this.ambient);
-		pipeline.set_uniform(`${uniform_name}.diffuse`, this.diffuse);
-		pipeline.set_uniform(`${uniform_name}.specular`, this.specular);
+		pipeline.try_set_uniform(`${name}.color`, () => this.color);
+		pipeline.try_set_uniform(`${name}.intensity`, () => this.intensity);
 	}
 
 	view() { return golxzn.math.mat4.make_identity(); }
@@ -20,9 +20,8 @@ class LightBase {
 };
 
 class DirectionalLight extends LightBase {
-	constructor(direction, base = null) {
-		if (base != null) super(base.ambient, base.diffuse, base.specular);
-		else super();
+	constructor(direction, info = DEFAULT_LIGHT_INFO) {
+		super(info);
 
 		this._direction = golxzn.math.normalize(direction);
 		this._view = null;
@@ -64,9 +63,8 @@ class DirectionalLight extends LightBase {
 const ATTENUATION_THRESHOLD = 0.005;
 
 class PointLight extends LightBase {
-	constructor(position, attenuation = [ 1.0, 0.09, 0.032 ], base = null) {
-		if (base != null) super(base.ambient, base.diffuse, base.specular);
-		else super();
+	constructor(position, attenuation = [ 1.0, 0.09, 0.032 ], base = DEFAULT_LIGHT_INFO) {
+		super(base);
 
 		this.attenuation = attenuation;
 		this._position = position;
@@ -98,9 +96,8 @@ class PointLight extends LightBase {
 const DEFAULT_SPOT_LIMITS = { inner: golxzn.math.to_radians(15), outer: golxzn.math.to_radians(17) }
 
 class SpotLight extends PointLight {
-	constructor(position, direction, attenuation = [ 1.0, 0.022, 0.0019 ], limits = null, base = null) {
-		if (base != null) super(position, attenuation, base);
-		else super();
+	constructor(position, direction, attenuation = [ 1.0, 0.022, 0.0019 ], limits = null, base = DEFAULT_LIGHT_INFO) {
+		super(position, attenuation, base);
 
 		this._direction = golxzn.math.normalize(direction);
 		this._limits = limits == null ? DEFAULT_SPOT_LIMITS : limits;

@@ -46,17 +46,30 @@ class gltf_loader {
 			const texture = gltf.textures[info.index];
 			return this._get_texture(texture.source);
 		};
+		const convert_mode = (mode_name) => {
+			switch (mode_name) {
+				case "OPAQUE": return ALPHA_MODE.OPAQUE;
+				case "MASK":   return ALPHA_MODE.MASK;
+				case "BLEND":  return ALPHA_MODE.BLEND;
+			}
+			return ALPHA_MODE.OPAQUE;
+		};
 
 		const material_info = gltf.materials[material_id];
 		const pbr = material_info.pbrMetallicRoughness;
 		return new material({
 			metallic_factor: pbr.metallicFactor,
+			emissive_factor: material_info.emissiveFactor,
 			roughness_factor: pbr.roughnessFactor,
+			base_color_factor: pbr.baseColorFactor,
 			albedo: take_texture(pbr.baseColorTexture),
 			normal: take_texture(material_info.normalTexture),
-			metallic_roughness: take_texture(pbr.metallicRoughnessTexture),
-			ambient_occlusion: take_texture(material_info.occlusionTexture)
-		})
+			roughness_metallic: take_texture(pbr.metallicRoughnessTexture),
+			ambient_occlusion: take_texture(material_info.occlusionTexture),
+			emissive: take_texture(material_info.emissiveTexture),
+			alpha_cutoff: material_info.alphaCutoff,
+			alpha_mode: convert_mode(material_info.alphaMode)
+		});
 	}
 
 	parse_mesh(mesh_id = 0) {
@@ -69,15 +82,18 @@ class gltf_loader {
 
 		var created_mesh = new mesh({
 			name: mesh_info.name,
-			primitives: mesh_info.primitives.map((info, id) => new primitive(id, info))
+			primitives: mesh_info.primitives.map((info, id) => {
+				const prim = new primitive(id, info);
+				prim.material = this.parse_material(info.material);
+				prim.setup(info.attributes, gltf.accessors, gltf.bufferViews, this._buffers);
+				return prim;
+			})
 		});
-		created_mesh.bind();
-		for (const prim of created_mesh.primitives) {
-			const info = mesh_info.primitives[prim.id];
-			prim.material = this.parse_material(info.material);
-			prim.setup(info.attributes, gltf.accessors, gltf.bufferViews, this._buffers);
-		}
-		created_mesh.unbind();
+		// for (const prim of created_mesh.primitives) {
+		// 	const info = mesh_info.primitives[prim.id];
+		// 	prim.material = this.parse_material(info.material);
+		// 	prim.setup(info.attributes, gltf.accessors, gltf.bufferViews, this._buffers);
+		// }
 
 		return created_mesh;
 	}
@@ -91,6 +107,14 @@ class gltf_loader {
 	}
 
 	parse_scene(scene_id = 0) {
+		const gltf = this.gltf;
+		if ("scenes" in gltf && within_range(gltf.scenes, scene_id)) {
+			const scene = gltf.scenes[scene_id];
+			if (scene.nodes.length == 1) {
+				return this.parse_node(scene.nodes[0]);
+			}
+		}
+
 		return this._parse_(scene_id, "scenes", "nodes", (child, info) => {
 			console.error("[gltf_loader] Cannot parse node '",
 				child.name, "' of scene '", info.name, "'"
@@ -149,13 +173,15 @@ class gltf_loader {
 
 	async _preload_textures() {
 		const gltf = this.gltf;
+		if (gltf.textures == null) return;
+
 		const paths = [];
 		for (var i = 0; i < gltf.textures.length; ++i) {
 			const texture_info = gltf.textures[i];
 			const image = gltf.images[texture_info.source];
 			paths.push({
 				path: this.directory + image.uri,
-				sampler: gltf.samplers[texture_info.sampler]
+				sampler: texture_info.sampler ? gltf.samplers[texture_info.sampler] : null
 			});
 		}
 

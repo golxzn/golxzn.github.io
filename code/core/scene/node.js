@@ -46,6 +46,7 @@ class node {
 	/** @param {graphics} g  */
 	pre_draw(g) {
 		g.push_transform(this.transform.matrix);
+		g.set_engine_uniforms();
 	}
 
 	/** @param {graphics} g  */
@@ -65,6 +66,7 @@ class node {
 
 	/** @param {graphics} g  */
 	post_draw(g) {
+		g.reset_engine_uniforms();
 		g.pop_transform();
 	}
 

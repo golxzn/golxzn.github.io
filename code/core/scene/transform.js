@@ -7,38 +7,40 @@ const DEFAULT_TRANSFORM = {
 };
 Object.freeze(DEFAULT_TRANSFORM);
 
-const TRANSFORM_DIRTY = {
-	POSITION: (1 << 0),
-	ROTATION: (1 << 1),
-	SCALE:    (1 << 2),
-
-	EVERYTHING: 0x07
-};
-Object.freeze(TRANSFORM_DIRTY);
-
 class transform {
 	constructor(info = DEFAULT_TRANSFORM) {
-		this.matrix = info.matrix || DEFAULT_TRANSFORM.matrix;
+		this._matrix = info.matrix || DEFAULT_TRANSFORM.matrix;
 		this._position = info.position || DEFAULT_TRANSFORM.position;
 		this._rotation = info.rotation || DEFAULT_TRANSFORM.rotation;
 		this._scale = info.scale || DEFAULT_TRANSFORM.scale;
-		this.dirty_flags = TRANSFORM_DIRTY.EVERYTHING;
+		this.dirty_flags = true;
 	}
 
 	is_dirty() {
-		return this.dirty_flags != 0;
+		return this.dirty_flags;
+	}
+
+	mark_dirty() {
+		this.dirty_flags = true;
 	}
 
 	actualize_matrix() {
-		const is_set = (flag) => (this.dirty_flags & flag) == flag;
 		const m4 = golxzn.math.mat4;
 
-		if (is_set(TRANSFORM_DIRTY.POSITION)) m4.set_translation(this.matrix, this.position);
-		/// @todo Rotation
-		// if (is_set(TRANSFORM_DIRTY.ROTATION)) m4.set_rotation(this.matrix, this.rotation);
-		if (is_set(TRANSFORM_DIRTY.SCALE   )) m4.set_scale(this.matrix, this.scale);
+		this._matrix = m4.translate(
+			m4.multiply(
+				m4.from_quaternion(this._rotation),
+				m4.scale(m4.make_identity(), this._scale)
+			),
+			this._position
+		);
 
-		this.dirty_flags = 0;
+		this.dirty_flags = false;
+	}
+
+	get matrix() {
+		if (this.is_dirty()) this.actualize_matrix();
+		return this._matrix;
 	}
 
 	/** @param {Array<float>} value */
@@ -49,7 +51,7 @@ class transform {
 		}
 
 		this._position = value;
-		this.dirty_flags |= TRANSFORM_DIRTY.POSITION;
+		this.dirty_flags = true;
 	}
 	get position() { return this._position; }
 
@@ -62,7 +64,7 @@ class transform {
 		}
 
 		this._rotation = value;
-		this.dirty_flags |= TRANSFORM_DIRTY.ROTATION;
+		this.dirty_flags = true;
 	}
 	get rotation() { return this._rotation; }
 
@@ -74,7 +76,7 @@ class transform {
 		}
 
 		this._scale = value;
-		this.dirty_flags |= TRANSFORM_DIRTY.SCALE;
+		this.dirty_flags = true;
 	}
 	get scale() { return this._scale; }
 };

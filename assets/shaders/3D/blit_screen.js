@@ -2,7 +2,6 @@
 Object.assign(SHADERS["3D"], { BLIT_SCREEN : {
 
 vert: /* glsl */ `#version 300 es
-#pragma vscode_glsllint_stage: vert
 layout(location = 0) in vec2 a_position;
 
 out vec2 f_uv;
@@ -17,13 +16,10 @@ void main() {
 
 
 frag: /* glsl */ `#version 300 es
-#pragma vscode_glsllint_stage: frag
 precision mediump float;
 
 in vec2 f_uv;
 out vec4 frag_color;
-
-#define WEIGHTS_COUNT 5
 
 uniform sampler2D u_screen;
 uniform sampler2D u_bloom;
