@@ -179,9 +179,9 @@ Object.assign(golxzn.math, {
 			const yz = y * z, yw = y * w, zw = z * w;
 
 			return [
-				1 - 2 * (yy + zz), 2 * (xy - zw),     2 * (xz + yw),     0,
-				2 * (xy + zw),     1 - 2 * (xx + zz), 2 * (yz - xw),     0,
-				2 * (xz - yw),     2 * (yz + xw),     1 - 2 * (xx + yy), 0,
+				1 - 2 * (yy + zz), 2 * (xy + zw),     2 * (xz - yw),     0,
+				2 * (xy - zw),     1 - 2 * (xx + zz), 2 * (yz + xw),     0,
+				2 * (xz + yw),     2 * (yz - xw),     1 - 2 * (xx + yy), 0,
 				0,                 0,                 0,                 1
 			];
 		},
@@ -233,7 +233,7 @@ Object.assign(golxzn.math, {
 				m[2] * (m[3] * m[3] - m[4] * m[6]);
 
 			if (det <= 0) {
-				return null;
+				return this.identity();
 			}
 
 			const invdet = 1.0 / det;

@@ -65,21 +65,20 @@ class game_instance {
 			obj.transform.scale = [10.0, 10.0, 10.0];
 		});
 		this._load_model("assets/models/street-lamp-pillar/street-lamp-pillar.gltf", (obj) => {
-			obj.transform.position = [ 3.0, 0.0, -3.0 ];
+			// obj.transform.position = [ 3.0, 0.0, -3.0 ];
 			// obj.transform.rotation = [ 0.258819, 0, 0, 0.9659258 ]; // 30 deg around X
 		});
 
 		this._load_model("assets/models/logitech-keyboard/Logitech Keyboard.gltf", (obj) => {
 			obj.transform.position = [ 3.0, 0.0, 0.0 ];
-			obj.transform.rotation = golxzn.math.quat.from_euler([ 0, Math.PI * 0.75, 0 ]);
+			obj.transform.rotation = golxzn.math.quat.from_euler([ 0, Math.PI * 1.25, 0 ]);
 		});
 		this._load_model("assets/models/alpha-blend-mode-test/AlphaBlendModeTest.gltf", (obj) => {
-			obj.transform.position = [ -5.0, 0.0, 2.0 ];
-			obj.transform.rotation = golxzn.math.quat.from_euler([ 0, Math.PI * 1.25, 0 ]);
+			obj.transform.position = [ -5.0, 0.3, 0.0 ];
+			obj.transform.rotation = golxzn.math.quat.from_euler([ 0, Math.PI * 0.75, 0 ]);
 		});
 		this._load_model("assets/models/ground/ground.gltf");
 		// this._load_model("assets/models/sponza/Sponza.gltf");
-
 
 		const setup_light_gizmo = (obj, color, position) => {
 			var base_color = color.slice(0);

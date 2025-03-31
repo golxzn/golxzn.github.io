@@ -34,32 +34,23 @@ class primitive {
 		if (this.material) this.material.deactivate(g);
 	}
 
+	bind() { gl.bindVertexArray(this.vao); }
+	unbind() { gl.bindVertexArray(null); }
+
 	setup(attributes, accessors, views, buffers) {
 		/// I assumed that there should'n be primitives which uses different buffers
-
-
-
-		const make_buffer = (view) => {
-			const target = view.target || gl.ARRAY_BUFFER;
-			const buffer = gl.createBuffer();
-			gl.bindBuffer(target, buffer);
-			gl.bufferData(target,
-				new DataView(buffers[view.buffer], view.byteOffset, view.byteLength),
-				gl.STATIC_DRAW,
-				0, // No need to pass offset since we made it in DataView
-				view.byteLength
-			);
-			return buffer;
-		}
-
 		const construct = (id, attribute_id) => {
 			const accessor = accessors[id];
-			const view = views[accessor.bufferView];
-			this.buffers.push(make_buffer(view));
-			this.setup_attribute(attribute_id, view, accessor);
+			const buffer = this.buffers.at(accessor.bufferView);
+			gl.bindBuffer(buffer.target, buffer.handle);
+			this.setup_attribute(attribute_id, views[accessor.bufferView], accessor);
 		}
 
 		this.bind();
+		for (const view of views) {
+			this.buffers.push(this._make_buffer(view, buffers));
+		}
+
 		var attribute_id = 0;
 		for (const name of ATTRIBUTE_NAMES) {
 			if (name in attributes) {
@@ -74,8 +65,9 @@ class primitive {
 			const accessor = accessors[this.indices];
 			const indices_count = accessor.count;
 			const type = accessor.componentType;
+			const offset = accessor.byteOffset || 0;
 			this._draw_method = () => {
-				gl.drawElements(this.mode, indices_count, type, 0);
+				gl.drawElements(this.mode, indices_count, type, offset);
 			}
 		}
 		this.unbind();
@@ -86,26 +78,31 @@ class primitive {
 			primitive.determine_count(accessor.type),
 			accessor.componentType,
 			accessor.normalized || false,
-			0, // view.byteStride || 0,
-			0, // view.byteOffset || accessor.byteOffset || 0
-			/// The reason the stride and offset are 0 is that we made a buffer for each view
+			view.byteStride || 0,
+			accessor.byteOffset || 0
 		);
 		gl.enableVertexAttribArray(id);
 	}
 
-	bind() { gl.bindVertexArray(this.vao); }
-	unbind() { gl.bindVertexArray(null); }
+	_make_buffer(view, buffers) {
+		const target = view.target || gl.ARRAY_BUFFER;
+		const buffer = gl.createBuffer();
+		gl.bindBuffer(target, buffer);
+		gl.bufferData(target,
+			new DataView(buffers[view.buffer]),
+			gl.STATIC_DRAW,
+			view.byteOffset, // No need to pass offset since we made it in DataView
+			view.byteLength
+		);
+		return { target: target, handle: buffer };
+	}
 
 	static determine_count(type) {
-		const c = type.charCodeAt(type.length - 1);
-		if (c >= 0x30 && c <= 0x39) {
-			const count = c - 0x30;
-			if (type.charAt(0) == 'M') {
-				return count * count;
-			}
-			return count;
-		}
-		return 1; // SCALAR OR WHATEVER
+		const char = type.charCodeAt(type.length - 1);
+		if (char < 0x30 || char > 0x39) return 1;
+
+		const count = char - 0x30;
+		return type.charAt(0) == 'M' ? count * count : count;
 	}
 
 	static type_size(type) {

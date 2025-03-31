@@ -176,7 +176,7 @@ class resource_manager {
 // private:
 	/** @param {String} path  */
 	_make_url(path) {
-		return `${this._url}${path}`;
+		return path.startsWith("http") ? path : `${this._url}${path}`;
 	}
 
 	_has_in(container, path) {

@@ -285,12 +285,13 @@ TODO:
 
 	set_engine_uniforms() {
 		const pipeline = this.current_pipeline();
+		const m3 = golxzn.math.mat3;
 
 		pipeline.try_set_uniform("u_mvp", () => this.model_view_projection());
 		pipeline.try_set_uniform("u_model", () => this.current_transform());
 		pipeline.try_set_uniform("u_view_position", () => golxzn.math.vec3.negative(this.active_camera.position));
 		pipeline.try_set_uniform("u_normal_matrix", () => {
-			return golxzn.math.mat3.inverse(golxzn.math.mat3.build_from(this.current_transform()));
+			return m3.inverse(m3.build_from(this.current_transform()));
 		}, { transpose: true });
 	}
 
