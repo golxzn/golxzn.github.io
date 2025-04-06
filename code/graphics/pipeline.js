@@ -7,7 +7,7 @@ Object.freeze(DEFAULT_PROPERTIES);
 class pipeline {
 	constructor(name, shaders, properties = DEFAULT_PROPERTIES) {
 		this._name = name;
-		this._properties = properties == null ? DEFAULT_PROPERTIES : properties;
+		this._properties = properties || DEFAULT_PROPERTIES;
 		this._texture_counter = 0;
 		for (const [key, value] of Object.entries(DEFAULT_PROPERTIES)) {
 			if (!Object.hasOwn(this._properties, key)) {
@@ -58,11 +58,21 @@ class pipeline {
 		return gl.getUniformLocation(this._program, uniform_name);
 	}
 
+	try_set_uniform(uniform_name, getter, options = { transpose: false, as_integer: false }) {
+		const location = this.uniform_location(uniform_name);
+		if (location) {
+			this.set_uniform(location, getter(), options);
+		}
+	}
+
 	set_uniform(uniform_name, value, options = { transpose: false, as_integer: false }) {
+		if (!options.transpose) options.transpose = false;
+		if (!options.as_integer) options.as_integer = false;
+
 		const location = pipeline._is_string(uniform_name) ? this.uniform_location(uniform_name) : uniform_name;
 		if (location == null) {
 			console.error(`[pipeline][${this._name}] Could not find a "${uniform_name}" uniform location!`);
-			return;
+			return false;
 		}
 
 		if (Array.isArray(value)) {
@@ -87,21 +97,26 @@ class pipeline {
 					gl.uniform1fv(location, data);
 					break;
 			}
-
-		} else if (typeof(value) == 'number') {
+			return true;
+		}
+		if (typeof(value) == 'number') {
 			if (options.as_integer) {
 				gl.uniform1i(location, value);
 			} else {
 				gl.uniform1f(location, value);
 			}
-		} else if (typeof(value) == 'boolean') {
-			gl.uniform1i(location, +value);
-		} else {
-			console.error(
-				`[pipeline][${this._name}] Cannot set uniform "${uniform_name}".`,
-				`The value type "${typeof(value)}" is not supported!`
-			);
+			return true;
 		}
+		if (typeof(value) == 'boolean') {
+			gl.uniform1i(location, +value);
+			return true;
+		}
+
+		console.error(
+			`[pipeline][${this._name}] Cannot set uniform "${uniform_name}".`,
+			`The value type "${typeof(value)}" is not supported!`
+		);
+		return false;
 	}
 
 	get_uniform(uniform_name) {

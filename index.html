@@ -30,9 +30,11 @@
 	<script src="code/math/common.js"></script>
 	<script src="code/math/vector.js"></script>
 	<script src="code/math/matrix.js"></script>
+	<script src="code/math/quaternion.js"></script>
 
 	<script src="code/core/settings.js"></script>
 	<script src="code/core/utils.js"></script>
+	<script src="code/core/webgl-debug.js"></script>
 	<script src="code/core/opengl.js"></script>
 
 	<script src="code/core/mouse_info.js"></script>
@@ -40,6 +42,8 @@
 	<script src="code/core/service_provider.js"></script>
 
 	<script src="code/core/state_machine.js"></script>
+	<script src="code/core/scene/transform.js"></script>
+	<script src="code/core/scene/node.js"></script>
 
 <!------------------------ SHADERS ------------------------->
 
@@ -48,12 +52,10 @@
 	<script src="assets/shaders/3D/depth.js"></script>
 	<script src="assets/shaders/3D/bloom.js"></script>
 	<script src="assets/shaders/3D/primitive.js"></script>
-	<script src="assets/shaders/3D/geometry.js"></script>
-	<script src="assets/shaders/3D/lighting.js"></script>
-	<script src="assets/shaders/3D/lighting_deferred.js"></script>
-	<script src="assets/shaders/3D/particles.js"></script>
-	<script src="assets/shaders/3D/snow_particles_lighting.js"></script>
 	<script src="assets/shaders/3D/blit_screen.js"></script>
+
+	<script src="assets/shaders/3D/PBR-geometry.js"></script>
+	<script src="assets/shaders/3D/PBR.js"></script>
 
 <!------------------------ SOURCES ------------------------->
 
@@ -63,10 +65,13 @@
 	<script src="code/graphics/graphics.js"></script>
 	<script src="code/graphics/pipeline.js"></script>
 	<script src="code/graphics/texture.js"></script>
-	<script src="code/graphics/material.js"></script>
 	<script src="code/graphics/light.js"></script>
+
+	<script src="code/graphics/material.js"></script>
 	<script src="code/graphics/mesh.js"></script>
-	<script src="code/graphics/primitives/3d.js"></script>
+
+	<script src="code/graphics/parsers/gltf_parser.js"></script>
+
 	<script src="code/graphics/model.js"></script>
 
 	<script src="code/game/managers/pipeline_manager.js"></script>

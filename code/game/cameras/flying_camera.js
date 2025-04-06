@@ -1,8 +1,16 @@
 
+const MIN_CAMERA_SPEED = 0.1;
+const MAX_CAMERA_SPEED = 100.0;
+
 class flying_camera extends camera {
 	constructor(position, speed = 10, fov = golxzn.math.to_radians(75), aspect = 1.0) {
 		super(position, fov, aspect);
-		this.speed = speed;
+		this._speed = speed;
+	}
+
+	get speed() { return this._speed; }
+	set speed(value) {
+		this._speed = golxzn.math.clamp(value, MIN_CAMERA_SPEED, MAX_CAMERA_SPEED);
 	}
 
 	update(keyboard, delta) {
@@ -22,7 +30,7 @@ class flying_camera extends camera {
 	move(direction, delta) {
 		const m = golxzn.math;
 
-		const distance = this.speed * delta;
+		const distance = this._speed * delta;
 		switch (direction) {
 			case camera.DIRECTION_FORWARD:
 				this.position = m.sum(this.position, m.scale(this.front, distance));

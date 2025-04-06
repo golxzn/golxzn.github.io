@@ -1,6 +1,6 @@
 
 class object_base {
-	constructor(name, transform = golxzn.math.mat4.make_identity()) {
+	constructor(name, transform = golxzn.math.mat4.identity()) {
 		this.name = name;
 		this.transform = transform;
 	}
@@ -11,20 +11,20 @@ class object_base {
 }
 
 class model_object extends object_base {
-	constructor(name, model, transform = golxzn.math.mat4.make_identity()) {
+	constructor(name, model, transform = golxzn.math.mat4.identity()) {
 		super(name, transform);
 		this.model = model
 	}
 
 	draw(/*_gizmos*/graphics) {
 		graphics.push_transform(this.transform);
-		this.model.draw(graphics);
+		if (this.model) this.model.draw(graphics);
 		graphics.pop_transform();
 	}
 }
 
 class gizmos_object extends object_base {
-	constructor(name, model, transform = golxzn.math.mat4.make_identity()) {
+	constructor(name, model, transform = golxzn.math.mat4.identity()) {
 		super(name, transform);
 		this.model = model
 	}
@@ -32,7 +32,7 @@ class gizmos_object extends object_base {
 
 	draw/*_gizmos*/(graphics) {
 		graphics.push_transform(this.transform);
-		this.model.draw(graphics);
+		if (this.model) this.model.draw(graphics);
 		graphics.pop_transform();
 	}
 }

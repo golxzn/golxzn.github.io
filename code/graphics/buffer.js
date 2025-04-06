@@ -144,12 +144,15 @@ const render_object_type = {
 
 
 class render_object {
-	constructor(info = { type: render_object_type.vertex_array }) {
+	constructor(info = { type: render_object_type.vertex_array }, infos = null) {
 		this.info = info;
 		this.id = render_object._make_object(info.type);
 		this.last_attribute_id = 0;
 		this.buffers = {};
 		this._bind_impl = render_object._get_bind_method_for(info.type);
+		if (infos != null) {
+			this.setup(infos);
+		}
 	}
 
 	bind()   { this._bind_impl(this.id); }

@@ -4,10 +4,24 @@ const DISAPPEAR_DURATION = 0.75;
 const LOADING_SPEED      = 2.0;
 
 const PRELOAD_TEXTURES = [
-	"assets/textures/asphalt.jpg",
-	"assets/textures/lain.jpg"
+	{ path: "assets/textures/asphalt.jpg", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/textures/lain.jpg", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/models/street-lamp-pillar/pillar_diffuse.png", sampler: DEFAULT_SAMPLER },
 ];
 Object.freeze(PRELOAD_TEXTURES);
+
+const PRELOAD_MODELS = [
+// My models
+	"assets/models/ground/ground.gltf",
+	"assets/models/street-lamp-pillar/street-lamp-pillar.gltf",
+	// "assets/models/gizmos/gizmos_sphere.gltf",
+
+// Third party
+	"assets/models/water-bottle/WaterBottle.gltf",
+	"assets/models/EmissiveStrengthTest/EmissiveStrengthTest.gltf",
+];
+Object.freeze(PRELOAD_MODELS);
+
 
 class progress_counter {
 	constructor(total) {
@@ -51,8 +65,7 @@ class loading_screen {
 		this._progress = 0.0;
 
 		this._timer = 0.0;
-		this._texture_promises = [];
-		this._texture_loading_progress = new progress_counter(PRELOAD_TEXTURES.length);
+		this._loading_progress = new progress_counter(PRELOAD_TEXTURES.length + PRELOAD_MODELS.length);
 		this._compiling_pipeline_progress = new progress_counter(0);
 
 		this.states = new state_machine({
@@ -72,20 +85,17 @@ class loading_screen {
 			[loading_screen.STATE_RESOURCE_LOADING]: new state({
 				on_enter: () => {
 					this.status_bar.innerHTML = 'loading resources 0%';
+					const resources = get_service("resource");
+					const increment = (_loaded, _total) => this._loading_progress.increment();
 
-					this._texture_promises = get_service("resource").preload_textures(
-						PRELOAD_TEXTURES, (_loaded, _total) => {
-							this._texture_loading_progress.increment();
-						}
-					);
-					if (this._texture_promises.length == 0) {
-						throw new Error("No resources found!");
-					}
+					resources.preload_textures(PRELOAD_TEXTURES, increment);
+					resources.preload_models(PRELOAD_MODELS, increment);
 				},
 				update: (delta) => {
 					// TODO: Fix loading! The speed of progress changing should be lerped between next progress
 					// to reach it faster!
-					const next_progress = this._texture_loading_progress.progress();
+					const next_progress = this._loading_progress.progress()
+
 					this._progress = Math.min(this._progress + LOADING_SPEED * delta, next_progress);
 
 					// Ensure we don't exceed the next progress

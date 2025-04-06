@@ -1,95 +1,150 @@
+// const ATTRIBUTE_NAMES = [
+// 	"POSITION",
+// 	"NORMAL",
+// 	"TEXCOORD_0",
+// 	"TEXCOORD_1",
+// 	"TANGENT",
+// 	// "WEIGHTS_0",
+// 	// "JOINTS_0",
+// ];
+// Object.freeze(ATTRIBUTE_NAMES);
 
-const draw_method_type = {
-	array                             : "array",
-	elements                          : "elements",
-	instanced_array                   : "instanced_array",
-	instanced_elements                : "instanced_elements",
-};
-
-class draw_method {
-	constructor(data = {
-		type: draw_method_type.array,
-		mode: gl.TRIANGLES,
-		target_buffer: null,
-		instances_count: null,
-	}) {
-		this.mode = data.mode != null ? data.mode : gl.TRIANGLES;
-		this.draw_method = draw_method.select(data.type);
-		this.target_buffer = data.target_buffer;
-		this.instances_count = data.instances_count;
-	}
-
-	draw(graphics, mesh_instance) {
-		this.draw_method(graphics, this, mesh_instance);
-	}
-
-	static select(type) {
-		switch (type) {
-			case draw_method_type.array:
-				return (graphics, self, mesh) => { graphics.draw_array(self, mesh); };
-			case draw_method_type.elements:
-				return (graphics, self, mesh) => { graphics.draw_elements(self, mesh); };
-			case draw_method_type.instanced_array:
-				return (graphics, self, mesh) => { graphics.draw_instanced_array(self, mesh); };
-			case draw_method_type.instanced_elements:
-				return (graphics, self, mesh) => { graphics.draw_instanced_elements(self, mesh); };
+class primitive {
+	constructor(id, info = { indices: null, mode: gl.TRIANGLES }, material = null) {
+		this.id = id;
+		this.vao = gl.createVertexArray();
+		this.indices = info.indices;
+		this.vertex_count = 0;
+		this.material = material;
+		this.mode = info.mode || gl.TRIANGLES;
+		this.buffers = [];
+		this._draw_method = (self) => {
+			gl.drawArrays(self.mode, 0, self.vertex_count);
 		}
-		return null;
+	}
+
+	/** @param {graphics} g  */
+	draw(g) {
+		if (this.material) this.material.activate(g);
+
+		this.bind();
+		this._draw_method(this);
+		this.unbind();
+
+		if (this.material) this.material.deactivate(g);
+	}
+
+	bind() { gl.bindVertexArray(this.vao); }
+	unbind() { gl.bindVertexArray(null); }
+
+	setup(attributes, accessors, views, buffers) {
+		/// I assumed that there should'n be primitives which uses different buffers
+
+		const construct = (id, attribute_id) => {
+			const accessor = accessors[id];
+			const buffer = this.buffers.at(accessor.bufferView);
+			gl.bindBuffer(buffer.target, buffer.handle);
+			this.setup_attribute(attribute_id, views[accessor.bufferView], accessor);
+		}
+
+		this.bind();
+		for (const accessor of accessors) {
+			const view = views[accessor.bufferView];
+			this.buffers.push(this._make_buffer(view, buffers,
+				primitive.determine_target(view, accessor)
+			));
+		}
+
+		/// @todo Pipeline generation using primitive info
+		const pipeline = get_service("pipeline").load("3D", "PBR_GEOMETRY");
+		var bound_attributes = 0;
+		for (const [name, id] of Object.entries(attributes)) {
+			const attribute_id = pipeline.attribute_location(name);
+			if (attribute_id != -1) {
+				construct(id, attribute_id);
+				++bound_attributes;
+				continue;
+			}
+			console.warn("Cannot find", name, "attribute location!");
+		}
+		this.vertex_count = accessors[Object.values(attributes)[0]].count; // Ouch, fuck
+
+		if (this.indices) {
+			construct(this.indices, bound_attributes + 1);
+			const accessor = accessors[this.indices];
+			const indices_count = accessor.count;
+			const type = accessor.componentType;
+			const offset = accessor.byteOffset || 0;
+			this._draw_method = (self) => {
+				gl.drawElements(self.mode, indices_count, type, offset);
+			}
+		}
+		this.unbind();
+	}
+
+	setup_attribute(id, view, accessor) {
+		gl.vertexAttribPointer(id,
+			primitive.determine_count(accessor.type),
+			accessor.componentType,
+			accessor.normalized || false,
+			view.byteStride || 0,
+			/*accessor.byteOffset || */ 0 // we're using a buffer for each attribute
+		);
+		gl.enableVertexAttribArray(id);
+	}
+
+	_make_buffer(view, buffers, default_target) {
+		const target = view.target || default_target;
+		const buffer = gl.createBuffer();
+		const data = new DataView(buffers[view.buffer], view.byteOffset, view.byteLength);
+		gl.bindBuffer(target, buffer);
+		gl.bufferData(target, data, gl.STATIC_DRAW);
+		return { target: target, handle: buffer };
+	}
+
+	static determine_target(view, accessor) {
+		if (accessor.type == "SCALAR") return gl.ELEMENT_ARRAY_BUFFER;
+		return gl.ARRAY_BUFFER;
+	}
+
+	static determine_count(type) {
+		const char = type.charCodeAt(type.length - 1);
+		if (char < 0x30 || char > 0x39) return 1;
+
+		const count = char - 0x30;
+		return type.charAt(0) == 'M' ? count * count : count;
+	}
+
+	static type_size(type) {
+		switch (type) {
+			case gl.BYTE:
+			case gl.UNSIGNED_BYTE:
+				return 1;
+
+			case gl.SHORT:
+			case gl.UNSIGNED_SHORT:
+			case gl.HALF_FLOAT:
+				return 2;
+
+			case gl.FLOAT:
+			case gl.INT:
+			case gl.UNSIGNED_INT:
+			case gl.INT_2_10_10_10_REV:
+			case gl.UNSIGNED_INT_2_10_10_10_REV:
+				return 4;
+		}
+		return 0;
 	}
 };
 
 class mesh {
-	constructor(textures, material, details = { pipeline: null, buffer_infos: [], draw_method: null, settings: null }) {
-		this.vao = new render_object({ type: render_object_type.vertex_array });
-		this.vao.setup(details.buffer_infos);
-		// this.vao = gl.createVertexArray();
-		// this.buffers = {};
-		this.draw_method = details.draw_method;
-		this.pipeline_name = details.pipeline;
-
-		this.textures = textures;
-		this.material = material;
-
-		this.draw = (graphics) => { this._draw(graphics); }
-		if (details.settings != null) {
-			this.enable_settings = details.settings.enable == null ? [] : details.settings.enable;
-			this.disable_settings = details.settings.disable == null ? [] : details.settings.disable;
-			if (this.enable_settings.length + this.disable_settings.length > 0) {
-				this.draw = (graphics) => { this._draw_with_settings(graphics); }
-			}
-		}
+	constructor(info = { name: "", primitives: [] }) {
+		this.name = info.name;
+		this.primitives = info.primitives;
 	}
 
-	_draw(graphics) {
-		this.draw_method.draw(graphics, this);
-	}
-
-	_draw_with_settings(graphics) {
-		var previous_disabled = []
-		for (var i = 0; i < this.enable_settings.length; ++i) {
-			const param = this.enable_settings[i];
-			if (!gl.isEnabled(param)) previous_disabled.push(param);
-			gl.enable(param);
-		}
-		var previous_enabled = []
-		for (var i = 0; i < this.disable_settings.length; ++i) {
-			const param = this.disable_settings[i];
-			if (gl.isEnabled(param)) previous_enabled.push(param);
-			gl.disable(param);
-		}
-
-		this.draw_method.draw(graphics, this);
-
-		previous_disabled.forEach(value => gl.disable(value));
-		previous_enabled.forEach(value => gl.enable(value));
-	}
-
-	update_buffer_data(name, data, offset = 0) {
-		const buffer = this.vao.get_buffer(name);
-		if (buffer == null) return;
-
-		this.vao.bind();
-		buffer.sub_data(data, offset);
-		this.vao.unbind();
+	/** @param {graphics} g  */
+	draw(g) {
+		this.primitives.forEach((prim) => prim.draw(g));
 	}
 };

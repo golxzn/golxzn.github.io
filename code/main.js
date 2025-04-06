@@ -6,12 +6,11 @@ let loading = null;
 let game = null;
 
 function instantiate_game(display, renderer) {
-	gl.getExtension("EXT_color_buffer_float");
-
 	let instance = new game_instance(display, renderer);
 
 	document.onkeydown = (event) => instance.on_key_down(event);
 	document.onkeyup   = (event) => instance.on_key_up(event);
+	document.onwheel   = (event) => instance.on_wheel(event);
 
 	display.onmousedown = (event) => instance.on_mouse_down(event);
 	display.onmousemove = (event) => instance.on_mouse_move(event);
@@ -33,7 +32,7 @@ function instantiate_game(display, renderer) {
 	return instance;
 }
 
-function start() {
+async function start() {
 	display.width = window.innerWidth;
 	display.height = window.innerHeight;
 
@@ -44,9 +43,9 @@ function start() {
 		"resource": new resource_manager(),
 		"scene"   : new scene_manager()
 	});
-	renderer = new graphics(display);
+	// Requires pipeline manager
+	renderer = service_provider().set("graphics", new graphics(display));
 	renderer.set_clear_color(SETTINGS.graphics.clear_color);
-	service_provider().set("graphics", renderer); // Requires pipeline manager
 
 	loading = new loading_screen((state) => {
 		switch (state) {

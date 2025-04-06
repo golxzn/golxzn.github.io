@@ -46,20 +46,8 @@ class framebuffer {
 
 		out_pipeline.use();
 		for (const attachment of attachments) {
-			if (!('name' in attachment)) {
-				continue;
-			}
-
-			switch (attachment.type) {
-				case attachment_type.texture:
-					out_pipeline.push_texture(attachment.name);
-					break;
-
-				case attachment_type.texture_array:
-					out_pipeline.push_texture(attachment.name);
-					break;
-
-				default: break;
+			if ('name' in attachment) {
+				out_pipeline.push_texture(attachment.name);
 			}
 		}
 		out_pipeline.unuse();
@@ -98,6 +86,10 @@ class framebuffer {
 
 	texture_array(index = 0) {
 		return make_texture_proxy(this.texture_arrays[index], gl.TEXTURE_2D_ARRAY);
+	}
+
+	render_buffer(index = 0) {
+		return make_texture_proxy(this.render_buffers[index], gl.TEXTURE_2D);
 	}
 
 	width() { return this.size[0]; }

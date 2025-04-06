@@ -87,29 +87,8 @@ uniform sampler2D u_diffuse; // albedo
 // uniform sampler2D u_ambient_occlusion;
 uniform mediump sampler2DArray u_spotlight_shadow_map;
 
-
 ${SHADERS_COMMON.LIGHTING_UTILITIES}
-
-float calc_shadow(vec4 fragment_pos_light_space, int id, float bias, int accuracy) {
-	vec3 projection_coords = (fragment_pos_light_space.xyz / fragment_pos_light_space.w) * 0.5 + 0.5;
-	if (projection_coords.z > 1.0) return 0.0;
-
-	float current_depth = projection_coords.z;
-
-	int line_width = accuracy * 2 + 1;
-	float shadow_weight = 1.0 / float(line_width * line_width);
-	vec2 texel_size = 1.0 / vec2(textureSize(u_spotlight_shadow_map, 0));
-	float shadow = 0.0;
-	for (int x = -accuracy; x <= accuracy; ++x) {
-		for (int y = -accuracy; y <= accuracy; ++y) {
-			vec3 uv = vec3(projection_coords.xy + vec2(x, y) * texel_size, id);
-			float pcf_depth = texture(u_spotlight_shadow_map, uv).r;
-			shadow += step(pcf_depth, current_depth - bias) * shadow_weight;
-		}
-	}
-
-	return shadow;
-}
+${SHADERS_COMMON.SHADOW_CALCULATION}
 
 vec3 tone_mapping(vec3 color, float exposure) {
 	return vec3(1.0) - exp(-color * exposure);

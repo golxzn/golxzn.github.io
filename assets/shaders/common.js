@@ -16,6 +16,35 @@ LIGHTING_CONSTANTS: /* glsl */ `
 #define MAX_SPOT_LIGHT_COLORS 16
 `,
 
+PBR_LIGHTING_STRUCTURES: /* glsl */ `
+
+struct DirectionalLight {
+	vec3 color;
+	vec3 direction;
+	float intensity;
+};
+
+struct PointLight {
+	vec3 color;
+	vec3 position;
+	vec3 attenuation; // [constant, linear, cubic]
+	float intensity;
+};
+
+struct Limits {
+	float inner;
+	float outer;
+};
+struct SpotLight {
+	vec3 color;
+	vec3 position;
+	vec3 attenuation; // [constant, linear, cubic]
+	vec3 direction;
+	float intensity;
+	Limits limits;
+};
+`,
+
 LIGHTING_STRUCTURES: /* glsl */ `
 
 struct LightProperties {
@@ -48,8 +77,8 @@ struct SpotLight {
 	vec3 direction;
 	Limits limits;
 };
-
 `,
+
 
 MATERIAL_STRUCTURE: /* glsl */ `
 struct Material {
@@ -81,31 +110,27 @@ float calc_specular(vec3 to_light, vec3 to_view, vec3 normal, float shininess) {
 
 SHADOW_CALCULATION: /* glsl */`
 float calc_shadow(vec4 fragment_pos_light_space, int id, float bias, int accuracy) {
-	// fragment_pos_light_space = { 22.99704, 10.25679, -12.5804, 19.86758 }
-	float invert_w = 1.0 / fragment_pos_light_space.w; // 0.0503334592
-	// (fragment_pos_light_space.xyz * invert_w) == { 1.158, 0.519, -0.637 }
-	// projection_coords = { 1.079, 0.7595, 0.1815 }
-	vec3 projection_coords = (fragment_pos_light_space.xyz * invert_w) * 0.5 + vec3(0.5);
-	// current_depth = 0.1815
+	vec3 projection_coords = (fragment_pos_light_space.xyz / fragment_pos_light_space.w) * 0.5 + 0.5;
 	float current_depth = projection_coords.z;
 	if (current_depth > 1.0) return 0.0;
 
-	// line_width = 5
+	float threshold = current_depth - bias;
 	int line_width = accuracy * 2 + 1;
-	vec2 texel_size = 1.0 / vec2(textureSize(u_spotlight_shadow_map, 0));
+	float shadow_weight = 1.0 / float(line_width * line_width);
+	vec2 texel_size = 1.0 / vec2(textureSize(u_spotlight_shadow_map, id));
+
 	float shadow = 0.0;
 	for (int x = -accuracy; x <= accuracy; ++x) {
 		for (int y = -accuracy; y <= accuracy; ++y) {
 			vec3 uv = vec3(projection_coords.xy + vec2(x, y) * texel_size, id);
-			float pcf_depth = texture(u_spotlight_shadow_map, uv).r; // 0.99962
-			shadow += step(pcf_depth, current_depth - bias);
+			float pcf_depth = texture(u_spotlight_shadow_map, uv).r;
+			shadow += step(pcf_depth, threshold) * shadow_weight;
 		}
 	}
 
-	float shadow_weight = 1.0 / float(line_width * line_width);
-	return shadow * shadow_weight;
+	return shadow;
 }
-`
+`,
 
 };
 Object.freeze(SHADERS_COMMON);
