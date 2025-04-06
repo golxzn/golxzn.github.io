@@ -9,31 +9,41 @@ properties : {
 vert : /* glsl */ `#version 300 es
 #pragma vscode_glsllint_stage: vert
 
-layout(location = 0) in vec3 a_position;
-layout(location = 1) in vec3 a_normal;
-layout(location = 2) in vec2 a_uv;
-layout(location = 3) in vec4 a_tangent;
+layout(location = 0) in vec3 POSITION;
+layout(location = 1) in vec3 NORMAL;
+layout(location = 2) in vec4 TANGENT;
+layout(location = 3) in vec2 TEXCOORD_0;
+layout(location = 4) in vec2 TEXCOORD_1;
 
 out vec3 f_position;
-out vec3 f_normal;
 out vec2 f_uv;
-out vec3 f_tangent;
-out vec3 f_bitangent;
+out mat3 f_TBN;
+flat out int f_tangent_exists;
 
 uniform mat4 u_mvp;
 uniform mat4 u_model;
 uniform mat3 u_normal_matrix;
 
 void main() {
-	vec4 position = vec4(a_position, 1.0);
+	vec4 position = vec4(POSITION, 1.0);
 
 	gl_Position = u_mvp * position;
 
 	f_position = vec3(u_model * position);
-	f_normal = normalize(u_normal_matrix * a_normal);
-	f_uv = a_uv;
-	f_tangent = a_tangent.xyz;
-	f_bitangent = cross(f_normal, a_tangent.xyz) * a_tangent.w;
+	f_uv = TEXCOORD_0;
+
+	vec3 normal    = normalize(u_normal_matrix * NORMAL);
+	f_TBN[2] = normal;
+	f_tangent_exists = TANGENT.xyz != vec3(0.0) ? 1 : 0;
+
+	if (f_tangent_exists == 1) {
+		vec3 tangent   = normalize(u_normal_matrix * normalize(TANGENT.xyz));
+		// tangent -= dot(tangent, normal) * normal;
+		vec3 bitangent = normalize(vec3(cross(normal, tangent) * TANGENT.w));
+
+		f_TBN[0] = tangent;
+		f_TBN[1] = bitangent;
+	}
 }
 `,
 
@@ -51,21 +61,20 @@ const int MASK_OFFSET_AMBIENT_OCCLUSION = (1 << 3);
 const int MASK_OFFSET_EMISSIVE = (1 << 4);
 
 in vec3 f_position;
-in vec3 f_normal;
 in vec2 f_uv;
-in vec3 f_tangent; /// @todo ParallaxMapping maybe?
-in vec3 f_bitangent;
+in mat3 f_TBN;
+flat in int f_tangent_exists;
 
 layout(location = 0) out vec4 frag_albedo;
 layout(location = 1) out vec3 frag_position;
 layout(location = 2) out vec3 frag_normal;
-layout(location = 3) out vec3 frag_emissive;
-layout(location = 4) out vec3 frag_occlusion_roughness_metallic;
+layout(location = 3) out vec4 frag_emissive;
+layout(location = 4) out vec3 frag_occlusion_metallic_roughness;
 
 struct Material {
 	sampler2D albedo;
 	sampler2D normal;
-	sampler2D occlusion_roughness_metallic;
+	sampler2D occlusion_metallic_roughness;
 	sampler2D emissive;
 	vec4 base_color_factor;
 	vec3 emissive_factor;
@@ -81,34 +90,33 @@ bool has_texture(int mask) {
 	return (u_material.textures_mask & mask) == mask;
 }
 
-vec4 make_albedo(Material mat) {
+vec4 make_albedo(in Material mat) {
 	if (has_texture(MASK_OFFSET_ALBEDO)) {
 		return texture(mat.albedo, f_uv) * mat.base_color_factor;
 	}
 	return mat.base_color_factor;
 }
 
-vec3 make_normal(sampler2D surface_normal) {
-	if (has_texture(MASK_OFFSET_NORMAL)) {
- 	/// @todo apply f_normal. I'm not sure that this is correct way to do so
-		return normalize(texture(surface_normal, f_uv).rgb + f_normal);
+vec3 make_normal(in Material mat) {
+	if (has_texture(MASK_OFFSET_NORMAL) && f_tangent_exists == 1) {
+		return normalize(f_TBN * (texture(mat.normal, f_uv).xyz * 2.0 - 1.0));
 	}
-	return f_normal;
+	return normalize(f_TBN[2]);
 }
 
-vec3 make_emissive(sampler2D emissive_surface) {
+vec4 make_emissive(in Material mat) {
 	if (has_texture(MASK_OFFSET_EMISSIVE)) {
-		return texture(emissive_surface, f_uv).xyz;
+		return texture(mat.emissive, f_uv);
 	}
-	return u_material.emissive_factor;
+	return vec4(mat.emissive_factor, 1.0);
 }
 
-vec3 make_occlusion_roughness_metallic() {
-	vec3 default_color = vec3(1.0, u_material.metallic_factor, u_material.roughness_factor);
-	vec3 color = texture(u_material.occlusion_roughness_metallic, f_uv).rgb * default_color;
+vec3 make_occlusion_metallic_roughness(in Material mat) {
+	vec3 default_color = vec3(1.0, mat.metallic_factor, mat.roughness_factor);
+	vec3 color = texture(mat.occlusion_metallic_roughness, f_uv).rgb;// * default_color;
 
 	if (!has_texture(MASK_OFFSET_METALLIC_ROUGHNESS)) {
-		color = vec3(color.r, default_color.g, default_color.b);
+		color.gb = default_color.gb;
 	}
 	if (!has_texture(MASK_OFFSET_AMBIENT_OCCLUSION)) {
 		color.r = default_color.r;
@@ -116,19 +124,15 @@ vec3 make_occlusion_roughness_metallic() {
 	return color;
 }
 
-vec3 pack(vec3 value, float coeff) {
-	return (value * coeff) + vec3(0.5);
-}
-
 void main() {
 	vec4 albedo = make_albedo(u_material);
 	if (albedo.a < u_material.alpha_cutoff) discard;
 
-	frag_position = pack(f_position, 0.025);
 	frag_albedo = albedo;
-	frag_normal = pack(make_normal(u_material.normal), 0.5);
-	frag_emissive = make_emissive(u_material.emissive);
-	frag_occlusion_roughness_metallic = make_occlusion_roughness_metallic();
+	frag_position = f_position;
+	frag_normal = make_normal(u_material);
+	frag_emissive = make_emissive(u_material);
+	frag_occlusion_metallic_roughness = make_occlusion_metallic_roughness(u_material);
 }
 `
 

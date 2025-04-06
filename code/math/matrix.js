@@ -1,7 +1,7 @@
 
 Object.assign(golxzn.math, {
 	mat4 : {
-		make_identity : function() {
+		identity : function() {
 			return [
 				1.0, 0.0, 0.0, 0.0,
 				0.0, 1.0, 0.0, 0.0,
@@ -38,40 +38,29 @@ Object.assign(golxzn.math, {
 			return matrix;
 		},
 
-		transpose : function(matrix) {
-			var transposed = new Array(matrix.length)
-			var t = 0;
-			for (var i = 0; i < 4; ++i) {
-				for (var j = 0; j < 4; ++j) {
-					transposed[t++] = matrix[j * 4 + i];
-				}
-			}
-			return transposed;
-		},
-
-		inverse : function(m) {
+		inverse: function(m) {
 			// Calculate the determinant of the matrix
 			const det = m[0] * (
 				m[5] * (m[10] * m[15] - m[14] * m[11]) -
 				m[9] * (m[6] * m[15] - m[14] * m[7]) +
 				m[13] * (m[6] * m[11] - m[10] * m[7])
-			) - m[4] * (
-				m[1] * (m[10] * m[15] - m[14] * m[11]) -
-				m[9] * (m[2] * m[15] - m[14] * m[3]) +
-				m[13] * (m[2] * m[11] - m[10] * m[3])
-			) + m[8] * (
-				m[1] * (m[6] * m[15] - m[14] * m[7]) -
-				m[5] * (m[2] * m[15] - m[14] * m[3]) +
-				m[13] * (m[2] * m[7] - m[6] * m[3])
-			) - m[12] * (
-				m[1] * (m[6] * m[11] - m[10] * m[7]) -
-				m[5] * (m[2] * m[11] - m[10] * m[3]) +
-				m[9] * (m[2] * m[7] - m[6] * m[3])
+			) - m[1] * (
+				m[4] * (m[10] * m[15] - m[14] * m[11]) -
+				m[8] * (m[6] * m[15] - m[14] * m[7]) +
+				m[12] * (m[6] * m[11] - m[10] * m[7])
+			) + m[2] * (
+				m[4] * (m[9] * m[15] - m[13] * m[11]) -
+				m[8] * (m[5] * m[15] - m[13] * m[7]) +
+				m[12] * (m[5] * m[11] - m[9] * m[7])
+			) - m[3] * (
+				m[4] * (m[9] * m[14] - m[13] * m[10]) -
+				m[8] * (m[5] * m[14] - m[13] * m[6]) +
+				m[12] * (m[5] * m[10] - m[9] * m[6])
 			);
 
 			// If determinant is 0, the matrix is not invertible
-			if (det === 0) {
-				return null;
+			if (det == 0) {
+				return this.identity();
 			}
 
 			const inverted_det = 1.0 / det;
@@ -84,7 +73,7 @@ Object.assign(golxzn.math, {
 				-(m[4] * (m[10] * m[15] - m[14] * m[11]) - m[8] * (m[6] * m[15] - m[14] * m[7]) + m[12] * (m[6] * m[11] - m[10] * m[7])) * inverted_det,
 				+(m[0] * (m[10] * m[15] - m[14] * m[11]) - m[8] * (m[2] * m[15] - m[14] * m[3]) + m[12] * (m[2] * m[11] - m[10] * m[3])) * inverted_det,
 				-(m[0] * (m[6] * m[15] - m[14] * m[7]) - m[4] * (m[2] * m[15] - m[14] * m[3]) + m[12] * (m[2] * m[7] - m[6] * m[3])) * inverted_det,
-				(m[0] * (m[6] * m[11] - m[10] * m[7]) - m[4] * (m[2] * m[11] - m[10] * m[3]) + m[8] * (m[2] * m[7] - m[6] * m[3])) * inverted_det,
+				+(m[0] * (m[6] * m[11] - m[10] * m[7]) - m[4] * (m[2] * m[11] - m[10] * m[3]) + m[8] * (m[2] * m[7] - m[6] * m[3])) * inverted_det,
 
 				+(m[4] * (m[9] * m[15] - m[13] * m[11]) - m[8] * (m[5] * m[15] - m[13] * m[7]) + m[12] * (m[5] * m[11] - m[9] * m[7])) * inverted_det,
 				-(m[0] * (m[9] * m[15] - m[13] * m[11]) - m[8] * (m[1] * m[15] - m[13] * m[3]) + m[12] * (m[1] * m[11] - m[9] * m[3])) * inverted_det,
@@ -95,6 +84,15 @@ Object.assign(golxzn.math, {
 				+(m[0] * (m[9] * m[14] - m[13] * m[10]) - m[8] * (m[1] * m[14] - m[13] * m[2]) + m[12] * (m[1] * m[10] - m[9] * m[2])) * inverted_det,
 				-(m[0] * (m[5] * m[14] - m[13] * m[6]) - m[4] * (m[1] * m[14] - m[13] * m[2]) + m[12] * (m[1] * m[6] - m[5] * m[2])) * inverted_det,
 				+(m[0] * (m[5] * m[10] - m[9] * m[6]) - m[4] * (m[1] * m[10] - m[9] * m[2]) + m[8] * (m[1] * m[6] - m[5] * m[2])) * inverted_det,
+			];
+		},
+
+		transpose: function(m) {
+			return [
+				m[0], m[4], m[ 8], m[12],
+				m[1], m[5], m[ 9], m[13],
+				m[2], m[6], m[10], m[14],
+				m[3], m[7], m[11], m[15]
 			];
 		},
 
@@ -226,29 +224,38 @@ Object.assign(golxzn.math, {
 			]
 		},
 
-		inverse : function(m) {
+		inverse: function(m) {
 			const det =
-				m[0] * (m[4] * m[8] - m[3] * m[5]) -
+				m[0] * (m[4] * m[8] - m[5] * m[7]) -
 				m[1] * (m[3] * m[8] - m[5] * m[6]) +
-				m[2] * (m[3] * m[3] - m[4] * m[6]);
+				m[2] * (m[3] * m[7] - m[4] * m[6]);
 
-			if (det <= 0) {
-				return this.identity();
+			if (det === 0) {
+				return this.identity(); // Return identity matrix if not invertible
 			}
 
 			const invdet = 1.0 / det;
 			return [
-				(m[4] * m[8] - m[3] * m[5]) * invdet,
-				(m[2] * m[3] - m[1] * m[8]) * invdet,
+				(m[4] * m[8] - m[5] * m[7]) * invdet,
+				(m[2] * m[7] - m[1] * m[8]) * invdet,
 				(m[1] * m[5] - m[2] * m[4]) * invdet,
 				(m[5] * m[6] - m[3] * m[8]) * invdet,
 				(m[0] * m[8] - m[2] * m[6]) * invdet,
 				(m[3] * m[2] - m[0] * m[5]) * invdet,
-				(m[3] * m[3] - m[6] * m[4]) * invdet,
-				(m[6] * m[1] - m[0] * m[3]) * invdet,
+				(m[3] * m[7] - m[6] * m[4]) * invdet,
+				(m[6] * m[1] - m[0] * m[7]) * invdet,
 				(m[0] * m[4] - m[3] * m[1]) * invdet,
-			]
+			];
 		},
+
+		transpose: function(m) {
+			return [
+				m[0], m[3], m[6],
+				m[1], m[4], m[7],
+				m[2], m[5], m[8]
+			];
+		},
+
 
 		multiply_vec3 : function(m, v) {
 			return [

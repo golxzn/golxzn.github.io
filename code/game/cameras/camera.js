@@ -28,7 +28,7 @@ class camera {
 		this._fov = fov;
 		this._aspect = aspect;
 
-		this.perspective = golxzn.math.mat4.make_identity();
+		this.perspective = golxzn.math.mat4.identity();
 
 		this._perspective_dirty = true;
 		this._yaw_pitch_dirty = false;

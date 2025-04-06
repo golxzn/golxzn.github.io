@@ -1,6 +1,6 @@
 
 class object_base {
-	constructor(name, transform = golxzn.math.mat4.make_identity()) {
+	constructor(name, transform = golxzn.math.mat4.identity()) {
 		this.name = name;
 		this.transform = transform;
 	}
@@ -11,7 +11,7 @@ class object_base {
 }
 
 class model_object extends object_base {
-	constructor(name, model, transform = golxzn.math.mat4.make_identity()) {
+	constructor(name, model, transform = golxzn.math.mat4.identity()) {
 		super(name, transform);
 		this.model = model
 	}
@@ -24,7 +24,7 @@ class model_object extends object_base {
 }
 
 class gizmos_object extends object_base {
-	constructor(name, model, transform = golxzn.math.mat4.make_identity()) {
+	constructor(name, model, transform = golxzn.math.mat4.identity()) {
 		super(name, transform);
 		this.model = model
 	}

@@ -2,7 +2,8 @@ const MATERIAL_UNIFORM = 'u_material';
 
 const ALBEDO_NAME                       = `${MATERIAL_UNIFORM}.albedo`
 const NORMAL_NAME                       = `${MATERIAL_UNIFORM}.normal`
-const OCCLUSION_METALLIC_ROUGHNESS_NAME = `${MATERIAL_UNIFORM}.occlusion_roughness_metallic`
+const OCCLUSION_METALLIC_ROUGHNESS_NAME = `${MATERIAL_UNIFORM}.occlusion_metallic_roughness`
+const METALLIC_ROUGHNESS_NAME           = `${MATERIAL_UNIFORM}.metallic_roughness`
 const AMBIENT_OCCLUSION_NAME            = `${MATERIAL_UNIFORM}.ambient_occlusion`
 const EMISSIVE_NAME                     = `${MATERIAL_UNIFORM}.emissive`
 const TEXTURES_MASK_NAME                = `${MATERIAL_UNIFORM}.textures_mask`
@@ -51,11 +52,11 @@ class material {
 		this.alpha_cutoff = info.alpha_cutoff != null ? info.alpha_cutoff : DEFAULT_MATERIAL_INFO.alpha_cutoff;
 		this.alpha_mode = info.alpha_mode != null ? info.alpha_mode : DEFAULT_MATERIAL_INFO.alpha_mode;
 
-		if (this.ambient_occlusion && this.occlusion_roughness_metallic != this.ambient_occlusion) {
-			console.error(`[material] Ambient Occlusion and Roughness Metallic textures should be merged!`);
-			this.ambient_occlusion = null;
-			this.textures_mask = this.get_textures_mask();
-		}
+		// if (this.ambient_occlusion && this.occlusion_roughness_metallic != this.ambient_occlusion) {
+		// 	console.error(`[material] Ambient Occlusion and Roughness Metallic textures should be merged!`);
+		// 	this.ambient_occlusion = null;
+		// 	this.textures_mask = this.get_textures_mask();
+		// }
 		this._applied_textures = 0;
 	}
 

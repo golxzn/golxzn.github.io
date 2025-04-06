@@ -1,16 +1,16 @@
-const ATTRIBUTE_NAMES = [
-	"POSITION",
-	"NORMAL",
-	"TEXCOORD_0",
-	// "TEXCOORD_1",
-	"TANGENT",
-	// "WEIGHTS_0",
-	// "JOINTS_0",
-];
-Object.freeze(ATTRIBUTE_NAMES);
+// const ATTRIBUTE_NAMES = [
+// 	"POSITION",
+// 	"NORMAL",
+// 	"TEXCOORD_0",
+// 	"TEXCOORD_1",
+// 	"TANGENT",
+// 	// "WEIGHTS_0",
+// 	// "JOINTS_0",
+// ];
+// Object.freeze(ATTRIBUTE_NAMES);
 
 class primitive {
-	constructor(id, info = { indices: 0, mode: gl.TRIANGLES }, material = null) {
+	constructor(id, info = { indices: null, mode: gl.TRIANGLES }, material = null) {
 		this.id = id;
 		this.vao = gl.createVertexArray();
 		this.indices = info.indices;
@@ -18,8 +18,8 @@ class primitive {
 		this.material = material;
 		this.mode = info.mode || gl.TRIANGLES;
 		this.buffers = [];
-		this._draw_method = () => {
-			gl.drawArrays(this.mode, 0, this.vertex_count);
+		this._draw_method = (self) => {
+			gl.drawArrays(self.mode, 0, self.vertex_count);
 		}
 	}
 
@@ -28,7 +28,7 @@ class primitive {
 		if (this.material) this.material.activate(g);
 
 		this.bind();
-		this._draw_method();
+		this._draw_method(this);
 		this.unbind();
 
 		if (this.material) this.material.deactivate(g);
@@ -39,6 +39,7 @@ class primitive {
 
 	setup(attributes, accessors, views, buffers) {
 		/// I assumed that there should'n be primitives which uses different buffers
+
 		const construct = (id, attribute_id) => {
 			const accessor = accessors[id];
 			const buffer = this.buffers.at(accessor.bufferView);
@@ -47,27 +48,35 @@ class primitive {
 		}
 
 		this.bind();
-		for (const view of views) {
-			this.buffers.push(this._make_buffer(view, buffers));
+		for (const accessor of accessors) {
+			const view = views[accessor.bufferView];
+			this.buffers.push(this._make_buffer(view, buffers,
+				primitive.determine_target(view, accessor)
+			));
 		}
 
-		var attribute_id = 0;
-		for (const name of ATTRIBUTE_NAMES) {
-			if (name in attributes) {
-				const id = attributes[name];
-				construct(id, attribute_id++);
-				this.vertex_count = accessors[id].count; // Meh, but ok
+		/// @todo Pipeline generation using primitive info
+		const pipeline = get_service("pipeline").load("3D", "PBR_GEOMETRY");
+		var bound_attributes = 0;
+		for (const [name, id] of Object.entries(attributes)) {
+			const attribute_id = pipeline.attribute_location(name);
+			if (attribute_id != -1) {
+				construct(id, attribute_id);
+				++bound_attributes;
+				continue;
 			}
+			console.warn("Cannot find", name, "attribute location!");
 		}
+		this.vertex_count = accessors[Object.values(attributes)[0]].count; // Ouch, fuck
 
-		if (this.indices != null) {
-			construct(this.indices, attribute_id);
+		if (this.indices) {
+			construct(this.indices, bound_attributes + 1);
 			const accessor = accessors[this.indices];
 			const indices_count = accessor.count;
 			const type = accessor.componentType;
 			const offset = accessor.byteOffset || 0;
-			this._draw_method = () => {
-				gl.drawElements(this.mode, indices_count, type, offset);
+			this._draw_method = (self) => {
+				gl.drawElements(self.mode, indices_count, type, offset);
 			}
 		}
 		this.unbind();
@@ -79,22 +88,23 @@ class primitive {
 			accessor.componentType,
 			accessor.normalized || false,
 			view.byteStride || 0,
-			accessor.byteOffset || 0
+			/*accessor.byteOffset || */ 0 // we're using a buffer for each attribute
 		);
 		gl.enableVertexAttribArray(id);
 	}
 
-	_make_buffer(view, buffers) {
-		const target = view.target || gl.ARRAY_BUFFER;
+	_make_buffer(view, buffers, default_target) {
+		const target = view.target || default_target;
 		const buffer = gl.createBuffer();
+		const data = new DataView(buffers[view.buffer], view.byteOffset, view.byteLength);
 		gl.bindBuffer(target, buffer);
-		gl.bufferData(target,
-			new DataView(buffers[view.buffer]),
-			gl.STATIC_DRAW,
-			view.byteOffset, // No need to pass offset since we made it in DataView
-			view.byteLength
-		);
+		gl.bufferData(target, data, gl.STATIC_DRAW);
 		return { target: target, handle: buffer };
+	}
+
+	static determine_target(view, accessor) {
+		if (accessor.type == "SCALAR") return gl.ELEMENT_ARRAY_BUFFER;
+		return gl.ARRAY_BUFFER;
 	}
 
 	static determine_count(type) {

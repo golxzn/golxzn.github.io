@@ -24,11 +24,11 @@
 			"doubleSided":true,
 			"name":"asphalt",
 			"normalTexture":{
-				"index":1
+				"index":0
 			},
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
-					"index":0
+					"index":1
 				},
 				"metallicFactor":0
 			}
@@ -42,9 +42,10 @@
 					"attributes":{
 						"POSITION":0,
 						"NORMAL":1,
-						"TEXCOORD_0":2
+						"TEXCOORD_0":2,
+						"TANGENT":3
 					},
-					"indices":3,
+					"indices":4,
 					"material":0
 				}
 			]
@@ -63,13 +64,13 @@
 	"images":[
 		{
 			"mimeType":"image/jpeg",
-			"name":"asphalt",
-			"uri":"asphalt.jpg"
+			"name":"asphalt-height",
+			"uri":"asphalt-height.jpg"
 		},
 		{
 			"mimeType":"image/jpeg",
-			"name":"asphalt-height",
-			"uri":"asphalt-height.jpg"
+			"name":"asphalt",
+			"uri":"asphalt.jpg"
 		}
 	],
 	"accessors":[
@@ -78,13 +79,13 @@
 			"componentType":5126,
 			"count":4,
 			"max":[
-				20,
-				0,
+				19.999998092651367,
+				3.4969114039995475e-06,
 				20
 			],
 			"min":[
-				-20,
-				0,
+				-19.999998092651367,
+				-3.4969114039995475e-06,
 				-20
 			],
 			"type":"VEC3"
@@ -103,6 +104,12 @@
 		},
 		{
 			"bufferView":3,
+			"componentType":5126,
+			"count":4,
+			"type":"VEC4"
+		},
+		{
+			"bufferView":4,
 			"componentType":5123,
 			"count":6,
 			"type":"SCALAR"
@@ -129,8 +136,14 @@
 		},
 		{
 			"buffer":0,
-			"byteLength":12,
+			"byteLength":64,
 			"byteOffset":128,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":12,
+			"byteOffset":192,
 			"target":34963
 		}
 	],
@@ -142,7 +155,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":140,
+			"byteLength":204,
 			"uri":"ground.bin"
 		}
 	]

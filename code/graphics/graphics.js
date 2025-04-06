@@ -11,7 +11,7 @@ class graphics {
 
 		this.active_camera = null;
 		this.pipeline_stack = [];
-		this.transform_stack = [m.make_identity()];
+		this.transform_stack = [m.identity()];
 		this.projection_stack = [];
 		this.view_stack = [];
 
@@ -54,12 +54,12 @@ TODO:
 		this.render_passes = {
 			geometry: new render_pass("Geometry",
 				new framebuffer(this.render_size, [
-					{ name: "u_albedo",   type: attachment_type.texture, format: gl.RGBA8, attachment: gl.COLOR_ATTACHMENT0, storage: true },
-					{ name: "u_position", type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT1, storage: true },
-					{ name: "u_normal",   type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT2, storage: true },
-					{ name: "u_emissive", type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT3, storage: true },
-					{ name: "u_occlusion_roughness_metallic", type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT4, storage: true },
-					{ type: attachment_type.renderbuffer, format: gl.DEPTH_COMPONENT16, attachment: gl.DEPTH_ATTACHMENT  },
+					{ name: "u_albedo",   type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT0, storage: true },
+					{ name: "u_position", type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT1, storage: true },
+					{ name: "u_normal",   type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT2, storage: true },
+					{ name: "u_emissive", type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT3, storage: true },
+					{ name: "u_occlusion_metallic_roughness", type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT4, storage: true },
+					{ name: "u_depth", type: attachment_type.renderbuffer, format: gl.DEPTH_COMPONENT16, attachment: gl.DEPTH_ATTACHMENT },
 				], pipelines.load("3D", "PBR")),
 				[ gl.CULL_FACE, gl.DEPTH_TEST ], {
 					bind: function(pass, graphics) {
@@ -101,12 +101,23 @@ TODO:
 					{ type: attachment_type.renderbuffer, format: gl.DEPTH24_STENCIL8, attachment: gl.DEPTH_STENCIL_ATTACHMENT  },
 				]), [ gl.CULL_FACE, gl.DEPTH_TEST ], {
 					bind: function(pass, graphics) {
-						gl.enable(gl.CULL_FACE);
 						gl.cullFace(gl.FRONT);
 						gl.frontFace(gl.CCW);
 						gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+						const geom = graphics.render_passes.geometry;
+						geom.bind_all_textures();
+						/// u_depth binding, It doesn't work.
+						// const last_id = geom.texture_count()
+						// geom.render_buffer(last_id).bind(last_id);
+
+						graphics.set_engine_uniforms();
+						graphics.set_engine_lighting_uniforms();
 					},
-					unbind: (pass, graphics) => { }
+					unbind: (pass, graphics) => {
+						graphics.reset_engine_lighting_uniforms();
+						graphics.reset_engine_uniforms();
+					}
 				},
 				pipelines.load("3D", "PBR")
 			),
@@ -214,14 +225,8 @@ TODO:
 	//=======================================  Color  Pass  =======================================//
 		const shading_pass = this.set_current_render_pass(this.render_passes.shading);
 		shading_pass.bind(this);
-		geometry_pass.bind_all_textures();
-
-		this.set_engine_uniforms();
-		this.set_engine_lighting_uniforms();
-		this._blit_on_quad(shading_pass.pipeline, {}, { u_exposure: SETTINGS.graphics.exposure });
-		this.reset_engine_lighting_uniforms();
-		this.reset_engine_uniforms();
-
+		this.current_pipeline().set_uniform("u_exposure", SETTINGS.graphics.exposure);
+		this._blit_on_quad_({});
 		shading_pass.unbind(this);
 
 	//========================================== GIZMOS ==========================================//
@@ -243,7 +248,7 @@ TODO:
 		var bloom_texture = shading_pass.texture(1);
 		for (var i = 0; i < SETTINGS.graphics.bloom.iterations; ++i) {
 			bloom_pass.bind(this);
-			this._blit_on_quad(bloom_pass.pipeline, { u_bloom: bloom_texture }, bloom_uniforms);
+			this._blit_on_quad_({ u_bloom: bloom_texture });
 			bloom_pass.unbind(this);
 
 			bloom_texture = bloom_pass.texture();
@@ -289,10 +294,10 @@ TODO:
 
 		pipeline.try_set_uniform("u_mvp", () => this.model_view_projection());
 		pipeline.try_set_uniform("u_model", () => this.current_transform());
-		pipeline.try_set_uniform("u_view_position", () => golxzn.math.vec3.negative(this.active_camera.position));
+		pipeline.try_set_uniform("u_view_position", () => this.active_camera.position);
 		pipeline.try_set_uniform("u_normal_matrix", () => {
-			return m3.inverse(m3.build_from(this.current_transform()));
-		}, { transpose: true });
+			return m3.transpose(m3.inverse(m3.build_from(this.current_transform())));
+		});
 	}
 
 	reset_engine_uniforms() { }
@@ -475,6 +480,20 @@ TODO:
 		);
 	}
 
+	_blit_on_quad_(textures) {
+		gl.enable(gl.CULL_FACE);
+		gl.cullFace(gl.FRONT);
+		gl.frontFace(gl.CW);
+
+		for (const [name, texture] of Object.entries(textures)) {
+			this.apply_texture(name, texture);
+		}
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
+		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+		gl.disable(gl.CULL_FACE);
+	}
 
 	_blit_on_quad(pipeline, textures, uniforms) {
 		gl.enable(gl.CULL_FACE);
@@ -495,6 +514,8 @@ TODO:
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
 		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+		pipeline.unuse();
 
 		gl.disable(gl.CULL_FACE);
 	}

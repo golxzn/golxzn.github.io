@@ -26,7 +26,7 @@ Object.assign(golxzn.math, {
 			/// @todo Maybe there's more efficient algorithm to do so
 			const [x, y, z, w] = quaternion;
 			const yy = y * y;
-			const wy_xz2 = 2.0 * (q.w * q.y - q.x * q.z)
+			const wy_xz2 = 2.0 * (w * y - x * z)
 			return [
 				Math.atan2(2.0 * (w * x + y * z), 1.0 - 2.0 * (x * x + yy)),
 				2.0 * Math.atan2(Math.sqrt(1.0 + wy_xz2), Math.sqrt(1.0 - wy_xz2)) - Math.PI * 0.5,

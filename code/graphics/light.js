@@ -15,8 +15,8 @@ class LightBase {
 		pipeline.try_set_uniform(`${name}.intensity`, () => this.intensity);
 	}
 
-	view() { return golxzn.math.mat4.make_identity(); }
-	projection() { return golxzn.math.mat4.make_identity(); }
+	view() { return golxzn.math.mat4.identity(); }
+	projection() { return golxzn.math.mat4.identity(); }
 };
 
 class DirectionalLight extends LightBase {

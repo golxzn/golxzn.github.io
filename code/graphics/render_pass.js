@@ -33,6 +33,10 @@ class render_pass {
 		return this.framebuffer.texture(id);
 	}
 
+	render_buffer(id = 0) {
+		return this.framebuffer.render_buffer(id);
+	}
+
 	bind_all_textures() {
 		for (var i = 0; i < this.texture_count(); ++i) {
 			this.texture(i).bind(i);

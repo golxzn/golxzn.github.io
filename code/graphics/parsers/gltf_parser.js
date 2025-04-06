@@ -54,21 +54,29 @@ class gltf_loader {
 			}
 			return ALPHA_MODE.OPAQUE;
 		};
+		const get_emissive_factor = (info) => {
+			if (info.extensions && info.extensions.KHR_materials_emissive_strength) {
+				return golxzn.math.scale(info.emissiveFactor,
+					info.extensions.KHR_materials_emissive_strength.emissiveStrength
+				);
+			}
+			return info.emissiveFactor;
+		};
 
 		const material_info = gltf.materials[material_id];
 		const pbr = material_info.pbrMetallicRoughness;
 		return new material({
-			metallic_factor: pbr.metallicFactor,
-			emissive_factor: material_info.emissiveFactor,
-			roughness_factor: pbr.roughnessFactor,
-			base_color_factor: pbr.baseColorFactor,
-			albedo: take_texture(pbr.baseColorTexture),
-			normal: take_texture(material_info.normalTexture),
+			albedo            : take_texture(pbr.baseColorTexture),
+			normal            : take_texture(material_info.normalTexture),
 			roughness_metallic: take_texture(pbr.metallicRoughnessTexture),
-			ambient_occlusion: take_texture(material_info.occlusionTexture),
-			emissive: take_texture(material_info.emissiveTexture),
-			alpha_cutoff: material_info.alphaCutoff,
-			alpha_mode: convert_mode(material_info.alphaMode)
+			ambient_occlusion : take_texture(material_info.occlusionTexture),
+			emissive          : take_texture(material_info.emissiveTexture),
+			metallic_factor   : pbr.metallicFactor,
+			emissive_factor   : get_emissive_factor(material_info),
+			roughness_factor  : pbr.roughnessFactor,
+			base_color_factor : pbr.baseColorFactor,
+			alpha_cutoff      : material_info.alphaCutoff,
+			alpha_mode        : convert_mode(material_info.alphaMode)
 		});
 	}
 
@@ -85,6 +93,7 @@ class gltf_loader {
 			primitives: mesh_info.primitives.map((info, id) => {
 				const prim = new primitive(id, info);
 				prim.material = this.parse_material(info.material);
+				// generate or find pipeline here, then pass to setup
 				prim.setup(info.attributes, gltf.accessors, gltf.bufferViews, this._buffers);
 				return prim;
 			})

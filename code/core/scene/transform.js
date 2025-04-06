@@ -1,6 +1,6 @@
 
 const DEFAULT_TRANSFORM = {
-	matrix: golxzn.math.mat4.make_identity(),
+	matrix: golxzn.math.mat4.identity(),
 	position: [0.0, 0.0, 0.0],
 	rotation: [0.0, 0.0, 0.0, 1.0],
 	scale: [1.0, 1.0, 1.0]
