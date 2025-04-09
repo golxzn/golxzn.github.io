@@ -1,15 +1,15 @@
-const DEFAULT_PROPERTIES = {
+const PIPELINE_DEFAULT_PROPERTIES = {
 	flags: PIPELINE_FLAGS.nothing,
 	transform_feedback: null,
 };
-Object.freeze(DEFAULT_PROPERTIES);
+Object.freeze(PIPELINE_DEFAULT_PROPERTIES);
 
 class pipeline {
-	constructor(name, shaders, properties = DEFAULT_PROPERTIES) {
+	constructor(name, shaders, properties = PIPELINE_DEFAULT_PROPERTIES) {
 		this._name = name;
-		this._properties = properties || DEFAULT_PROPERTIES;
+		this._properties = properties || PIPELINE_DEFAULT_PROPERTIES;
 		this._texture_counter = 0;
-		for (const [key, value] of Object.entries(DEFAULT_PROPERTIES)) {
+		for (const [key, value] of Object.entries(PIPELINE_DEFAULT_PROPERTIES)) {
 			if (!Object.hasOwn(this._properties, key)) {
 				this._properties[key] = value;
 			}
@@ -170,6 +170,12 @@ class pipeline {
 			return shader;
 		}
 
+		pipeline._print_error(shader, type, source_code);
+		gl.deleteShader(shader);
+		return null;
+	}
+
+	static _print_error(shader, type, source_code) {
 		const type_names = {
 			[gl.VERTEX_SHADER]: "VERTEX",
 			[gl.FRAGMENT_SHADER]: "FRAGMENT"
@@ -177,8 +183,7 @@ class pipeline {
 		console.error(`[pipeline][${this._name}] Failed to compile the ${type_names[type]} shader:`)
 		console.error("[pipeline]", gl.getShaderInfoLog(shader));
 		console.error("[pipeline]", source_code);
-		gl.deleteShader(shader);
-		return null;
+		console.error(`[pipeline][${this._name}] --------------------------------------------------`);
 	}
 
 	static _is_string(value) {

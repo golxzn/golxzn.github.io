@@ -1,8 +1,4 @@
 
-function within_range(array, id) {
-	return id >= 0 && id < array.length;
-}
-
 class gltf_loader {
 
 	/** @param {String} path  */
@@ -32,7 +28,7 @@ class gltf_loader {
 	parse_material(material_id) {
 		const gltf = this.gltf;
 
-		if (!within_range(gltf.materials, material_id)) {
+		if (!golxzn.within_range(gltf.materials, material_id)) {
 			return null;
 		}
 
@@ -40,7 +36,7 @@ class gltf_loader {
 			if (info == null) {
 				return null;
 			}
-			if (!within_range(gltf.textures, info.index)) {
+			if (!golxzn.within_range(gltf.textures, info.index)) {
 				return null;
 			}
 			const texture = gltf.textures[info.index];
@@ -63,14 +59,34 @@ class gltf_loader {
 			return info.emissiveFactor;
 		};
 
+		const load_textures = (info, pbr) => {
+			var textures = new Map([
+				[ALBEDO_NAME  , take_texture(pbr.baseColorTexture)],
+				[NORMAL_NAME  , take_texture(info.normalTexture)],
+				[EMISSIVE_NAME, take_texture(info.emissiveTexture)],
+			]);
+			if (info.occlusionTexture && pbr.metallicRoughnessTexture &&
+				info.occlusionTexture.index == pbr.metallicRoughnessTexture.index
+			) {
+				textures.set(OCCLUSION_METALLIC_ROUGHNESS_NAME, take_texture(info.occlusionTexture));
+			} else {
+				textures.set(METALLIC_ROUGHNESS_NAME, take_texture(pbr.metallicRoughnessTexture));
+				textures.set(AMBIENT_OCCLUSION_NAME, take_texture(info.occlusionTexture));
+			}
+
+			for (const [name, texture] of textures) {
+				if (texture == null) textures.delete(name);
+			}
+
+			return textures;
+		};
+
+		/// @todo generate uv usage bitset
+
 		const material_info = gltf.materials[material_id];
 		const pbr = material_info.pbrMetallicRoughness;
 		return new material({
-			albedo            : take_texture(pbr.baseColorTexture),
-			normal            : take_texture(material_info.normalTexture),
-			roughness_metallic: take_texture(pbr.metallicRoughnessTexture),
-			ambient_occlusion : take_texture(material_info.occlusionTexture),
-			emissive          : take_texture(material_info.emissiveTexture),
+			textures: load_textures(material_info, pbr),
 			metallic_factor   : pbr.metallicFactor,
 			emissive_factor   : get_emissive_factor(material_info),
 			roughness_factor  : pbr.roughnessFactor,
@@ -83,26 +99,30 @@ class gltf_loader {
 	parse_mesh(mesh_id = 0) {
 		const gltf = this.gltf;
 
-		if (!within_range(gltf.meshes, mesh_id)) {
+		if (!golxzn.within_range(gltf.meshes, mesh_id)) {
 			return null;
 		}
-		const mesh_info = gltf.meshes[mesh_id];
 
+		const pipelines = get_service("pipeline");
+		const mesh_info = gltf.meshes[mesh_id];
 		var created_mesh = new mesh({
 			name: mesh_info.name,
 			primitives: mesh_info.primitives.map((info, id) => {
 				const prim = new primitive(id, info);
 				prim.material = this.parse_material(info.material);
-				// generate or find pipeline here, then pass to setup
+
+				const builder = new pbr_pipeline_builder(info, gltf.accessors, gltf.materials);
+				const hash = builder.make_hash();
+				if (!pipelines.has_pipeline(hash)) {
+					/// @todo it could be async
+					pipelines.emplace(hash, builder.generate());
+				}
+				prim.pipeline_id = hash;
+
 				prim.setup(info.attributes, gltf.accessors, gltf.bufferViews, this._buffers);
 				return prim;
 			})
 		});
-		// for (const prim of created_mesh.primitives) {
-		// 	const info = mesh_info.primitives[prim.id];
-		// 	prim.material = this.parse_material(info.material);
-		// 	prim.setup(info.attributes, gltf.accessors, gltf.bufferViews, this._buffers);
-		// }
 
 		return created_mesh;
 	}
@@ -117,7 +137,7 @@ class gltf_loader {
 
 	parse_scene(scene_id = 0) {
 		const gltf = this.gltf;
-		if ("scenes" in gltf && within_range(gltf.scenes, scene_id)) {
+		if ("scenes" in gltf && golxzn.within_range(gltf.scenes, scene_id)) {
 			const scene = gltf.scenes[scene_id];
 			if (scene.nodes.length == 1) {
 				return this.parse_node(scene.nodes[0]);
@@ -137,7 +157,7 @@ class gltf_loader {
 			return null;
 		}
 
-		if (!within_range(gltf[field_name], id)) {
+		if (!golxzn.within_range(gltf[field_name], id)) {
 			return null;
 		}
 
@@ -199,7 +219,7 @@ class gltf_loader {
 	}
 
 	_get_preload(buffer, index) {
-		if (within_range(buffer, index)) {
+		if (golxzn.within_range(buffer, index)) {
 			return buffer[index];
 		}
 		return null;

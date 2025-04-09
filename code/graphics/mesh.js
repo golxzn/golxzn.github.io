@@ -18,6 +18,7 @@ class primitive {
 		this.material = material;
 		this.mode = info.mode || gl.TRIANGLES;
 		this.buffers = [];
+		this.pipeline_id = "PBR_GEOMETRY";
 		this._draw_method = (self) => {
 			gl.drawArrays(self.mode, 0, self.vertex_count);
 		}
@@ -25,6 +26,9 @@ class primitive {
 
 	/** @param {graphics} g  */
 	draw(g) {
+		g.push_pipeline(get_service("pipeline").get_pipeline(this.pipeline_id));
+		g.set_engine_uniforms();
+		g.set_engine_lighting_uniforms();
 		if (this.material) this.material.activate(g);
 
 		this.bind();
@@ -32,6 +36,9 @@ class primitive {
 		this.unbind();
 
 		if (this.material) this.material.deactivate(g);
+		g.reset_engine_lighting_uniforms();
+		g.reset_engine_uniforms();
+		g.pop_pipeline();
 	}
 
 	bind() { gl.bindVertexArray(this.vao); }
@@ -56,7 +63,7 @@ class primitive {
 		}
 
 		/// @todo Pipeline generation using primitive info
-		const pipeline = get_service("pipeline").load("3D", "PBR_GEOMETRY");
+		const pipeline = get_service("pipeline").get_pipeline(this.pipeline_id);
 		var bound_attributes = 0;
 		for (const [name, id] of Object.entries(attributes)) {
 			const attribute_id = pipeline.attribute_location(name);
@@ -69,7 +76,7 @@ class primitive {
 		}
 		this.vertex_count = accessors[Object.values(attributes)[0]].count; // Ouch, fuck
 
-		if (this.indices) {
+		if (this.indices != null) {
 			construct(this.indices, bound_attributes + 1);
 			const accessor = accessors[this.indices];
 			const indices_count = accessor.count;
