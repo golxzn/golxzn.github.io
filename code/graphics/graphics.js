@@ -59,7 +59,7 @@ TODO:
 					{ name: "u_normal",   type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT2, storage: true },
 					{ name: "u_emissive", type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT3, storage: true },
 					{ name: "u_occlusion_metallic_roughness", type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT4, storage: true },
-					{ name: "u_depth", type: attachment_type.renderbuffer, format: gl.DEPTH_COMPONENT16, attachment: gl.DEPTH_ATTACHMENT },
+					{ type: attachment_type.renderbuffer, format: gl.DEPTH_COMPONENT16, attachment: gl.DEPTH_ATTACHMENT },
 				], pipelines.load("3D", "PBR")),
 				[ gl.CULL_FACE, gl.DEPTH_TEST ], {
 					bind: function(pass, graphics) {

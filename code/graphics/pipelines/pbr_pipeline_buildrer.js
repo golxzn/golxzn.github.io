@@ -1,12 +1,3 @@
-const ATTRIBUTE_NAMES = {
-	POSITION  : "POSITION",
-	NORMAL    : "NORMAL",
-	TANGENT   : "TANGENT",
-	TEXCOORD_0: "TEXCOORD_0",
-	TEXCOORD_1: "TEXCOORD_1",
-};
-Object.freeze(ATTRIBUTE_NAMES)
-
 const SHADER_DEFINITIONS = {
 	TEXTURE_ALBEDO                    : "MATERIAL_TEXTURE_ALBEDO",
 	TEXTURE_NORMAL                    : "MATERIAL_TEXTURE_NORMAL",
@@ -63,11 +54,14 @@ class pbr_pipeline_builder {
 			const accessor = accessors[id];
 			this.attributes.push({
 				type: accessor.type.toLowerCase(),
-				name: name,
-				id: id
+				name: name
 			});
 		}
-		this.attributes.sort((lhv, rhv) => lhv.id < rhv.id);
+
+		if (!primitive.tangents_required(attributes)) return;
+
+		this.definitions.push(`SUPPORT_${ATTRIBUTE_NAMES.TANGENT}`);
+		this.attributes.push({ type: "vec4", name: ATTRIBUTE_NAMES.TANGENT });
 	}
 
 	_scan_material(material) {
@@ -230,9 +224,9 @@ struct Material {
 	float metallic_factor;
 	float roughness_factor;
 	float alpha_cutoff;
-#if defined(SUPPORT_TEXCOORD_0) || defined(SUPPORT_TEXCOORD_1)
+#if defined(SUPPORT_TEXCOORD_0) && defined(SUPPORT_TEXCOORD_1)
 	int uv_usage_mask; // from left to right in order of textures, 0 bit is uv0, 1 is uv1
-#endif // defined(SUPPORT_TEXCOORD_0) || defined(SUPPORT_TEXCOORD_1)
+#endif // defined(SUPPORT_TEXCOORD_0) && defined(SUPPORT_TEXCOORD_1)
 };
 
 uniform Material u_material;
@@ -264,7 +258,9 @@ vec3 make_normal(in Material mat) {
 #if defined(SUPPORT_TANGENT) && defined(SUPPORT_NORMAL)
 		f_TBN * surface_normal
 #elif defined(SUPPORT_NORMAL)
-		f_normal + surface_normal
+		// surface_normal
+		// f_normal
+		mix(f_normal, surface_normal, 0.5)
 #else
 		surface_normal
 #endif //  defined(SUPPORT_TANGENT) && defined(SUPPORT_NORMAL)

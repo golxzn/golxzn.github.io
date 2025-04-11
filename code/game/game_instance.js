@@ -55,7 +55,9 @@ class game_instance {
 		this._load_model("assets/models/street-lamp-pillar/street-lamp-pillar.gltf", (obj) => {
 			obj.transform.position = [1.0, 0.0, 1.0];
 		});
-
+		this._load_model("assets/models/DamagedHelmet/DamagedHelmet.gltf", (obj) => {
+			obj.transform.position = [3.0, 3.0, 0.0];
+		});
 		this._load_model("assets/models/ground/ground.gltf");
 
 
