@@ -59,7 +59,7 @@ TODO:
 					{ name: "u_normal",   type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT2, storage: true },
 					{ name: "u_emissive", type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT3, storage: true },
 					{ name: "u_occlusion_metallic_roughness", type: attachment_type.texture, format: gl.RGB8, attachment: gl.COLOR_ATTACHMENT4, storage: true },
-					{ name: "u_depth", type: attachment_type.renderbuffer, format: gl.DEPTH_COMPONENT16, attachment: gl.DEPTH_ATTACHMENT },
+					{ type: attachment_type.renderbuffer, format: gl.DEPTH_COMPONENT16, attachment: gl.DEPTH_ATTACHMENT },
 				], pipelines.load("3D", "PBR")),
 				[ gl.CULL_FACE, gl.DEPTH_TEST ], {
 					bind: function(pass, graphics) {
@@ -67,8 +67,8 @@ TODO:
 						gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 					},
 					unbind: (pass, graphics) => { }
-				},
-				pipelines.load("3D", "PBR_GEOMETRY")
+				}
+				// pipelines.load("3D", "PBR_GEOMETRY")
 			),
 
 			spotlight_shadow: new render_pass("Spotlight Shadows",
@@ -290,6 +290,7 @@ TODO:
 
 	set_engine_uniforms() {
 		const pipeline = this.current_pipeline();
+		if (!pipeline) return;
 		const m3 = golxzn.math.mat3;
 
 		pipeline.try_set_uniform("u_mvp", () => this.model_view_projection());
@@ -304,6 +305,7 @@ TODO:
 
 	set_engine_lighting_uniforms() {
 		const pipeline = this.current_pipeline();
+		if (!pipeline) return;
 
 		this.directional_lights.apply(pipeline, "u_dir_light");
 
@@ -337,6 +339,8 @@ TODO:
 
 	reset_engine_lighting_uniforms() {
 		const pipeline = this.current_pipeline();
+		if (!pipeline) return;
+
 		if (this.spotlight_shadow_map_texture && pipeline.uniform_location('u_point_lights_count') != null) {
 			this.remove_textures(1); // u_spotlight_shadow_map
 		}

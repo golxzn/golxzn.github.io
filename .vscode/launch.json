@@ -2,12 +2,11 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"type": "chrome",
 			"name": "[golxzn]",
+			"type": "firefox",
 			"request": "launch",
 			"url": "http://localhost:8080",
-			"cleanUp": "wholeBrowser",
-			"disableNetworkCache": true
+			"webRoot": "${workspaceFolder}"
 		}
 	]
 }

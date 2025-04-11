@@ -13,11 +13,12 @@ Object.freeze(PRELOAD_TEXTURES);
 const PRELOAD_MODELS = [
 // My models
 	"assets/models/ground/ground.gltf",
-	"assets/models/street-lamp-pillar/street-lamp-pillar.gltf",
 	// "assets/models/gizmos/gizmos_sphere.gltf",
+	"assets/models/street-lamp-pillar/street-lamp-pillar.gltf",
 
 // Third party
 	"assets/models/water-bottle/WaterBottle.gltf",
+	"assets/models/DamagedHelmet/DamagedHelmet.gltf",
 	"assets/models/EmissiveStrengthTest/EmissiveStrengthTest.gltf",
 ];
 Object.freeze(PRELOAD_MODELS);

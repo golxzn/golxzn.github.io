@@ -4,6 +4,33 @@ class pipeline_manager {
 		this._pipelines = new Map();
 	}
 
+	emplace(name, data, force_reload = false) {
+		if (!force_reload && this.has_pipeline(name)) {
+			return;
+		}
+
+		if (data == null) {
+			console.error(`[game][pipeline_manager] Cannot find a "${dimensions}.${name}" shader`);
+			return;
+		}
+
+		const {frag, vert, properties} = data;
+		if (frag == null) {
+			console.error(`[game][pipeline_manager] Cannot find fragment code for "${dimensions}.${name}"`);
+			return;
+		}
+		const pipeline_instance = new pipeline(name, {
+			[gl.VERTEX_SHADER  ]: vert,
+			[gl.FRAGMENT_SHADER]: frag
+		}, properties);
+
+		if (pipeline_instance != null && pipeline_instance.valid()) {
+			this._pipelines[name] = pipeline_instance;
+		} else {
+			console.error(`[game][pipeline_manager] Cannot create ${name} pipeline!`);
+		}
+	}
+
 	load(dimensions, name, force_reload = false) {
 		if (!force_reload && this.has_pipeline(name)) {
 			return this._pipelines[name];
@@ -34,6 +61,10 @@ class pipeline_manager {
 
 	has_pipeline(name) {
 		return name in this._pipelines && this._pipelines[name] != null;
+	}
+
+	get_pipeline(name) {
+		return this._pipelines[name];
 	}
 
 	static _find_shader(name, dimensions) {
