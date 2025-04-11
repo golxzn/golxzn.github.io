@@ -100,13 +100,15 @@ function ensure_canvas_size() {
 
 
 var fps_update_timer = 0;
+var frames_counter = 0;
 const fps_display = document.querySelector("#fps")
 
 function updateFPS(delta) {
 	fps_update_timer += delta;
-	if (fps_update_timer >= 0.25) {
-		const fps = Math.round(1.0 / delta);
-		fps_display.textContent = Math.round(fps);
+	++frames_counter;
+	if (fps_update_timer >= 0.5) {
+		fps_display.textContent = Math.round(frames_counter / fps_update_timer);
 		fps_update_timer = 0;
+		frames_counter = 0;
 	}
 }
