@@ -44,20 +44,35 @@ class game_instance {
 
 	_load_demo_scene(graphics) {
 		// GAME OBJECTS
-		this._load_model("assets/models/water-bottle/WaterBottle.gltf", (obj) => {
-			obj.transform.position = [-1.0, 1.5, -1.0];
-			obj.transform.scale = [10.0, 10.0, 10.0];
+
+		this._load_model("assets/models/third-party/water-bottle/WaterBottle.gltf", (obj) => {
+			obj.position = [-3.88, 2.25, -2.1];
+			obj.scale = [2.5, 2.5, 2.5];
+			obj.rotation = golxzn.math.quat.from_euler([Math.PI * 0.5, Math.PI * -0.5, Math.PI * -0.27]);
 		});
-		this._load_model("assets/models/EmissiveStrengthTest/EmissiveStrengthTest.gltf", (obj) => {
-			obj.transform.position = [0.0, 6.0, 10.0];
-			obj.transform.rotation = golxzn.math.quat.from_euler([0.0, Math.PI, 0.0]);
+		this._load_model("assets/models/third-party/EmissiveStrengthTest/EmissiveStrengthTest.gltf", (obj) => {
+			obj.position = [0.0, 6.0, 10.0];
+			obj.rotation = golxzn.math.quat.from_euler([0.0, Math.PI, 0.0]);
 		});
+		this._load_model("assets/models/third-party/NormalTangentTest/glTF/NormalTangentTest.gltf", (obj) => {
+			obj.position = [-7.0, 4.0, 3.0];
+			obj.scale = [3.0, 3.0, 3.0];
+			obj.rotation = golxzn.math.quat.from_euler([0.0, Math.PI * 0.6, 0.0]);
+		});
+		this._load_model("assets/models/third-party/DamagedHelmet/DamagedHelmet.gltf", (obj) => {
+			obj.position = [-5, 1.6, -2.6];
+			obj.rotation = golxzn.math.quat.from_euler([0.0, Math.PI * 0.58, 0.0]);
+		});
+
 		this._load_model("assets/models/street-lamp-pillar/street-lamp-pillar.gltf", (obj) => {
-			obj.transform.position = [1.0, 0.0, 1.0];
+			obj.position = [1.0, 0.0, 1.0];
 		});
-		this._load_model("assets/models/DamagedHelmet/DamagedHelmet.gltf", (obj) => {
-			obj.transform.position = [3.0, 3.0, 0.0];
+		this._load_model("assets/models/kostya/kostya-chill.gltf", (obj) => {
+			obj.position = [-3.0, 1.15, -3.0];
+			obj.scale = [5.0, 5.0, 5.0];
+			obj.rotation = golxzn.math.quat.from_euler([0.0, Math.PI * 0.6, 0.0]);
 		});
+
 		this._load_model("assets/models/ground/ground.gltf");
 
 
@@ -96,7 +111,7 @@ class game_instance {
 				intensity: 1.0
 			}));
 
-			this._load_model("assets/models/gizmos/gizmos_sphere.gltf", (obj) => {
+			this._load_model("assets/models/gizmos/gizmos-sphere.gltf", (obj) => {
 				setup_light_gizmo(obj, color, pos);
 				obj.parent = point_lights;
 			});
@@ -110,10 +125,10 @@ class game_instance {
 		};
 		const spot_attenuation = [1.0, 0.007, 0.0002];
 
-		const distance_from_center = 4.5;
-		const light_height = 6.0;
+		const distance_from_center = 8;
+		const light_height = 10.0;
 		// const light_count = SHADERS_COMMON.MAX_SPOT_LIGHT_COLORS;
-		const light_count = 2;
+		const light_count = 3;
 		const angle = 2.0 * Math.PI / light_count;
 
 		const spot_lights = this.scene_manager.add_object(new node({ name: "SpotLights" }));
@@ -131,7 +146,7 @@ class game_instance {
 			);
 
 			graphics.spot_lights.push(light);
-			this._load_model("assets/models/gizmos/gizmos_sphere.gltf", (obj) => {
+			this._load_model("assets/models/gizmos/gizmos-sphere.gltf", (obj) => {
 				obj.name += `_${i}`;
 				setup_light_gizmo(obj, spot_color, position);
 				obj.parent = spot_lights;
