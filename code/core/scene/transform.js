@@ -26,13 +26,14 @@ class transform {
 
 	actualize_matrix() {
 		const m4 = golxzn.math.mat4;
-		this._matrix = m4.scale(
-			m4.translate(
-				m4.from_quaternion(this._rotation),
-				this._position
+		this._matrix = m4.translate(
+			m4.multiply(
+				m4.scale(m4.identity(), this._scale),
+				m4.from_quaternion(this._rotation)
 			),
-			this._scale
+			this._position
 		);
+
 
 		this.dirty_flags = false;
 	}

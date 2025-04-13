@@ -202,7 +202,7 @@ void main() {
 	float brightness = dot(color, GRAYSCALE_WEIGHT);
 
 	frag_color = vec4(color, 1.0);
-	// frag_color = vec4(mix(color, normal, 1.0), 1.0);
+	// frag_color = vec4(mix(color, normal * 0.5 + 0.5, 1.0), 1.0);
 	bright_color = vec4(brightness > BLOOM_BRIGHTNESS_THRESHOLD ? emissive : vec3(0.0), 1.0);
 
 	gl_FragDepth = depth;

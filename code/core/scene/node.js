@@ -149,4 +149,16 @@ class node {
 		return value;
 	}
 
+
+	// geometry helpers
+	set position(value) { this.transform.position = value; }
+	get position() { return this.transform.position; }
+
+	set rotation(value) { this.transform.rotation = value; }
+	get rotation() { return this.transform.rotation; }
+
+	set scale(value) { this.transform.scale = value; }
+	get scale() { return this.transform.scale; }
+
+	translate(offset) { this.position = golxzn.math.sum(this.position, offset); }
 };

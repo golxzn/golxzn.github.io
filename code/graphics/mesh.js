@@ -110,7 +110,7 @@ class primitive {
 			primitive.determine_count(accessor.type),
 			accessor.componentType,
 			accessor.normalized || false,
-			view.byteStride     || 0,
+			view.byteStride     || 0,// primitive.determine_stride(accessor),
 			accessor.byteOffset || 0
 		);
 		gl.enableVertexAttribArray(id);
@@ -132,57 +132,60 @@ class primitive {
 		return { target: target, handle: buffer };
 	}
 
-	_calc_tangents(id, attributes, accessors, views, buffers) {
-		const pos_accessor = accessors[attributes[ATTRIBUTE_NAMES.POSITION]];
-		const uv_accessor = accessors[attributes[ATTRIBUTE_NAMES.TEXCOORD_0]];
-		if (pos_accessor.count != uv_accessor.count) {
+	/// @todo mikktspace algorithm instead of this mess
+	_calc_tangents(attribute_id, attributes, accessors, views, buffers) {
+		const pos_accessor  = accessors[attributes[ATTRIBUTE_NAMES.POSITION  ]];
+		const norm_accessor = accessors[attributes[ATTRIBUTE_NAMES.NORMAL    ]];
+		const uv_accessor   = accessors[attributes[ATTRIBUTE_NAMES.TEXCOORD_0]];
+		const vertex_count = pos_accessor.count;
+		if (vertex_count != uv_accessor.count || vertex_count != norm_accessor.count) {
 			console.warn(
 				"[primitive] Cannot calculate tangents. The count of position and uv are not",
-				"equal:", pos_accessor.count, "!=", uv_accessor.count
+				"equal:", vertex_count, "!=", uv_accessor.count
 			);
 			return false;
 		}
+		const m = golxzn.math;
+
+		const select_buffer = (accessor, view) => {
+			const offset  = accessor.byteOffset || 0.0;
+			return new DataView(buffers[view.buffer],
+				view.byteOffset + offset,
+				// view.byteLength - offset // could be counted accessor.count * type_size(accessor...)
+				accessor.count * primitive.determine_stride(accessor)
+			);
+		};
+
 		const pos_view = views[pos_accessor.bufferView];
 		const uv_view = views[uv_accessor.bufferView];
-		const pos_buffer = new DataView(buffers[pos_view.buffer], pos_view.byteOffset, pos_view.byteLength);
-		const uv_buffer = new DataView(buffers[uv_view.buffer], uv_view.byteOffset, uv_view.byteLength);
+
+		const pos_stride = pos_view.byteStride || primitive.determine_stride(pos_accessor);
+		const uv_stride  = uv_view.byteStride || primitive.determine_stride(uv_accessor);
+
+		const pos_buffer = select_buffer(pos_accessor, pos_view);
+		const uv_buffer = select_buffer(uv_accessor, uv_view)
 
 		var indices = null;
 		if (this.indices != null) {
 			const indices_accessor = accessors[this.indices];
 			const indices_view = views[indices_accessor.bufferView];
-			const indices_buffer = new DataView(
-				buffers[indices_view.buffer], indices_view.byteOffset, indices_view.byteLength
-			);
 			const bytes = primitive.type_size(indices_accessor.componentType);
+			const indices_stride = indices_view.byteStride || bytes;
+			const indices_buffer = select_buffer(indices_accessor, indices_view);
 			var get_index = null;
 			switch (bytes) {
-				case 1: get_index = (i) => indices_buffer.getUint8(i); break;
-				case 4: get_index = (i) => indices_buffer.getUint32(i * bytes, true); break;
+				case 1: get_index = (_, i) => indices_buffer.getUint8(i); break;
+				case 4: get_index = (_, i) => indices_buffer.getUint32(i * indices_stride, true); break;
 				case 2: // [[fallthrough]];
 				default:
-					get_index = (i) => indices_buffer.getUint16(i * bytes, true);
+					get_index = (_, i) => indices_buffer.getUint16(i * indices_stride, true);
 					break;
 			}
 
-			indices = new Array(indices_accessor.count);
-			for (var i = 0; i < indices.length; ++i) {
-				indices[i] = get_index(i);
-			}
+			indices = Array.from({ length: indices_accessor.count }, get_index);
 		} else {
-			indices = new Array(pos_accessor.count / 3);
-			for (var i = 0; i < indices.length; ++i) {
-				indices[i] = i * 3;
-			}
+			indices = Array.from({ length: vertex_count }, (_, k) => k);
 		}
-
-		const m = golxzn.math;
-		const float4_elements = 4;
-		const float3_bytes = float4_elements * 3;
-		const float2_bytes = float4_elements * 2;
-
-		const pos_offset = pos_view.byteStride || float3_bytes;
-		const uv_offset  = uv_view.byteStride || float2_bytes;
 
 		const get_vec3 = (buffer_view, offset) => {
 			return [
@@ -198,37 +201,64 @@ class primitive {
 			]
 		};
 
-		const tangents = new Float32Array(pos_accessor.count * float4_elements);
-		tangents.fill(1.0);
+		const tangents = Array.from({length: vertex_count}, () => [0.0, 0.0, 0.0]);
+		const bitangents = Array.from({length: vertex_count}, () => [0.0, 0.0, 0.0]);;
 		for (var i = 0; i < indices.length; i += 3) {
 			const vert0_id = indices[i + 0];
 			const vert1_id = indices[i + 1];
 			const vert2_id = indices[i + 2];
 
-			const pos0 = get_vec3(pos_buffer, vert0_id * pos_offset);
-			const delta_pos1 = m.sub(get_vec3(pos_buffer, vert1_id * pos_offset), pos0);
-			const delta_pos2 = m.sub(get_vec3(pos_buffer, vert2_id * pos_offset), pos0);
+			const pos0 = get_vec3(pos_buffer, vert0_id * pos_stride);
+			const edge0 = m.sub(get_vec3(pos_buffer, vert1_id * pos_stride), pos0);
+			const edge1 = m.sub(get_vec3(pos_buffer, vert2_id * pos_stride), pos0);
 
-			const uv0  = get_vec2(uv_buffer, vert0_id * uv_offset);
-			const delta_uv1 = m.sub(get_vec2(uv_buffer, vert1_id * uv_offset), uv0);
-			const delta_uv2 = m.sub(get_vec2(uv_buffer, vert2_id * uv_offset), uv0);
+			const uv0  = get_vec2(uv_buffer, vert0_id * uv_stride);
+			const delta_uv1 = m.sub(get_vec2(uv_buffer, vert1_id * uv_stride), uv0);
+			const delta_uv2 = m.sub(get_vec2(uv_buffer, vert2_id * uv_stride), uv0);
 
-			const tangent = m.scale(
-				m.sub(
-					m.scale(delta_pos1, delta_uv2[1]),
-					m.scale(delta_pos2, delta_uv1[1])
-				),
-				1.0 / (delta_uv1[0] * delta_uv2[1] - delta_uv1[1] * delta_uv2[0])
-			);
+			// Zero division. Will we give a fuck? I'm not sure
+			const r = 1.0 / (delta_uv1[0] * delta_uv2[1] - delta_uv1[1] * delta_uv2[0]);
 
-			tangents.set(tangent, vert0_id * float4_elements);
-			tangents.set(tangent, vert1_id * float4_elements);
-			tangents.set(tangent, vert2_id * float4_elements);
+			const tangent = m.scale(m.sub(
+				m.scale(edge0, delta_uv2[1]),
+				m.scale(edge1, delta_uv1[1])
+			), r);
+
+			const bitangent = m.scale(m.sub(
+				m.scale(edge0, delta_uv2[0]),
+				m.scale(edge1, delta_uv1[0])
+			), r);
+
+			tangents[vert0_id] = m.sum(tangents[vert0_id], tangent);
+			tangents[vert1_id] = m.sum(tangents[vert1_id], tangent);
+			tangents[vert2_id] = m.sum(tangents[vert2_id], tangent);
+
+			bitangents[vert0_id] = m.sum(bitangents[vert0_id], bitangent);
+			bitangents[vert1_id] = m.sum(bitangents[vert1_id], bitangent);
+			bitangents[vert2_id] = m.sum(bitangents[vert2_id], bitangent);
 		}
 
-		this.buffers.push(this._make_buffer_from_data(gl.ARRAY_BUFFER, tangents));
-		gl.vertexAttribPointer(id, 4, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(id);
+		const norm_view = views[norm_accessor.bufferView];
+		const norm_stride = norm_view.byteStride || primitive.determine_stride(norm_accessor);
+		const norm_buffer = select_buffer(norm_accessor, norm_view);
+
+		const vec4_elements_count = 4;
+		const tangents_buffer = new Float32Array(vertex_count * vec4_elements_count);
+		for (var i = 0; i < vertex_count; ++i) {
+			const normal = get_vec3(norm_buffer, i * norm_stride);
+			const tangent = tangents[i];
+			const bitangent = bitangents[i];
+
+			// Ortho-Normalize
+			const t = m.normalize(m.sub(tangent, m.scale(normal, m.dot(normal, tangent)))); // xyz
+			t.push(m.dot(m.vec3.cross(normal, tangent), bitangent) < 0.0 ?  -1.0 : 1.0);    // w
+			tangents_buffer.set(t, i * vec4_elements_count);
+		}
+
+
+		this.buffers.push(this._make_buffer_from_data(gl.ARRAY_BUFFER, tangents_buffer));
+		gl.vertexAttribPointer(attribute_id, vec4_elements_count, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(attribute_id);
 
 		return true;
 	}
@@ -236,6 +266,10 @@ class primitive {
 	static tangents_required(attributes) {
 		return !(ATTRIBUTE_NAMES.TANGENT in attributes)
 			&& ATTRIBUTE_NAMES.TEXCOORD_0 in attributes;
+	}
+
+	static determine_stride(accessor) {
+		return primitive.type_size(accessor.componentType) * primitive.determine_count(accessor.type)
 	}
 
 	static determine_target(accessor) {

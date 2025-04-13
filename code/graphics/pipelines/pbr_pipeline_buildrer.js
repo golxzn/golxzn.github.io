@@ -69,10 +69,7 @@ class pbr_pipeline_builder {
 
 		this.properties = {};
 		Object.assign(this.properties, PIPELINE_DEFAULT_PROPERTIES);
-		this.properties.flags |=
-			PIPELINE_FLAGS.lighting_support |
-			PIPELINE_FLAGS.material_support
-		;
+		this.properties.flags |= PIPELINE_FLAGS.material_support;
 
 		const pbr = material.pbrMetallicRoughness;
 		if (pbr.baseColorTexture) {
@@ -154,8 +151,8 @@ void main() {
 #if defined(SUPPORT_NORMAL)
 	vec3 normal = normalize(u_normal_matrix * NORMAL);
 #if defined(SUPPORT_TANGENT)
-	vec3 tangent   = normalize(u_normal_matrix * normalize(TANGENT.xyz));
-	vec3 bitangent = normalize(vec3(cross(normal, tangent) * TANGENT.w));
+	vec3 tangent   = normalize(u_normal_matrix * TANGENT.xyz);
+	vec3 bitangent = normalize(cross(normal, tangent) * TANGENT.w);
 	f_TBN = mat3(tangent, bitangent, normal);
 #else
 	f_normal = normal;
@@ -199,6 +196,15 @@ layout(location = 4) out vec3 frag_occlusion_roughness_metallic;
 #define EMISSIVE_ID 4
 
 struct Material {
+	vec4 base_color_factor;
+	vec3 emissive_factor;
+	float metallic_factor;
+	float roughness_factor;
+	float alpha_cutoff;
+#if defined(SUPPORT_TEXCOORD_0) && defined(SUPPORT_TEXCOORD_1)
+	int uv_usage_mask; // from left to right in order of textures, 0 bit is uv0, 1 is uv1
+#endif // defined(SUPPORT_TEXCOORD_0) && defined(SUPPORT_TEXCOORD_1)
+
 #if defined(${SHADER_DEFINITIONS.TEXTURE_ALBEDO})
 	sampler2D albedo;
 #endif
@@ -218,15 +224,6 @@ struct Material {
 #if defined(${SHADER_DEFINITIONS.TEXTURE_EMISSIVE})
 	sampler2D emissive;
 #endif
-
-	vec4 base_color_factor;
-	vec3 emissive_factor;
-	float metallic_factor;
-	float roughness_factor;
-	float alpha_cutoff;
-#if defined(SUPPORT_TEXCOORD_0) && defined(SUPPORT_TEXCOORD_1)
-	int uv_usage_mask; // from left to right in order of textures, 0 bit is uv0, 1 is uv1
-#endif // defined(SUPPORT_TEXCOORD_0) && defined(SUPPORT_TEXCOORD_1)
 };
 
 uniform Material u_material;
@@ -258,8 +255,6 @@ vec3 make_normal(in Material mat) {
 #if defined(SUPPORT_TANGENT) && defined(SUPPORT_NORMAL)
 		f_TBN * surface_normal
 #elif defined(SUPPORT_NORMAL)
-		// surface_normal
-		// f_normal
 		mix(f_normal, surface_normal, 0.5)
 #else
 		surface_normal
