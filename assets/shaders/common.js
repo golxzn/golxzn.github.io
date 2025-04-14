@@ -56,50 +56,6 @@ struct SpotLight {
 };
 `,
 
-LIGHTING_STRUCTURES: /* glsl */ `
-
-struct LightProperties {
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
-};
-
-struct DirectionalLight {
-	LightProperties properties;
-	vec3 direction;
-};
-
-struct PointLight {
-	LightProperties properties;
-
-	vec3 position;
-	vec3 attenuation; // [constant, linear, cubic]
-};
-
-struct Limits {
-	float inner;
-	float outer;
-};
-struct SpotLight {
-	LightProperties properties;
-
-	vec3 position;
-	vec3 attenuation; // [constant, linear, cubic]
-	vec3 direction;
-	Limits limits;
-};
-`,
-
-
-MATERIAL_STRUCTURE: /* glsl */ `
-struct Material {
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
-	float shininess;
-};
-`,
-
 LIGHTING_UTILITIES: /* glsl */ `
 float attenuation(vec3 attenuation, float dist) {
 	return attenuation.r + attenuation.g * dist + attenuation.b * dist * dist;

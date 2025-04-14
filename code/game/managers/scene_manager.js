@@ -9,6 +9,7 @@ const OBJECT_TYPE = {
 Object.freeze(OBJECT_TYPE);
 
 
+/// @todo rework sm
 class scene_manager {
 	constructor() {
 		this.updatable_objects = new Set();

@@ -152,12 +152,6 @@ class game_instance {
 				obj.parent = spot_lights;
 			});
 		}
-
-		// PARTICLES
-		// const particles_count = 50000;
-		// this.scene_manager.add_object(new cpu_falling_snow(
-		// 	"snow-particles", {}, particles_count
-		// ));
 	}
 
 // Event handling
