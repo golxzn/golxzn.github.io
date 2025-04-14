@@ -118,7 +118,7 @@ void main() {
 		to_light = normalize(to_light);
 
 		float spot_factor = dot(normalize(spot.direction), -to_light);
-		if (spot_factor < spot.limits.outer) continue;
+		if (spot_factor < spot.outer_limit) continue;
 
 		float att = attenuation(spot.attenuation, distance_to_light);
 		float diffuse_component = calc_diffuse(to_light, normal);

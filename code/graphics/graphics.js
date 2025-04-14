@@ -23,7 +23,12 @@ class graphics {
 
 		this.active_pass = 0;
 		this.render_size = golxzn.math.scale([canvas.width, canvas.height], SETTINGS.graphics.render_scale);
-
+		this.uniform_blocks = {
+			[SHADERS_COMMON.UNIFORM_BLOCKS.GEOMETRY.binding]: new uniform_block(
+				SHADERS_COMMON.UNIFORM_BLOCKS.GEOMETRY,
+				new Float32Array(m.identity().concat(m.identity()))
+			)
+		};
 /*
  [scene]                                          +--------[quad]--------+
  |                                                |           |          |
@@ -39,8 +44,6 @@ class graphics {
  +->| POINTS SHADOW (DEPTH)    |-----> dir_shadows  |
     +--------------------------+     +--------------+
 
-TODO:
-- [ ] Bind textures to programs once during initialization;
 */
 
 		// gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -293,15 +296,28 @@ TODO:
 		if (!pipeline) return;
 		const m3 = golxzn.math.mat3;
 
-		pipeline.try_set_uniform("u_mvp", () => this.model_view_projection());
-		pipeline.try_set_uniform("u_model", () => this.current_transform());
+		const geometry_block = this.uniform_blocks[SHADERS_COMMON.UNIFORM_BLOCKS.GEOMETRY.binding];
+		geometry_block.bind();
+		geometry_block.update(new Float32Array(
+			this.model_view_projection().concat(this.current_transform())
+		));
+
+		// pipeline.try_set_uniform("u_mvp", () => this.model_view_projection());
+		// pipeline.try_set_uniform("u_model", () => this.current_transform());
 		pipeline.try_set_uniform("u_view_position", () => this.active_camera.position);
 		pipeline.try_set_uniform("u_normal_matrix", () => {
 			return m3.transpose(m3.inverse(m3.build_from(this.current_transform())));
 		});
 	}
 
-	reset_engine_uniforms() { }
+	reset_engine_uniforms() {
+		// // is it necessary?
+		// const pipeline = this.current_pipeline();
+		// if (!pipeline) return;
+
+		// const geometry_block = this.uniform_blocks[SHADERS_COMMON.UNIFORM_BLOCKS.GEOMETRY.binding];
+		// geometry_block.unbind();
+	}
 
 	set_engine_lighting_uniforms() {
 		const pipeline = this.current_pipeline();

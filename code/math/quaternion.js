@@ -32,6 +32,11 @@ Object.assign(golxzn.math, {
 				2.0 * Math.atan2(Math.sqrt(1.0 + wy_xz2), Math.sqrt(1.0 - wy_xz2)) - Math.PI * 0.5,
 				Math.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (yy + z * z))
 			];
+		},
+
+		/** @param {number[4]} quaternion - [x, y, z, w] */
+		flip(quaternion) {
+			return [ -quaternion[0], -quaternion[1], -quaternion[2], quaternion[3] ]
 		}
 	}
 });

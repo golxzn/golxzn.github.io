@@ -176,14 +176,14 @@ void main() {
 		float NdotL = dot(config.normal, to_light); /// Shouldn't be here
 		if (NdotL <= 0.0) continue;
 
-		float spot_factor = max(dot(normalize(spot.direction), -to_light), spot.limits.outer);
-		if (spot_factor < spot.limits.outer) continue;
+		float spot_factor = max(dot(normalize(spot.direction), -to_light), spot.outer_limit);
+		if (spot_factor < spot.outer_limit) continue;
 
 		/// SHADOWS & ATTENUATION
 		float att = attenuation(spot.attenuation, distance_to_light); // in tutorial they use distance_to_light * distance_to_light;
 		float bias = max(0.0005 * (1.0 - NdotL), 0.0001);
 		float shadow = 1.0 - calc_shadow(u_spotlight_vp[i] * vec4(position, 1.0), i, bias, 2);
-		float intensity = shadow * spot_intensity(spot_factor, spot.limits) / att;
+		float intensity = shadow * spot_intensity(spot_factor, spot.inner_limit, spot.outer_limit) / att;
 
 		config.to_light = to_light;
 		config.radiance = spot.intensity * spot.color * intensity;

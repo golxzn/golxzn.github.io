@@ -6,6 +6,7 @@ const SHADER_DEFINITIONS = {
 	TEXTURE_AMBIENT_OCCLUSION         : "MATERIAL_TEXTURE_AMBIENT_OCCLUSION",
 	TEXTURE_AMBIENT_METALLIC_ROUGHNESS: "MATERIAL_TEXTURE_AMBIENT_METALLIC_ROUGHNESS",
 	TEXTURE_EMISSIVE                  : "MATERIAL_TEXTURE_EMISSIVE",
+	NO_TEXTURES                       : "NO_TEXTURES"
 };
 Object.freeze(SHADER_DEFINITIONS)
 
@@ -34,7 +35,7 @@ class pbr_pipeline_builder {
 		return {
 			vert: this._generate_vertex(),
 			frag: this._generate_fragment(),
-			properties: this.properties
+			properties: this.properties,
 		};
 	}
 
@@ -69,9 +70,14 @@ class pbr_pipeline_builder {
 
 		this.properties = {};
 		Object.assign(this.properties, PIPELINE_DEFAULT_PROPERTIES);
+		this.properties.uniform_blocks = [
+			SHADERS_COMMON.UNIFORM_BLOCKS.GEOMETRY,
+			SHADERS_COMMON.UNIFORM_BLOCKS.MATERIAL_CONSTANTS
+		]
 		this.properties.flags |= PIPELINE_FLAGS.material_support;
 
 		const pbr = material.pbrMetallicRoughness;
+		const count = this.definitions.length;
 		if (pbr.baseColorTexture) {
 			this.definitions.push(SHADER_DEFINITIONS.TEXTURE_ALBEDO)
 		}
@@ -94,6 +100,12 @@ class pbr_pipeline_builder {
 
 		if (material.normalTexture) {
 			this.definitions.push(SHADER_DEFINITIONS.TEXTURE_NORMAL)
+		}
+
+		if (count != this.definitions.length) { // means that we got some textures
+			this.properties.flags |= PIPELINE_FLAGS.material_textures_support;
+		} else {
+			this.definitions.push(SHADER_DEFINITIONS.NO_TEXTURES);
 		}
 	}
 
@@ -130,8 +142,11 @@ out vec2 f_uv0;
 out vec2 f_uv1;
 #endif
 
-uniform mat4 u_mvp;
-uniform mat4 u_model;
+layout(std140) uniform ${SHADERS_COMMON.UNIFORM_BLOCKS.GEOMETRY.name} {
+	mat4 u_mvp;
+	mat4 u_model;
+};
+
 #if defined(SUPPORT_NORMAL)
 uniform mat3 u_normal_matrix;
 #endif
@@ -195,16 +210,16 @@ layout(location = 4) out vec3 frag_occlusion_roughness_metallic;
 #define AMBIENT_OCCLUSION_ID 3
 #define EMISSIVE_ID 4
 
-struct Material {
+layout(std140) uniform ${SHADERS_COMMON.UNIFORM_BLOCKS.MATERIAL_CONSTANTS.name} {
 	vec4 base_color_factor;
 	vec3 emissive_factor;
 	float metallic_factor;
 	float roughness_factor;
 	float alpha_cutoff;
-#if defined(SUPPORT_TEXCOORD_0) && defined(SUPPORT_TEXCOORD_1)
-	int uv_usage_mask; // from left to right in order of textures, 0 bit is uv0, 1 is uv1
-#endif // defined(SUPPORT_TEXCOORD_0) && defined(SUPPORT_TEXCOORD_1)
+} u_material_constants;
 
+#if !defined(${SHADER_DEFINITIONS.NO_TEXTURES})
+struct MaterialTextures {
 #if defined(${SHADER_DEFINITIONS.TEXTURE_ALBEDO})
 	sampler2D albedo;
 #endif
@@ -224,13 +239,18 @@ struct Material {
 #if defined(${SHADER_DEFINITIONS.TEXTURE_EMISSIVE})
 	sampler2D emissive;
 #endif
+
+#if defined(SUPPORT_TEXCOORD_0) && defined(SUPPORT_TEXCOORD_1)
+	int uv_usage_mask; // from left to right in order of textures, 0 bit is uv0, 1 is uv1
+#endif // defined(SUPPORT_TEXCOORD_0) && defined(SUPPORT_TEXCOORD_1)
 };
 
-uniform Material u_material;
+uniform MaterialTextures u_material_textures;
+#endif // !defined(SHADER_DEFINITIONS.NO_TEXTURES)
 
 vec2 select_uv(int id) {
 #if defined(SUPPORT_TEXCOORD_0) && defined(SUPPORT_TEXCOORD_1)
-	return (1 & (u_material.uv_usage_mask >> id)) == 0 ? f_uv0 : f_uv1;
+	return (1 & (u_material_textures.uv_usage_mask >> id)) == 0 ? f_uv0 : f_uv1;
 #elif defined(SUPPORT_TEXCOORD_0)
 	return f_uv0;
 #elif defined(SUPPORT_TEXCOORD_1)
@@ -240,17 +260,17 @@ vec2 select_uv(int id) {
 #endif
 }
 
-vec4 make_albedo(in Material mat) {
-	return mat.base_color_factor
+vec4 make_albedo() {
+	return u_material_constants.base_color_factor
 #if defined(${SHADER_DEFINITIONS.TEXTURE_ALBEDO})
-		* texture(mat.albedo, select_uv(ALBEDO_ID))
+		* texture(u_material_textures.albedo, select_uv(ALBEDO_ID))
 #endif
 	;
 }
 
-vec3 make_normal(in Material mat) {
+vec3 make_normal() {
 #if defined(${SHADER_DEFINITIONS.TEXTURE_NORMAL})
-	vec3 surface_normal = texture(mat.normal, select_uv(NORMAL_ID)).xyz * 2.0 - 1.0;
+	vec3 surface_normal = texture(u_material_textures.normal, select_uv(NORMAL_ID)).xyz * 2.0 - 1.0;
 	return normalize(
 #if defined(SUPPORT_TANGENT) && defined(SUPPORT_NORMAL)
 		f_TBN * surface_normal
@@ -276,46 +296,46 @@ vec3 make_normal(in Material mat) {
 #endif // defined(SHADER_DEFINITIONS.TEXTURE_NORMAL)
 }
 
-vec4 make_emissive(in Material mat) {
-	return vec4(mat.emissive_factor, 1.0) /// @todo I'm not sure we should multiply it
+vec4 make_emissive() {
+	return vec4(u_material_constants.emissive_factor, 1.0) /// @todo I'm not sure we should multiply it
 #if defined(${SHADER_DEFINITIONS.TEXTURE_EMISSIVE})
-		* texture(mat.emissive, select_uv(EMISSIVE_ID))
+		* texture(u_material_textures.emissive, select_uv(EMISSIVE_ID))
 #endif
 	;
 }
 
-vec3 make_occlusion_roughness_metallic(in Material mat) {
+vec3 make_occlusion_roughness_metallic() {
 #if !defined(${SHADER_DEFINITIONS.TEXTURE_AMBIENT_METALLIC_ROUGHNESS})
 
 #if defined(${SHADER_DEFINITIONS.TEXTURE_AMBIENT_OCCLUSION})
-	float occlusion = texture(mat.ambient_occlusion, select_uv(AMBIENT_OCCLUSION_ID)).r;
+	float occlusion = texture(u_material_textures.ambient_occlusion, select_uv(AMBIENT_OCCLUSION_ID)).r;
 #else
 	const float occlusion = 1.0;
 #endif
 
 #if defined(${SHADER_DEFINITIONS.TEXTURE_METALLIC_ROUGHNESS})
-	vec2 metallic_roughness = texture(mat.metallic_roughness, select_uv(METALLIC_ROUGHNESS_ID)).gb;
+	vec2 metallic_roughness = texture(u_material_textures.metallic_roughness, select_uv(METALLIC_ROUGHNESS_ID)).gb;
 #else
-	vec2 metallic_roughness = vec2(mat.metallic_factor, mat.roughness_factor);
+	vec2 metallic_roughness = vec2(u_material_constants.metallic_factor, u_material_constants.roughness_factor);
 #endif
 
 #else // ambient and metallic_roughness are same texture
-	float occlusion = texture(mat.occlusion_roughness_metallic, select_uv(AMBIENT_OCCLUSION_ID)).r;
-	vec2 metallic_roughness = texture(mat.occlusion_roughness_metallic, select_uv(METALLIC_ROUGHNESS_ID)).gb;
+	float occlusion = texture(u_material_textures.occlusion_roughness_metallic, select_uv(AMBIENT_OCCLUSION_ID)).r;
+	vec2 metallic_roughness = texture(u_material_textures.occlusion_roughness_metallic, select_uv(METALLIC_ROUGHNESS_ID)).gb;
 #endif // SHADER_DEFINITIONS.TEXTURE_AMBIENT_METALLIC_ROUGHNESS
 
 	return vec3(occlusion, metallic_roughness);
 }
 
 void main() {
-	vec4 albedo = make_albedo(u_material);
-	if (albedo.a < u_material.alpha_cutoff) discard;
+	vec4 albedo = make_albedo();
+	if (albedo.a < u_material_constants.alpha_cutoff) discard;
 
 	frag_albedo = albedo;
 	frag_position = f_position;
-	frag_normal = make_normal(u_material);
-	frag_emissive = make_emissive(u_material);
-	frag_occlusion_roughness_metallic = make_occlusion_roughness_metallic(u_material);
+	frag_normal = make_normal();
+	frag_emissive = make_emissive();
+	frag_occlusion_roughness_metallic = make_occlusion_roughness_metallic();
 }
 `;
 	}

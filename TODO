@@ -1,5 +1,8 @@
 [ ] Optimization
 	[ ] uniform buffers
+		[ ] Lighting buffers
+		[x] Geometry buffer
+		[x] Material Constants buffer
 	[ ] INSTANCING!
 	[ ] Transform feedback for particles
 	[ ] Tiled Deferred Shading

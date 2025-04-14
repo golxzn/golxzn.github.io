@@ -2,11 +2,17 @@ const PIPELINE_FLAGS = {
 	nothing                   : 0,
 	lighting_support          : 1 << 0,
 	material_support          : 1 << 1,
-	transform_feedback_support: 1 << 2,
+	material_textures_support : 1 << 2,
+	transform_feedback_support: 1 << 3,
 };
 Object.freeze(PIPELINE_FLAGS);
 
 const SHADERS_COMMON = {
+
+UNIFORM_BLOCKS: {
+	GEOMETRY          : { name: "Geometry",          binding: 0 },
+	MATERIAL_CONSTANTS: { name: "MaterialConstants", binding: 1 }
+},
 
 MAX_POINT_LIGHT_COLORS: 16,
 MAX_SPOT_LIGHT_COLORS: 16,
@@ -31,17 +37,22 @@ struct PointLight {
 	float intensity;
 };
 
-struct Limits {
-	float inner;
-	float outer;
-};
+/*
+/// @todo uniform buffer
+LAYOUT
+cr, cg, rb, in, // intensity
+px, py, pz, il, // inner limit
+ax, ay, az, ol, outer // limit
+dx, dy, dz, __
+*/
 struct SpotLight {
 	vec3 color;
-	vec3 position;
-	vec3 attenuation; // [constant, linear, cubic]
-	vec3 direction;
 	float intensity;
-	Limits limits;
+	vec3 position;
+	float inner_limit;
+	vec3 attenuation; // [constant, linear, cubic]
+	float outer_limit;
+	vec3 direction;
 };
 `,
 
@@ -94,8 +105,8 @@ float attenuation(vec3 attenuation, float dist) {
 	return attenuation.r + attenuation.g * dist + attenuation.b * dist * dist;
 }
 
-float spot_intensity(float spot_factor, Limits limits) {
-	return clamp((spot_factor - limits.outer) / (limits.inner - limits.outer), 0.0, 1.0);
+float spot_intensity(float spot_factor, float inner_limit, float outer_limit) {
+	return clamp((spot_factor - outer_limit) / (inner_limit - outer_limit), 0.0, 1.0);
 }
 
 float calc_diffuse(vec3 to_light, vec3 normal) {

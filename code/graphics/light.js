@@ -129,8 +129,8 @@ class SpotLight extends PointLight {
 
 		super.apply(pipeline, name);
 		pipeline.set_uniform(direction_name, this._direction);
-		pipeline.set_uniform(`${name}.limits.inner`, this._limits.inner);
-		pipeline.set_uniform(`${name}.limits.outer`, this._limits.outer);
+		pipeline.set_uniform(`${name}.inner_limit`, this._limits.inner);
+		pipeline.set_uniform(`${name}.outer_limit`, this._limits.outer);
 	}
 
 	view() {

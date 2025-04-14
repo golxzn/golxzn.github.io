@@ -1,6 +1,7 @@
 const PIPELINE_DEFAULT_PROPERTIES = {
 	flags: PIPELINE_FLAGS.nothing,
 	transform_feedback: null,
+	uniform_blocks: []
 };
 Object.freeze(PIPELINE_DEFAULT_PROPERTIES);
 
@@ -16,6 +17,7 @@ class pipeline {
 		}
 
 		this._program = this._make_program(shaders);
+		this._bind_uniform_blocks(properties);
 	}
 
 	use() {
@@ -155,6 +157,15 @@ class pipeline {
 		console.error("[pipeline]" + gl.getProgramInfoLog(program));
 		gl.deleteProgram(program);
 		return null;
+	}
+
+	_bind_uniform_blocks(properties) {
+		if (properties.uniform_blocks == null) return;
+
+		for (const {name, binding} of properties.uniform_blocks) {
+			const index = gl.getUniformBlockIndex(this._program, name);
+			gl.uniformBlockBinding(this._program, index, binding)
+		}
 	}
 
 	_enable_transform_feedback(program, info) {
