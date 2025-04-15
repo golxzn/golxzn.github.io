@@ -105,10 +105,10 @@ class game_instance {
 		const point_attenuation = [ 1.0, 0.09, 0.032 ];
 		const point_lights = this.scene_manager.add_object(new node({ name: "PointLights" }));
 		for (const color of rgb) {
-			const pos = golxzn.math.sum(golxzn.math.scale(color, 5.0), [0.0, 1.0, 0.0]);
+			const pos = golxzn.math.sum(golxzn.math.scale(color, 7.0), [0.0, 1.0, 0.0]);
 			graphics.point_lights.push(new PointLight(pos, point_attenuation, {
 				color: color,
-				intensity: 1.0
+				intensity: 10.0
 			}));
 
 			this._load_model("assets/models/gizmos/gizmos-sphere.gltf", (obj) => {
@@ -120,16 +120,16 @@ class game_instance {
 
 		const spot_color = [0.96, 0.72, 0.36];
 		const spot_limits = {
-			inner: Math.cos(golxzn.math.to_radians(30.0)),
-			outer: Math.cos(golxzn.math.to_radians(33.5))
+			inner: Math.cos(golxzn.math.to_radians(23.0)),
+			outer: Math.cos(golxzn.math.to_radians(23.5))
 		};
 		const spot_attenuation = [1.0, 0.007, 0.0002];
 
 		const distance_from_center = 8;
 		const light_height = 10.0;
-		// const light_count = SHADERS_COMMON.MAX_SPOT_LIGHT_COLORS;
+		// const light_count = SHADERS_COMMON.LIGHTING_INFO.SPOT.MAX_COUNT;
 		const light_count = 3;
-		const angle = 2.0 * Math.PI / light_count;
+		const angle = Math.PI / light_count;
 
 		const spot_lights = this.scene_manager.add_object(new node({ name: "SpotLights" }));
 		for (var i = 0; i < light_count; ++i) {
