@@ -27,7 +27,11 @@ class graphics {
 			[SHADERS_COMMON.UNIFORM_BLOCKS.GEOMETRY.binding]: new uniform_block(
 				SHADERS_COMMON.UNIFORM_BLOCKS.GEOMETRY,
 				new Float32Array(m.identity().concat(m.identity()))
-			)
+			),
+			[SHADERS_COMMON.UNIFORM_BLOCKS.LIGHT_PROPERTIES.binding]: new uniform_block(
+				SHADERS_COMMON.UNIFORM_BLOCKS.LIGHT_PROPERTIES,
+				new Float32Array(SHADERS_COMMON.LIGHTING_INFO.UNIFORM_BUFFER_LENGTH)
+			),
 		};
 /*
  [scene]                                          +--------[quad]--------+
@@ -78,7 +82,7 @@ class graphics {
 				new framebuffer(SETTINGS.graphics.shadow_resolution, [ {
 					name: "u_spotlight_shadow_map",
 					type: attachment_type.texture_array,
-					layers: SHADERS_COMMON.MAX_SPOT_LIGHT_COLORS,
+					layers: SHADERS_COMMON.LIGHTING_INFO.SPOT.MAX_COUNT,
 					format: gl.DEPTH_COMPONENT,
 					internal: gl.DEPTH_COMPONENT32F,
 					attachment: gl.DEPTH_ATTACHMENT,
@@ -321,32 +325,40 @@ class graphics {
 
 	set_engine_lighting_uniforms() {
 		const pipeline = this.current_pipeline();
-		if (!pipeline) return;
+		if (!pipeline || !pipeline.support(PIPELINE_FLAGS.lighting_support)) return;
 
-		this.directional_lights.apply(pipeline, "u_dir_light");
+		const light_block = this.uniform_blocks[SHADERS_COMMON.UNIFORM_BLOCKS.LIGHT_PROPERTIES.binding];
+		if (this.directional_lights.dirty) {
+			light_block.update(this.directional_lights.binary(), 0);
+		}
 
 		const u_point_lights_count_location = pipeline.uniform_location('u_point_lights_count');
 		if (u_point_lights_count_location == null) return;
 
 		pipeline.set_uniform(u_point_lights_count_location, this.point_lights.length, { as_integer: true });
-		for (var i = 0; i < this.point_lights.length; i++) {
-			this.point_lights[i].apply(pipeline, `u_point_lights[${i}]`);
+		const point_bytes_length = SHADERS_COMMON.LIGHTING_INFO.POINT.COMPONENTS_COUNT
+			* Float32Array.BYTES_PER_ELEMENT;
+		for (var i = 0; i < this.point_lights.length; ++i) {
+			const point = this.point_lights[i];
+			if (point.dirty) {
+				light_block.update(point.binary(),
+					SHADERS_COMMON.LIGHTING_INFO.POINT.BYTES_OFFSET + point_bytes_length * i
+				);
+			}
 		}
 
 		pipeline.set_uniform('u_spot_lights_count', this.spot_lights.length, { as_integer: true });
-		for (var i = 0; i < this.spot_lights.length; i++) {
-			const light = this.spot_lights[i];
-			// const transform_location = pipeline.uniform_location(`u_spotlight_positions[${i}]`);
-			// if (transform_location != null) {
-			// 	light.apply(pipeline, `u_spot_lights[${i}]`);
-			// 	pipeline.set_uniform(transform_location, light.view_projection_position());
-			// }
-			light.apply(pipeline, `u_spot_lights[${i}]`);
-			const transform_location = pipeline.uniform_location(`u_spotlight_vp[${i}]`);
-			if (transform_location != null) {
-				pipeline.set_uniform(transform_location, light.view_projection());
+		const spot_bytes_length = SHADERS_COMMON.LIGHTING_INFO.SPOT.COMPONENTS_COUNT
+			* Float32Array.BYTES_PER_ELEMENT;
+		for (var i = 0; i < this.spot_lights.length; ++i) {
+			const spot = this.spot_lights[i];
+			if (spot.dirty) {
+				light_block.update(spot.binary(),
+					SHADERS_COMMON.LIGHTING_INFO.SPOT.BYTES_OFFSET + spot_bytes_length * i
+				);
 			}
 		}
+		light_block.bind();
 
 		if (this.spotlight_shadow_map_texture) {
 			this.apply_texture(this.spotlight_shadow_map_texture, "u_spotlight_shadow_map");
@@ -355,9 +367,12 @@ class graphics {
 
 	reset_engine_lighting_uniforms() {
 		const pipeline = this.current_pipeline();
-		if (!pipeline) return;
+		if (!pipeline || !pipeline.support(PIPELINE_FLAGS.lighting_support)) return;
 
-		if (this.spotlight_shadow_map_texture && pipeline.uniform_location('u_point_lights_count') != null) {
+		if (pipeline.uniform_location('u_point_lights_count') == null) return;
+		this.uniform_blocks[SHADERS_COMMON.UNIFORM_BLOCKS.LIGHT_PROPERTIES.binding].unbind();
+
+		if (this.spotlight_shadow_map_texture) {
 			this.remove_textures(1); // u_spotlight_shadow_map
 		}
 	}

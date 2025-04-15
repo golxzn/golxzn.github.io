@@ -2,7 +2,10 @@
 Object.assign(SHADERS["3D"], { PBR : {
 
 properties : {
-	flags: PIPELINE_FLAGS.lighting_support
+	flags: PIPELINE_FLAGS.lighting_support,
+	uniform_blocks: [
+		SHADERS_COMMON.UNIFORM_BLOCKS.LIGHT_PROPERTIES
+	]
 },
 
 // >----------------------------------< VERTEX >----------------------------------< //
@@ -30,8 +33,6 @@ const float INV_PI = 0.318309886184;
 const float BLOOM_BRIGHTNESS_THRESHOLD = 1.0;
 const vec3 GRAYSCALE_WEIGHT = vec3(0.2126, 0.7152, 0.0722);
 
-${SHADERS_COMMON.LIGHTING_CONSTANTS}
-
 in vec2 f_uv;
 
 layout(location = 0) out vec4 frag_color;
@@ -43,10 +44,12 @@ uniform vec3             u_view_position;
 uniform float            u_exposure;
 uniform int              u_point_lights_count;
 uniform int              u_spot_lights_count;
-uniform DirectionalLight u_dir_light;
-uniform PointLight       u_point_lights[MAX_POINT_LIGHT_COLORS];
-uniform SpotLight        u_spot_lights[MAX_SPOT_LIGHT_COLORS];
-uniform mat4             u_spotlight_vp[MAX_SPOT_LIGHT_COLORS];
+
+layout(std140) uniform ${SHADERS_COMMON.UNIFORM_BLOCKS.LIGHT_PROPERTIES.name} {
+	DirectionalLight u_dir_light;
+	PointLight       u_point_lights[${SHADERS_COMMON.LIGHTING_INFO.POINT.MAX_COUNT}];
+	SpotLight        u_spot_lights[${SHADERS_COMMON.LIGHTING_INFO.SPOT.MAX_COUNT}];
+};
 
 // /* uniform */ const FogInfo u_fog = FogInfo(vec3(0.01, 0.014, 0.022), 0.0, 60.0);
 
@@ -182,7 +185,7 @@ void main() {
 		/// SHADOWS & ATTENUATION
 		float att = attenuation(spot.attenuation, distance_to_light); // in tutorial they use distance_to_light * distance_to_light;
 		float bias = max(0.0005 * (1.0 - NdotL), 0.0001);
-		float shadow = 1.0 - calc_shadow(u_spotlight_vp[i] * vec4(position, 1.0), i, bias, 2);
+		float shadow = 1.0 - calc_shadow(spot.view_projection * vec4(position, 1.0), i, bias, 2);
 		float intensity = shadow * spot_intensity(spot_factor, spot.inner_limit, spot.outer_limit) / att;
 
 		config.to_light = to_light;

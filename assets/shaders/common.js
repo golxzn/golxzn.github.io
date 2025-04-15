@@ -7,45 +7,54 @@ const PIPELINE_FLAGS = {
 };
 Object.freeze(PIPELINE_FLAGS);
 
+const SHADER_TYPES = {
+	float: { elements_count: 1, byte_length:  4, padding: 0 },
+	vec2 : { elements_count: 2, byte_length:  8, padding: 2 },
+	vec3 : { elements_count: 3, byte_length: 12, padding: 1 },
+	vec4 : { elements_count: 4, byte_length: 16, padding: 0 },
+};
+Object.freeze(PIPELINE_FLAGS);
+
 const SHADERS_COMMON = {
 
 UNIFORM_BLOCKS: {
-	GEOMETRY          : { name: "Geometry",          binding: 0 },
-	MATERIAL_CONSTANTS: { name: "MaterialConstants", binding: 1 }
+	GEOMETRY          : { name: "Geometry"         , binding: 0 },
+	MATERIAL_CONSTANTS: { name: "MaterialConstants", binding: 1 },
+	LIGHT_PROPERTIES  : { name: "LightProperties"  , binding: 2 },
 },
 
-MAX_POINT_LIGHT_COLORS: 16,
-MAX_SPOT_LIGHT_COLORS: 16,
-
-LIGHTING_CONSTANTS: /* glsl */ `
-#define MAX_POINT_LIGHT_COLORS 16
-#define MAX_SPOT_LIGHT_COLORS 16
-`,
+LIGHTING_INFO: {
+	DIRECTIONAL: {
+		COMPONENTS_COUNT: 24,
+	},
+	POINT: {
+		COMPONENTS_COUNT: 12,
+		MAX_COUNT: 16
+	},
+	SPOT: {
+		COMPONENTS_COUNT: 32,
+		MAX_COUNT: 16
+	},
+},
 
 PBR_LIGHTING_STRUCTURES: /* glsl */ `
 
 struct DirectionalLight {
+	mat4 view_projection;
 	vec3 color;
-	vec3 direction;
 	float intensity;
+	vec3 direction;
 };
 
 struct PointLight {
 	vec3 color;
+	float intensity;
 	vec3 position;
 	vec3 attenuation; // [constant, linear, cubic]
-	float intensity;
 };
 
-/*
-/// @todo uniform buffer
-LAYOUT
-cr, cg, rb, in, // intensity
-px, py, pz, il, // inner limit
-ax, ay, az, ol, outer // limit
-dx, dy, dz, __
-*/
 struct SpotLight {
+	mat4 view_projection;
 	vec3 color;
 	float intensity;
 	vec3 position;
@@ -55,6 +64,34 @@ struct SpotLight {
 	vec3 direction;
 };
 `,
+
+/*
+dm0, dm1, dm2, dm3
+dm4, dm5, dm6, dm7
+dm8, dm9, dm0, dm1
+dm2, dm3, dm4, dm5
+dcr, dcg, dcb, din
+ddx, ddy, ddz, ___
+
+pcr, pcg, pcb, pin
+ppx, ppy, ppz, ___
+pac, pal, pac, ___
+
+scr, scg, scb, sin
+spx, spy, spz, sil
+sac, sal, sac, sol
+sdx, sdy, sdz, ___
+
+sm0, sm1, sm2, sm3
+sm4, sm5, sm6, sm7
+sm8, sm9, sm0, sm1
+sm2, sm3, sm4, sm5
+scr, scg, scb, sin
+spx, spy, spz, sil
+sac, sal, sac, sol
+sdx, sdy, sdz, ___
+
+*/
 
 LIGHTING_UTILITIES: /* glsl */ `
 float attenuation(vec3 attenuation, float dist) {
@@ -98,6 +135,24 @@ float calc_shadow(vec4 fragment_pos_light_space, int id, float bias, int accurac
 	return shadow;
 }
 `,
-
 };
+Object.defineProperties(SHADERS_COMMON.LIGHTING_INFO, {
+	UNIFORM_BUFFER_LENGTH: {
+		value: SHADERS_COMMON.LIGHTING_INFO.DIRECTIONAL.COMPONENTS_COUNT
+			+ SHADERS_COMMON.LIGHTING_INFO.POINT.COMPONENTS_COUNT * SHADERS_COMMON.LIGHTING_INFO.POINT.MAX_COUNT
+			+ SHADERS_COMMON.LIGHTING_INFO.SPOT.COMPONENTS_COUNT * SHADERS_COMMON.LIGHTING_INFO.SPOT.MAX_COUNT
+	},
+});
+Object.defineProperties(SHADERS_COMMON.LIGHTING_INFO.POINT, {
+	BYTES_OFFSET: {
+		value: SHADERS_COMMON.LIGHTING_INFO.DIRECTIONAL.COMPONENTS_COUNT * Float32Array.BYTES_PER_ELEMENT
+	},
+});
+Object.defineProperties(SHADERS_COMMON.LIGHTING_INFO.SPOT, {
+	BYTES_OFFSET: {
+		value: SHADERS_COMMON.LIGHTING_INFO.POINT.BYTES_OFFSET
+			+ SHADERS_COMMON.LIGHTING_INFO.POINT.COMPONENTS_COUNT
+				* SHADERS_COMMON.LIGHTING_INFO.POINT.MAX_COUNT * Float32Array.BYTES_PER_ELEMENT
+	},
+});
 Object.freeze(SHADERS_COMMON);
