@@ -463,12 +463,15 @@ class graphics {
 		gl.cullFace(gl.FRONT);
 		gl.frontFace(gl.CW);
 
+		var applied_textures = 0;
 		for (const [name, texture] of Object.entries(textures)) {
-			this.apply_texture(name, texture);
+			applied_textures += +this.apply_texture(texture, name);
 		}
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.blit_mesh);
 		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+		this.remove_textures(applied_textures);
 
 		gl.disable(gl.CULL_FACE);
 	}
@@ -479,9 +482,7 @@ class graphics {
 		gl.frontFace(gl.CW);
 
 		pipeline.use();
-		for (const [name, value] of Object.entries(uniforms)) {
-			pipeline.set_uniform(name, value);
-		}
+		pipeline.set_uniforms(uniforms);
 
 		var bind_id = 0;
 		for (const [name, texture] of Object.entries(textures)) {

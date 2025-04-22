@@ -60,10 +60,22 @@ class pipeline {
 		return gl.getUniformLocation(this._program, uniform_name);
 	}
 
+	try_set_uniforms(uniforms) {
+		for (const [name, value] of Object.entries(uniforms)) {
+			this.try_set_uniform(name, value.getter, value.options);
+		}
+	}
+
 	try_set_uniform(uniform_name, getter, options = { transpose: false, as_integer: false }) {
 		const location = this.uniform_location(uniform_name);
 		if (location) {
 			this.set_uniform(location, getter(), options);
+		}
+	}
+
+	set_uniforms(uniforms) {
+		for (const [name, value] of Object.entries(uniforms)) {
+			this.set_uniform(name, value.getter(), value.options);
 		}
 	}
 

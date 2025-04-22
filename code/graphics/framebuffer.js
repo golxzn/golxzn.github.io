@@ -127,19 +127,24 @@ class framebuffer {
 		const texture = gl.createTexture();
 
 		gl.bindTexture(gl.TEXTURE_2D_ARRAY, texture);
-		gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, attachment.internal,
-			this.size[0], this.size[1], attachment.layers,
-			0, attachment.format, attachment.data_type, null
-		);
 
 		const params = this._default_parameters_or(attachment.parameters);
-		for (const [parameter, value] of Object.entries(params)) {
-			gl.texParameteri(gl.TEXTURE_2D_ARRAY, parameter, value);
-		}
+		// for (var mip = 0; mip < attachment.layers; ++mip) {
+			gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0 /*mip*/, attachment.internal,
+				this.size[0], this.size[1], attachment.layers,
+				0, attachment.format, attachment.data_type, null
+			);
+
+			gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_BASE_LEVEL, 0);
+			gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAX_LEVEL, /*attachment.layers - 1*/ 0);
+			for (const [parameter, value] of Object.entries(params)) {
+				gl.texParameteri(gl.TEXTURE_2D_ARRAY, parameter, value);
+			}
+		// }
 
 		// The docs says that the type of texture couldn't be gl.TEXTURE_2D_ARRAY.
 		// It doesn't affects the rendering anyway
-		gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment.attachment, gl.TEXTURE_2D_ARRAY, texture, 0);
+		// gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment.attachment, gl.TEXTURE_2D_ARRAY, texture, 0);
 		return texture;
 	}
 
@@ -152,7 +157,7 @@ class framebuffer {
 	}
 
 	_default_parameters_or(params) {
-		return params != undefined ? params : {
+		return params || {
 			[gl.TEXTURE_MIN_FILTER]: gl.LINEAR,
 			[gl.TEXTURE_MAG_FILTER]: gl.LINEAR
 		};
