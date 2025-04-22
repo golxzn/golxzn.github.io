@@ -432,64 +432,6 @@ class graphics {
 		}
 	}
 
-//============================== draw buffers ==============================//
-
-	draw_array(draw_info, mesh_instance) {
-		const vbo = mesh_instance.vao.get_buffer(draw_info.target_buffer);
-		mesh_instance.vao.bind();
-		gl.drawArrays(draw_info.mode, 0, vbo.info.count);
-		mesh_instance.vao.unbind();
-	}
-
-	draw_array_transform_feedback(draw_info, mesh_instance) {
-		const vbo = mesh_instance.vao.get_buffer(draw_info.target_buffer);
-		// We should get this buffer from another VAO!
-		const tb = mesh_instance.vao.get_buffer(draw_info.output_buffer);
-		mesh_instance.vao.bind();
-		gl.bindBufferBase(draw_info.mode, 0, tb);
-		gl.beginTransformFeedback(draw_info.mode)
-		gl.drawArrays(draw_info.mode, 0, vbo.info.count);
-		gl.endTransformFeedback();
-		gl.bindBufferBase(draw_info.mode, 0, null);
-		mesh_instance.vao.unbind();
-	}
-
-	draw_elements(draw_info, mesh_instance) {
-		const ebo = mesh_instance.vao.get_buffer(draw_info.target_buffer);
-		mesh_instance.vao.bind();
-		gl.drawElements(draw_info.mode, ebo.info.count, gl.UNSIGNED_SHORT, 0);
-		mesh_instance.vao.unbind();
-	}
-
-	draw_instanced_array(draw_info, mesh_instance) {
-		const vbo = mesh_instance.vao.get_buffer(draw_info.target_buffer);
-		mesh_instance.vao.bind();
-		gl.drawArraysInstanced(draw_info.mode, 0, vbo.info.count, draw_info.instances_count);
-		mesh_instance.vao.unbind();
-	}
-
-	draw_instanced_array_transform_feedback(draw_info, mesh_instance) {
-		const vbo = mesh_instance.vao.get_buffer(draw_info.target_buffer);
-		const tb = mesh_instance.vao.get_buffer(draw_info.output_buffer);
-		mesh_instance.vao.bind();
-		gl.bindBufferBase(draw_info.mode, 0, tb);
-		gl.beginTransformFeedback(draw_info.mode)
-		gl.drawArraysInstanced(draw_info.mode, 0, vbo.info.count, draw_info.instances_count);
-		gl.endTransformFeedback();
-		gl.bindBufferBase(draw_info.mode, 0, null);
-		mesh_instance.vao.unbind();
-	}
-
-	draw_instanced_elements(draw_info, mesh_instance) {
-		const ebo = mesh_instance.vao.get_buffer(draw_info.target_buffer);
-		mesh_instance.vao.bind();
-		gl.drawElementsInstanced(draw_info.mode, ebo.info.count, gl.UNSIGNED_SHORT, 0,
-			draw_info.instances_count);
-		mesh_instance.vao.unbind();
-	}
-
-//==========================================================================//
-
 	aspect_ratio() {
 		return display.clientWidth / display.clientHeight;
 	}
