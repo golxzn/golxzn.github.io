@@ -18,14 +18,28 @@ void main() {
 frag: /* glsl */ `#version 300 es
 precision mediump float;
 
+const float GAMMA = 2.2;
+
 in vec2 f_uv;
 out vec4 frag_color;
 
+uniform float     u_exposure;
 uniform sampler2D u_screen;
 uniform sampler2D u_bloom;
 
+vec3 tone_mapping(vec3 color, float exposure) {
+	return color / (color + vec3(1.0)); // HDR tone mapping
+	// return vec3(1.0) - exp(-color * exposure);
+}
+
+vec3 gamma_correction(vec3 color) {
+	const float gamma = 1.0 / GAMMA;
+	return pow(color, vec3(gamma));
+}
+
 void main() {
-	frag_color = vec4(texture(u_screen, f_uv).rgb + texture(u_bloom, f_uv).rgb, 1.0);
+	vec3 color = texture(u_screen, f_uv).rgb + texture(u_bloom, f_uv).rgb;
+	frag_color = vec4(gamma_correction(tone_mapping(color, u_exposure)), 1.0);
 }
 `
 

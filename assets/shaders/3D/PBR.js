@@ -30,7 +30,7 @@ precision mediump float;
 const float GAMMA = 2.2;
 const float PI = 3.14159265359;
 const float INV_PI = 0.318309886184;
-const float BLOOM_BRIGHTNESS_THRESHOLD = 1.0;
+const float BLOOM_BRIGHTNESS_THRESHOLD = 0.2;
 const vec3 GRAYSCALE_WEIGHT = vec3(0.2126, 0.7152, 0.0722);
 
 in vec2 f_uv;
@@ -41,7 +41,6 @@ layout(location = 1) out vec4 bright_color;
 ${SHADERS_COMMON.PBR_LIGHTING_STRUCTURES}
 
 uniform vec3             u_view_position;
-uniform float            u_exposure;
 uniform int              u_point_lights_count;
 uniform int              u_spot_lights_count;
 
@@ -121,16 +120,6 @@ vec3 lighting_equation(in lighting_equation_config config) {
 	return (diffuse + specular) * config.radiance * NdotL;
 }
 
-vec3 tone_mapping(vec3 color, float exposure) {
-	return color / (color + vec3(1.0)); // HDR tone mapping
-	// return vec3(1.0) - exp(-color * exposure);
-}
-
-vec3 gamma_correction(vec3 color) {
-	const float gamma = 1.0 / GAMMA;
-	return pow(color, vec3(gamma));
-}
-
 void main() {
 	const vec4 gamma = vec4(GAMMA, GAMMA, GAMMA, 1.0);
 
@@ -198,9 +187,6 @@ void main() {
 	vec3 emissive = pow(texture(u_emissive, f_uv).rgb, gamma.rgb);
 	vec3 ambient = vec3(0.03) * albedo.rgb * ambient_occlusion;
 	vec3 color = emissive + ambient + Lo;
-
-	color = tone_mapping(color, u_exposure);
-	color = gamma_correction(color);
 
 	float brightness = dot(color, GRAYSCALE_WEIGHT);
 

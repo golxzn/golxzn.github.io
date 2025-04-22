@@ -92,7 +92,7 @@ class game_instance {
 
 		graphics.directional_lights = new DirectionalLight([-0.5, -1.0, -1.0], {
 			color: [0.1, 0.14, 0.22],
-			intensity: 2.0
+			intensity: 1.0
 		});
 
 
@@ -108,7 +108,7 @@ class game_instance {
 			const pos = golxzn.math.sum(golxzn.math.scale(color, 7.0), [0.0, 1.0, 0.0]);
 			graphics.point_lights.push(new PointLight(pos, point_attenuation, {
 				color: color,
-				intensity: 10.0
+				intensity: 1.0
 			}));
 
 			this._load_model("assets/models/gizmos/gizmos-sphere.gltf", (obj) => {
@@ -141,7 +141,7 @@ class game_instance {
 			var light = new SpotLight(
 				position, golxzn.math.vec3.negative(position), spot_attenuation, spot_limits, {
 					color: spot_color,
-					intensity: 4.0
+					intensity: 1.0
 				}
 			);
 

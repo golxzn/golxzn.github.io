@@ -9,7 +9,7 @@ Object.freeze(POWER_PREFERENCE);
 const SETTINGS = {
 	debug_mode: false,
 	graphics: {
-		exposure: 0.2,
+		exposure: 0.8,
 		antialias: true,
 		power_preference: POWER_PREFERENCE.HIGH_PERFORMANCE,
 		shadow_resolution: [1024, 1024],

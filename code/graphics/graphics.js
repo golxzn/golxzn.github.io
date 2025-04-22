@@ -103,8 +103,8 @@ class graphics {
 
 			shading: new render_pass("Shading",
 				new framebuffer(this.render_size, [
-					{ type: attachment_type.texture,      format: gl.RGBA,             attachment: gl.COLOR_ATTACHMENT0 },
-					{ type: attachment_type.texture,      format: gl.RGBA,             attachment: gl.COLOR_ATTACHMENT1 },
+					{ type: attachment_type.texture,      format: gl.RGBA16F,          attachment: gl.COLOR_ATTACHMENT0, storage: true },
+					{ type: attachment_type.texture,      format: gl.RGBA16F,          attachment: gl.COLOR_ATTACHMENT1, storage: true },
 					{ type: attachment_type.renderbuffer, format: gl.DEPTH24_STENCIL8, attachment: gl.DEPTH_STENCIL_ATTACHMENT  },
 				]), [ gl.CULL_FACE, gl.DEPTH_TEST ], {
 					bind: function(pass, graphics) {
@@ -141,7 +141,7 @@ class graphics {
 
 			bloom: new render_pass("Bloom",
 				new framebuffer(this.render_size, [
-					{ name: 'u_bloom', type: attachment_type.texture,  format: gl.RGBA, attachment: gl.COLOR_ATTACHMENT0 },
+					{ name: 'u_bloom', type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT0, storage: true },
 				]), [], {
 					bind: function(pass, graphics) {
 						gl.clear(gl.COLOR_BUFFER_BIT);
@@ -232,7 +232,6 @@ class graphics {
 	//=======================================  Color  Pass  =======================================//
 		const shading_pass = this.set_current_render_pass(this.render_passes.shading);
 		shading_pass.bind(this);
-		this.current_pipeline().set_uniform("u_exposure", SETTINGS.graphics.exposure);
 		this._blit_on_quad_({});
 		shading_pass.unbind(this);
 
@@ -265,12 +264,14 @@ class graphics {
 	//======================================= Blit  screen =======================================//
 		gl.clear(gl.COLOR_BUFFER_BIT);
 		gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-		this._blit_on_quad(
-			this.blit_texture_pipeline, { // todo replace it
-				u_screen: shading_pass.texture(0),
-				u_bloom: bloom_pass.texture(0),
-			}, {}
-		);
+		this._blit_on_quad(this.blit_texture_pipeline, { // todo replace it
+			u_screen: shading_pass.texture(0),
+			u_bloom : bloom_texture,
+		}, {
+			u_exposure: { getter: () => SETTINGS.graphics.exposure },
+		});
+
+		++this._frame_count;
 	}
 
 	set_active_camera(camera) {
