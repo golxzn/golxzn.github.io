@@ -139,7 +139,7 @@ class graphics {
 			// 	pipelines.load("3D", "PRIMITIVE")
 			// ),
 
-			bloom: new render_pass("Bloom",
+			bloom_horizontal: new render_pass("Bloom Horizontal",
 				new framebuffer(this.render_size, [
 					{ name: 'u_bloom', type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT0, storage: true },
 				]), [], {
@@ -149,7 +149,19 @@ class graphics {
 					unbind: function(pass, graphics) {
 					}
 				},
-				pipelines.load("3D", "BLOOM")
+				pipelines.load("3D", "BLOOM_HORIZONTAL")
+			),
+			bloom_vertical: new render_pass("Bloom Vertical",
+				new framebuffer(this.render_size, [
+					{ name: 'u_bloom', type: attachment_type.texture, format: gl.RGBA16F, attachment: gl.COLOR_ATTACHMENT0, storage: true },
+				]), [], {
+					bind: function(pass, graphics) {
+						gl.clear(gl.COLOR_BUFFER_BIT);
+					},
+					unbind: function(pass, graphics) {
+					}
+				},
+				pipelines.load("3D", "BLOOM_VERTICAL")
 			),
 		};
 		this._current_render_pass = null;
@@ -245,21 +257,31 @@ class graphics {
 		// gizmos_pass.unbind(this);
 
 	//==========================================  Bloom ==========================================//
-		const bloom_uniforms = {
-			u_direction: SETTINGS.graphics.bloom.direction,
-			u_weights: SETTINGS.graphics.bloom.weights
-		};
 
-		const bloom_pass = this.set_current_render_pass(this.render_passes.bloom);
+		const bloom_passes = [
+			this.render_passes.bloom_horizontal,
+			this.render_passes.bloom_vertical,
+		];
+		for (var i = 0; i < bloom_passes.length; ++i) {
+			const pass = bloom_passes[i];
+			pass.pipeline.use();
+			pass.pipeline.set_uniforms({
+				u_direction: { getter: () => SETTINGS.graphics.bloom.direction[i] },
+				u_weights: { getter: () => SETTINGS.graphics.bloom.weights }
+			});
+		}
+
 		var bloom_texture = shading_pass.texture(1);
 		for (var i = 0; i < SETTINGS.graphics.bloom.iterations; ++i) {
+			const id = i % bloom_passes.length;
+
+			const bloom_pass = this.set_current_render_pass(bloom_passes[id]);
 			bloom_pass.bind(this);
 			this._blit_on_quad_({ u_bloom: bloom_texture });
 			bloom_pass.unbind(this);
 
 			bloom_texture = bloom_pass.texture();
 		}
-
 
 	//======================================= Blit  screen =======================================//
 		gl.clear(gl.COLOR_BUFFER_BIT);
