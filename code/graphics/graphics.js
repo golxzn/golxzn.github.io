@@ -165,6 +165,7 @@ class graphics {
 			),
 		};
 		this._current_render_pass = null;
+		this._frame_count = 0;
 
 		this.blit_texture_pipeline = pipelines.load("3D", "BLIT_SCREEN");
 		this.blit_mesh = (() => {
@@ -212,31 +213,9 @@ class graphics {
 		// TODO: Implement Directional Shadows. It's not that hard, but I'm not sure it's necessary.
 
 	//==================================== Spotlights  Shadows ====================================//
-		const shadow_pass = this.set_current_render_pass(this.render_passes.spotlight_shadow);
-		const depth_framebuffer = shadow_pass.framebuffer;
-		const spotlight_shadow_maps = depth_framebuffer.texture_array();
-
-		for (var i = 0; i < this.spot_lights.length; ++i) {
-			const spotlight = this.spot_lights[i];
-			this.push_view(spotlight.view());
-			this.push_projection(spotlight.projection());
-			shadow_pass.bind(this);
-
-			gl.framebufferTextureLayer(
-				gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, spotlight_shadow_maps.handler, 0, i
-			);
-			gl.clear(gl.DEPTH_BUFFER_BIT);
-
-			if (depth_framebuffer.complete()) {
-				instance.render(this);
-			}
-			shadow_pass.unbind(this);
-			this.pop_projection();
-			this.pop_view();
+		if (this._frame_count % SETTINGS.graphics.shadow_calculation_frequency == 0) {
+			this.spotlight_shadow_map_texture = this.render_shadows(instance);
 		}
-
-		spotlight_shadow_maps.unbind();
-		this.spotlight_shadow_map_texture = spotlight_shadow_maps;
 
 	//==================================== PointLights Shadows ====================================//
 		// TODO: Maybe we could make an array of cube maps for each point light :thonk:
@@ -294,6 +273,34 @@ class graphics {
 		});
 
 		++this._frame_count;
+	}
+
+	render_shadows(instance) {
+		const shadow_pass = this.set_current_render_pass(this.render_passes.spotlight_shadow);
+		const depth_framebuffer = shadow_pass.framebuffer;
+		const spotlight_shadow_maps = depth_framebuffer.texture_array();
+
+		for (var i = 0; i < this.spot_lights.length; ++i) {
+			const spotlight = this.spot_lights[i];
+			this.push_view(spotlight.view());
+			this.push_projection(spotlight.projection());
+			shadow_pass.bind(this);
+
+			gl.framebufferTextureLayer(
+				gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, spotlight_shadow_maps.handler, 0, i
+			);
+			gl.clear(gl.DEPTH_BUFFER_BIT);
+
+			if (depth_framebuffer.complete()) {
+				instance.render(this);
+			}
+			shadow_pass.unbind(this);
+			this.pop_projection();
+			this.pop_view();
+		}
+
+		spotlight_shadow_maps.unbind();
+		return spotlight_shadow_maps;
 	}
 
 	set_active_camera(camera) {

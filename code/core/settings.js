@@ -13,6 +13,7 @@ const SETTINGS = {
 		antialias: true,
 		power_preference: POWER_PREFERENCE.HIGH_PERFORMANCE,
 		shadow_resolution: [1024, 1024],
+		shadow_calculation_frequency: 4, // each second frame
 		clear_color: [0.01, 0.014, 0.022, 1.0],
 		render_scale: 1.0,
 		bloom: {
