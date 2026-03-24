@@ -10,6 +10,7 @@ class uniform_block {
 		this.name = params.name || UNIFORM_BLOCK_PARAMS.name;
 		this.binding = params.binding != null ? params.binding : UNIFORM_BLOCK_PARAMS.binding;
 		this.buffer = gl.createBuffer();
+		// console.log("Uniform Block", this.name, "actual size:", data.length * data.BYTES_PER_ELEMENT)
 
 		gl.bindBuffer(gl.UNIFORM_BUFFER, this.buffer);
 		gl.bufferData(gl.UNIFORM_BUFFER, data, gl.DYNAMIC_DRAW);

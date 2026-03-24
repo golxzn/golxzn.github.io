@@ -65,13 +65,14 @@ class gltf_loader {
 				[NORMAL_NAME  , take_texture(info.normalTexture)],
 				[EMISSIVE_NAME, take_texture(info.emissiveTexture)],
 			]);
-			if (info.occlusionTexture && pbr.metallicRoughnessTexture &&
-				info.occlusionTexture.index == pbr.metallicRoughnessTexture.index
+			if (
+				!info.occlusionTexture || !pbr.metallicRoughnessTexture ||
+				info.occlusionTexture.index != pbr.metallicRoughnessTexture.index
 			) {
-				textures.set(OCCLUSION_METALLIC_ROUGHNESS_NAME, take_texture(info.occlusionTexture));
-			} else {
 				textures.set(METALLIC_ROUGHNESS_NAME, take_texture(pbr.metallicRoughnessTexture));
 				textures.set(AMBIENT_OCCLUSION_NAME, take_texture(info.occlusionTexture));
+			} else {
+				textures.set(OCCLUSION_METALLIC_ROUGHNESS_NAME, take_texture(info.occlusionTexture));
 			}
 
 			for (const [name, texture] of textures) {
@@ -86,11 +87,11 @@ class gltf_loader {
 		const material_info = gltf.materials[material_id];
 		const pbr = material_info.pbrMetallicRoughness;
 		return new material({
-			textures: load_textures(material_info, pbr),
-			metallic_factor   : pbr.metallicFactor,
+			textures: pbr ? load_textures(material_info, pbr) : null,
+			metallic_factor   : pbr ? pbr.metallicFactor : null,
 			emissive_factor   : get_emissive_factor(material_info),
-			roughness_factor  : pbr.roughnessFactor,
-			base_color_factor : pbr.baseColorFactor,
+			roughness_factor  : pbr ? pbr.roughnessFactor : null,
+			base_color_factor : pbr ? pbr.baseColorFactor : null,
 			alpha_cutoff      : material_info.alphaCutoff,
 			alpha_mode        : convert_mode(material_info.alphaMode)
 		});
@@ -207,6 +208,15 @@ class gltf_loader {
 		const paths = [];
 		for (var i = 0; i < gltf.textures.length; ++i) {
 			const texture_info = gltf.textures[i];
+			if (texture_info.source == undefined) {
+				if (!texture_info.hasOwnProperty('extensions')) {
+					continue;
+				}
+				if (!texture_info.extensions.hasOwnProperty("EXT_texture_webp")) {
+					continue;
+				}
+				texture_info.source = texture_info.extensions.EXT_texture_webp.source;
+			}
 			const image = gltf.images[texture_info.source];
 			paths.push({
 				path: this.directory + image.uri,

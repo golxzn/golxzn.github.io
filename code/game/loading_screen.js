@@ -3,16 +3,20 @@ const APPEAR_DURATION    = 0.75;
 const DISAPPEAR_DURATION = 0.75;
 const LOADING_SPEED      = 2.0;
 
-const PRELOAD_TEXTURES = [
+const PRELOAD_TEXTURES = Object.freeze([
 	{ path: "assets/textures/asphalt.jpg", sampler: DEFAULT_SAMPLER },
 	{ path: "assets/textures/lain.jpg", sampler: DEFAULT_SAMPLER },
-	{ path: "assets/models/street-lamp-pillar/pillar_diffuse.png", sampler: DEFAULT_SAMPLER },
-];
-Object.freeze(PRELOAD_TEXTURES);
+	// { path: "assets/models/street-lamp-pillar/pillar_diffuse.png", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/models/building/WarmGrayBricksAlbedo.webp", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/models/building/WarmGrayBricksNormal.webp", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/models/building/WarmGrayBricksRoughness.webp", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/models/building/building-stone.webp", sampler: DEFAULT_SAMPLER },
+]);
 
-const PRELOAD_MODELS = [
+const PRELOAD_MODELS = Object.freeze([
 // My models
 	"assets/models/ground/ground.gltf",
+	"assets/models/building/building.gltf",
 	// "assets/models/gizmos/gizmos-sphere.gltf",
 	"assets/models/kostya/kostya-chill.gltf",
 	"assets/models/street-lamp-pillar/street-lamp-pillar.gltf",
@@ -22,8 +26,7 @@ const PRELOAD_MODELS = [
 	"assets/models/third-party/DamagedHelmet/DamagedHelmet.gltf",
 	"assets/models/third-party/NormalTangentTest/glTF/NormalTangentTest.gltf",
 	"assets/models/third-party/EmissiveStrengthTest/EmissiveStrengthTest.gltf",
-];
-Object.freeze(PRELOAD_MODELS);
+]);
 
 
 class progress_counter {

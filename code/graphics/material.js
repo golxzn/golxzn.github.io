@@ -125,7 +125,7 @@ class material {
 			return value.length;
 		};
 
-		const buffer = new Float32Array(vec4_length + vec3_length * 2);
+		const buffer = new Float32Array(SHADERS_COMMON.GEOMETRY_INFO.UNIFORM_BUFFER_LENGTH);
 
 		var offset = emplace(buffer, extract("base_color_factor"), 0);
 		offset += emplace(buffer, extract("emissive_factor"), offset);

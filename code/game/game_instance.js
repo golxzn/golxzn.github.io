@@ -9,7 +9,7 @@ class game_instance {
 		this.scene_manager = get_service("scene");
 		this.paused = true;
 
-		this.camera = new flying_camera([0.0, 5.0, -10.0]);
+		this.camera = new flying_camera([-9.69, 0.84, -31.61]);
 		graphics.set_active_camera(this.camera);
 
 		this._load_demo_scene(graphics);
@@ -45,6 +45,10 @@ class game_instance {
 	_load_demo_scene(graphics) {
 		// GAME OBJECTS
 
+		this._load_model("assets/models/ground/ground.gltf", (obj) => {
+			obj.position = [0.0, -2.0, 0.0];
+			obj.scale = [2.0, 2.0, 2.0];
+		});
 		this._load_model("assets/models/third-party/water-bottle/WaterBottle.gltf", (obj) => {
 			obj.position = [-3.88, 2.25, -2.1];
 			obj.scale = [2.5, 2.5, 2.5];
@@ -73,9 +77,9 @@ class game_instance {
 			obj.rotation = golxzn.math.quat.from_euler([0.0, Math.PI * 0.6, 0.0]);
 		});
 
-		this._load_model("assets/models/ground/ground.gltf");
-
-
+		this._load_model("assets/models/building/building.gltf", (obj) => {
+			obj.position = [0.0, -1.5, 0.0];
+		});
 
 
 		// LIGHTING
@@ -116,6 +120,17 @@ class game_instance {
 				obj.parent = point_lights;
 			});
 		}
+
+		graphics.point_lights.push(new PointLight([-9.02, 4.16, -21.3], point_attenuation, {
+			color: [0.988, 0.725, 0.471],
+			intensity: 1.0
+		}));
+
+		this._load_model("assets/models/gizmos/gizmos-sphere.gltf", (obj) => {
+			setup_light_gizmo(obj, [0.988, 0.725, 0.471], [-9.02, 4.16, -21.3]);
+			obj.scale = [1.1, 1.1, 1.1];
+			obj.parent = point_lights;
+		});
 
 
 		const spot_color = [0.96, 0.72, 0.36];

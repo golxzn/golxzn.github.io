@@ -26,6 +26,8 @@ class pbr_pipeline_builder {
 		this._scan_attributes(primitive.attributes, accessors);
 		if (golxzn.within_range(materials, primitive.material)) {
 			this._scan_material(materials[primitive.material]);
+		} else {
+			this.definitions.push(SHADER_DEFINITIONS.NO_TEXTURES);
 		}
 
 		return this;
@@ -66,7 +68,10 @@ class pbr_pipeline_builder {
 	}
 
 	_scan_material(material) {
-		if (!material) return;
+		if (!material) {
+			this.definitions.push(SHADER_DEFINITIONS.NO_TEXTURES);
+			return;
+		}
 
 		this.properties = {};
 		Object.assign(this.properties, PIPELINE_DEFAULT_PROPERTIES);
@@ -76,21 +81,25 @@ class pbr_pipeline_builder {
 		]
 		this.properties.flags |= PIPELINE_FLAGS.material_support;
 
-		const pbr = material.pbrMetallicRoughness;
 		const count = this.definitions.length;
-		if (pbr.baseColorTexture) {
-			this.definitions.push(SHADER_DEFINITIONS.TEXTURE_ALBEDO)
-		}
-		if (pbr.metallicRoughnessTexture && material.occlusionTexture &&
-			pbr.metallicRoughnessTexture.index == material.occlusionTexture.index
-		) {
-			this.definitions.push(SHADER_DEFINITIONS.TEXTURE_AMBIENT_METALLIC_ROUGHNESS)
-		} else {
-			if (pbr.metallicRoughnessTexture) {
-				this.definitions.push(SHADER_DEFINITIONS.TEXTURE_METALLIC_ROUGHNESS);
+
+		const pbr = material.pbrMetallicRoughness;
+		if (pbr != null) {
+			if (pbr.baseColorTexture) {
+				this.definitions.push(SHADER_DEFINITIONS.TEXTURE_ALBEDO)
 			}
-			if (pbr.occlusionTexture) {
-				this.definitions.push(SHADER_DEFINITIONS.TEXTURE_AMBIENT_OCCLUSION);
+			if (
+				!pbr.metallicRoughnessTexture || !material.occlusionTexture ||
+				pbr.metallicRoughnessTexture.index != material.occlusionTexture.index
+			) {
+				if (pbr.metallicRoughnessTexture) {
+					this.definitions.push(SHADER_DEFINITIONS.TEXTURE_METALLIC_ROUGHNESS);
+				}
+				if (pbr.occlusionTexture) {
+					this.definitions.push(SHADER_DEFINITIONS.TEXTURE_AMBIENT_OCCLUSION);
+				}
+			} else {
+				this.definitions.push(SHADER_DEFINITIONS.TEXTURE_AMBIENT_METALLIC_ROUGHNESS);
 			}
 		}
 
@@ -229,13 +238,16 @@ struct MaterialTextures {
 #if defined(${SHADER_DEFINITIONS.TEXTURE_AMBIENT_METALLIC_ROUGHNESS})
 	sampler2D occlusion_roughness_metallic;
 #else
+
 #if defined(${SHADER_DEFINITIONS.TEXTURE_METALLIC_ROUGHNESS})
 	sampler2D metallic_roughness;
 #endif
 #if defined(${SHADER_DEFINITIONS.TEXTURE_AMBIENT_OCCLUSION})
 	sampler2D ambient_occlusion;
 #endif
-#endif // TEXTURE_AMBIENT_METALLIC_ROUGHNESS
+
+#endif // defined(${SHADER_DEFINITIONS.TEXTURE_AMBIENT_METALLIC_ROUGHNESS})
+
 #if defined(${SHADER_DEFINITIONS.TEXTURE_EMISSIVE})
 	sampler2D emissive;
 #endif
@@ -246,7 +258,7 @@ struct MaterialTextures {
 };
 
 uniform MaterialTextures u_material_textures;
-#endif // !defined(SHADER_DEFINITIONS.NO_TEXTURES)
+#endif // !defined(${SHADER_DEFINITIONS.NO_TEXTURES})
 
 vec2 select_uv(int id) {
 #if defined(SUPPORT_TEXCOORD_0) && defined(SUPPORT_TEXCOORD_1)
@@ -293,11 +305,12 @@ vec3 make_normal() {
 #endif //  defined(SUPPORT_TANGENT) && defined(SUPPORT_NORMAL)
 	;
 
-#endif // defined(SHADER_DEFINITIONS.TEXTURE_NORMAL)
+#endif // defined(${SHADER_DEFINITIONS.TEXTURE_NORMAL})
 }
 
 vec4 make_emissive() {
-	return vec4(u_material_constants.emissive_factor, 1.0) /// @todo I'm not sure we should multiply it
+	/// @todo I'm not sure we should multiply it
+	return vec4(u_material_constants.emissive_factor, 1.0)
 #if defined(${SHADER_DEFINITIONS.TEXTURE_EMISSIVE})
 		* texture(u_material_textures.emissive, select_uv(EMISSIVE_ID))
 #endif
@@ -322,7 +335,7 @@ vec3 make_occlusion_roughness_metallic() {
 #else // ambient and metallic_roughness are same texture
 	float occlusion = texture(u_material_textures.occlusion_roughness_metallic, select_uv(AMBIENT_OCCLUSION_ID)).r;
 	vec2 metallic_roughness = texture(u_material_textures.occlusion_roughness_metallic, select_uv(METALLIC_ROUGHNESS_ID)).gb;
-#endif // SHADER_DEFINITIONS.TEXTURE_AMBIENT_METALLIC_ROUGHNESS
+#endif // defined(${SHADER_DEFINITIONS.TEXTURE_AMBIENT_METALLIC_ROUGHNESS})
 
 	return vec3(occlusion, metallic_roughness);
 }

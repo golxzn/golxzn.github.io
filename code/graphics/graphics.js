@@ -26,7 +26,7 @@ class graphics {
 		this.uniform_blocks = {
 			[SHADERS_COMMON.UNIFORM_BLOCKS.GEOMETRY.binding]: new uniform_block(
 				SHADERS_COMMON.UNIFORM_BLOCKS.GEOMETRY,
-				new Float32Array(m.identity().concat(m.identity()))
+				new Float32Array(SHADERS_COMMON.GEOMETRY_INFO.UNIFORM_BUFFER_LENGTH)
 			),
 			[SHADERS_COMMON.UNIFORM_BLOCKS.LIGHT_PROPERTIES.binding]: new uniform_block(
 				SHADERS_COMMON.UNIFORM_BLOCKS.LIGHT_PROPERTIES,

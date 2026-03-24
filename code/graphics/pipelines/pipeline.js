@@ -172,10 +172,12 @@ class pipeline {
 	}
 
 	_bind_uniform_blocks(properties) {
-		if (properties.uniform_blocks == null) return;
+		if (properties == null || properties.uniform_blocks == null) { return; }
 
 		for (const {name, binding} of properties.uniform_blocks) {
 			const index = gl.getUniformBlockIndex(this._program, name);
+			// const blockSize = gl.getActiveUniformBlockParameter(this._program, index, gl.UNIFORM_BLOCK_DATA_SIZE);
+			// console.log("UBO ", name, " block size:", blockSize);
 			gl.uniformBlockBinding(this._program, index, binding)
 		}
 	}
