@@ -1,4 +1,4 @@
-const ATTRIBUTE_NAMES = {
+const ATTRIBUTE_NAMES = Object.freeze({
 	POSITION  : "POSITION",
 	NORMAL    : "NORMAL",
 	TEXCOORD_0: "TEXCOORD_0",
@@ -6,8 +6,7 @@ const ATTRIBUTE_NAMES = {
 	TANGENT   : "TANGENT",
 	WEIGHTS_0 : "WEIGHTS_0",
 	JOINTS_0  : "JOINTS_0",
-};
-Object.freeze(ATTRIBUTE_NAMES);
+});
 
 class primitive {
 	constructor(id, info = { indices: null, mode: gl.TRIANGLES }, material = null) {

@@ -1,10 +1,9 @@
 
-const POWER_PREFERENCE = {
+const POWER_PREFERENCE = Object.freeze({
 	DEFAULT: "default",
 	HIGH_PERFORMANCE: "high-performance",
 	LOW_POWER: "low-power"
-};
-Object.freeze(POWER_PREFERENCE);
+});
 
 const SETTINGS = {
 	debug_mode: false,

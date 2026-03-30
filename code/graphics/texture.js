@@ -1,21 +1,19 @@
 
-const DEFAULT_TEXTURE_INFO = {
+const DEFAULT_TEXTURE_INFO = Object.freeze({
 	DEFAULT_LEVEL  : 0,
 	DEFAULT_WIDTH  : 1,
 	DEFAULT_HEIGHT : 1,
 	DEFAULT_BORDER : 0,
 	DEFAULT_PIXELS : new Uint8Array([255, 255, 255, 255])
-};
-Object.freeze(DEFAULT_TEXTURE_INFO);
+});
 
-const DEFAULT_SAMPLER = {
+const DEFAULT_SAMPLER = Object.freeze({
 	wrapS: gl.REPEAT,
 	wrapT: gl.REPEAT,
 	wrapR: gl.REPEAT,
 	magFilter: gl.LINEAR,
 	minFilter: gl.LINEAR_MIPMAP_LINEAR
-};
-Object.freeze(DEFAULT_SAMPLER);
+});
 
 class texture {
 	constructor(image, sampler = DEFAULT_SAMPLER) {

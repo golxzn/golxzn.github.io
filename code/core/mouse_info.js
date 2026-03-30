@@ -61,5 +61,4 @@ class mouse_info {
 		this.delta = [event.movementX, -event.movementY];
 		this.position = [event.x, event.y];
 	}
-
 };

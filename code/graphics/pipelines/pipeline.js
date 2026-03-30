@@ -1,9 +1,8 @@
-const PIPELINE_DEFAULT_PROPERTIES = {
+const PIPELINE_DEFAULT_PROPERTIES = Object.freeze({
 	flags: PIPELINE_FLAGS.nothing,
 	transform_feedback: null,
 	uniform_blocks: []
-};
-Object.freeze(PIPELINE_DEFAULT_PROPERTIES);
+});
 
 class pipeline {
 	constructor(name, shaders, properties = PIPELINE_DEFAULT_PROPERTIES) {

@@ -71,6 +71,5 @@ class optional {
 	}
 };
 
-const nullopt = new optional(null);
-Object.freeze(nullopt);
+const nullopt = Object.freeze(new optional(null));
 

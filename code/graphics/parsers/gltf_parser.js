@@ -185,6 +185,7 @@ class gltf_loader {
 			node.parent = target; // Will push to children
 		}
 
+		// pack nodes with same mesh into instancing-node
 		return target;
 	}
 

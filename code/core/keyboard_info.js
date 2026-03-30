@@ -44,5 +44,4 @@ class keyboard_info {
 	on_key_up(event) {
 		this.keys[event.code] = new key_info(false);
 	}
-
-}
+};

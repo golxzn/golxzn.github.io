@@ -1,9 +1,8 @@
 
-const UNIFORM_BLOCK_PARAMS = {
+const UNIFORM_BLOCK_PARAMS = Object.freeze({
 	name: "",
 	binding: -1,
-};
-Object.freeze(UNIFORM_BLOCK_PARAMS);
+});
 
 class uniform_block {
 	constructor(params = UNIFORM_BLOCK_PARAMS, data = null) {

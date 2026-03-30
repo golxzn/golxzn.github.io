@@ -7,14 +7,13 @@ const METALLIC_ROUGHNESS_NAME           = `${MATERIAL_UNIFORM}.metallic_roughnes
 const AMBIENT_OCCLUSION_NAME            = `${MATERIAL_UNIFORM}.ambient_occlusion`
 const EMISSIVE_NAME                     = `${MATERIAL_UNIFORM}.emissive`
 
-const ALPHA_MODE = {
+const ALPHA_MODE = Object.freeze({
 	OPAQUE: 0,
 	MASK: 1,
 	BLEND: 2,
-};
-Object.freeze(ALPHA_MODE);
+});
 
-const DEFAULT_MATERIAL_INFO = {
+const DEFAULT_MATERIAL_INFO = Object.freeze({
 	textures: {},
 	base_color_factor: [1.0, 1.0, 1.0, 1.0],
 	emissive_factor: [0.0, 0.0, 0.0],
@@ -22,17 +21,15 @@ const DEFAULT_MATERIAL_INFO = {
 	roughness_factor: 1,
 	alpha_cutoff: 0.5,
 	alpha_mode: ALPHA_MODE.OPAQUE
-};
-Object.freeze(DEFAULT_MATERIAL_INFO);
+});
 
-const MATERIAL_CONSTANTS_OFFSETS = {
+const MATERIAL_CONSTANTS_OFFSETS = Object.freeze({
 	base_color_factor_offset: 0,
 	emissive_factor_offset  : 16,
 	metallic_factor_offset  : 28,
 	roughness_factor_offset : 32,
 	alpha_cutoff_offset     : 36
-};
-Object.freeze(MATERIAL_CONSTANTS_OFFSETS);
+});
 
 class material {
 	constructor(info = DEFAULT_MATERIAL_INFO) {

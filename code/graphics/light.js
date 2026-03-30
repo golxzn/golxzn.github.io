@@ -1,8 +1,7 @@
-const DEFAULT_LIGHT_INFO = {
+const DEFAULT_LIGHT_INFO = Object.freeze({
 	color: [1.0, 1.0, 1.0],
 	intensity: 1.0
-};
-Object.freeze(DEFAULT_LIGHT_INFO);
+});
 const BUFFER_PADDING = -0;
 
 class LightBase {

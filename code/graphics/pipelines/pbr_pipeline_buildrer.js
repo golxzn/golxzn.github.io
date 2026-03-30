@@ -1,4 +1,4 @@
-const SHADER_DEFINITIONS = {
+const SHADER_DEFINITIONS = Object.freeze({
 	TEXTURE_ALBEDO                    : "MATERIAL_TEXTURE_ALBEDO",
 	TEXTURE_NORMAL                    : "MATERIAL_TEXTURE_NORMAL",
 	TEXTURE_SPECULAR                  : "MATERIAL_TEXTURE_SPECULAR",
@@ -7,8 +7,7 @@ const SHADER_DEFINITIONS = {
 	TEXTURE_AMBIENT_METALLIC_ROUGHNESS: "MATERIAL_TEXTURE_AMBIENT_METALLIC_ROUGHNESS",
 	TEXTURE_EMISSIVE                  : "MATERIAL_TEXTURE_EMISSIVE",
 	NO_TEXTURES                       : "NO_TEXTURES"
-};
-Object.freeze(SHADER_DEFINITIONS)
+})
 
 class pbr_pipeline_builder {
 	constructor(primitive = null, accessors = null, materials = null) {

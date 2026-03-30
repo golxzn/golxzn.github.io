@@ -1,6 +1,6 @@
 'use strict';
 
-const context_settings = {
+const context_settings = Object.freeze({
 	alpha: true,
 	depth: true,
 	stencil: true,
@@ -9,8 +9,7 @@ const context_settings = {
 	antialias: SETTINGS.antialias,
 	powerPreference: SETTINGS.power_preference, // Could be "default", "high-performance", and "low-power"
 	preserveDrawingBuffer: true,
-};
-Object.freeze(context_settings);
+});
 
 const RECORDS_BUFFER_SIZE = 40;
 var RECORDS_BUFFER = [];

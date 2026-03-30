@@ -1,11 +1,10 @@
 
-const DEFAULT_TRANSFORM = {
+const DEFAULT_TRANSFORM = Object.freeze({
 	matrix: golxzn.math.mat4.identity(),
 	position: [0.0, 0.0, 0.0],
 	rotation: [0.0, 0.0, 0.0, 1.0],
 	scale: [1.0, 1.0, 1.0]
-};
-Object.freeze(DEFAULT_TRANSFORM);
+});
 
 class transform {
 	constructor(info = DEFAULT_TRANSFORM) {

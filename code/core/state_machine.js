@@ -1,9 +1,8 @@
-const DEFAULT_CALLBACKS = {
+const DEFAULT_CALLBACKS = Object.freeze({
 	update: (_) => {},
 	on_enter: () => {},
 	on_exit: () => {}
-};
-Object.freeze(DEFAULT_CALLBACKS);
+});
 
 class state {
 	constructor(callbacks = DEFAULT_CALLBACKS) {

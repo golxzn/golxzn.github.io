@@ -137,10 +137,10 @@ class buffer {
 };
 
 
-const render_object_type = {
+const render_object_type = Object.freeze({
 	vertex_array      : "vertex_array",
 	transform_feedback: "transform_feedback"
-};
+});
 
 
 class render_object {

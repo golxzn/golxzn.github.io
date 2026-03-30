@@ -1,8 +1,8 @@
 
-const DEFAULT_FRAMEBUFFER_CALLBACKS = {
+const DEFAULT_FRAMEBUFFER_CALLBACKS = Object.freeze({
 	bind: function() {},
 	unbind: function() {}
-}
+});
 
 class render_pass {
 	constructor(name, framebuffer, settings = [], callbacks = DEFAULT_FRAMEBUFFER_CALLBACKS, pipeline = null) {

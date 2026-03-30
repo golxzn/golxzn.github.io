@@ -1,9 +1,9 @@
 
-const attachment_type = {
+const attachment_type = Object.freeze({
 	texture          : "texture",
 	texture_array    : "texture_array",
 	renderbuffer     : "renderbuffer"
-};
+});
 
 function make_texture_proxy(texture, type) {
 	return {

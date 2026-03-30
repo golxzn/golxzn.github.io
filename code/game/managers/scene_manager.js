@@ -1,12 +1,11 @@
 
-const OBJECT_TYPE = {
+const OBJECT_TYPE = Object.freeze({
 	DRAWABLE: 1,
 	UPDATABLE: 2,
 	GIZMOS: 4,
 
 	ALL: 0xFF
-};
-Object.freeze(OBJECT_TYPE);
+});
 
 
 /// @todo rework sm
