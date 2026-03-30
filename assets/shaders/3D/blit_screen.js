@@ -18,7 +18,7 @@ void main() {
 frag: /* glsl */ `#version 300 es
 precision mediump float;
 
-const float GAMMA = 2.2;
+const vec3 GAMMA = vec3(1.0 / 2.2);
 
 in vec2 f_uv;
 out vec4 frag_color;
@@ -28,13 +28,12 @@ uniform sampler2D u_screen;
 uniform sampler2D u_bloom;
 
 vec3 tone_mapping(vec3 color, float exposure) {
+	color *= pow(2.0, exposure);
 	return color / (color + vec3(1.0)); // HDR tone mapping
-	// return vec3(1.0) - exp(-color * exposure);
 }
 
 vec3 gamma_correction(vec3 color) {
-	const float gamma = 1.0 / GAMMA;
-	return pow(color, vec3(gamma));
+	return pow(color, GAMMA);
 }
 
 void main() {

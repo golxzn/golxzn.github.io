@@ -214,6 +214,6 @@ class game_instance {
 	on_wheel(event) {
 		if (this.paused) return;
 
-		this.camera.speed -= event.deltaY * 0.001;
+		this.camera.speed -= event.deltaY * 0.01;
 	}
 }

@@ -19,8 +19,6 @@ class camera {
 		this.front    = [0.0, 0.0, -1.0];
 		this.up       = [0.0, 1.0, 0.0];
 
-		this.sensitivity = [0.1, 0.1];
-
 		this._yaw   =  90.0;
 		this._pitch = 0.0;
 		// this._roll  = 0.0;
