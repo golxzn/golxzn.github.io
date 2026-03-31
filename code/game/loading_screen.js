@@ -24,14 +24,14 @@ const PRELOAD_MODELS = Object.freeze([
 	"assets/models/ground/ground.gltf",
 	"assets/models/building/Building.gltf",
 	// "assets/models/gizmos/gizmos-sphere.gltf",
-	// "assets/models/kostya/kostya-chill.gltf",
-	// "assets/models/street-lamp-pillar/street-lamp-pillar.gltf",
+	"assets/models/kostya/kostya-chill.gltf",
+	"assets/models/street-lamp-pillar/street-lamp-pillar.gltf",
 
 // Third party
-	// "assets/models/third-party/water-bottle/WaterBottle.gltf",
-	// "assets/models/third-party/DamagedHelmet/DamagedHelmet.gltf",
-	// "assets/models/third-party/NormalTangentTest/glTF/NormalTangentTest.gltf",
-	// "assets/models/third-party/EmissiveStrengthTest/EmissiveStrengthTest.gltf",
+	"assets/models/third-party/water-bottle/WaterBottle.gltf",
+	"assets/models/third-party/DamagedHelmet/DamagedHelmet.gltf",
+	"assets/models/third-party/NormalTangentTest/glTF/NormalTangentTest.gltf",
+	"assets/models/third-party/EmissiveStrengthTest/EmissiveStrengthTest.gltf",
 ]);
 
 
