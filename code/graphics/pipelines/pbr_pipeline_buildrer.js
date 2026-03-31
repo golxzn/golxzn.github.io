@@ -10,21 +10,21 @@ const SHADER_DEFINITIONS = Object.freeze({
 })
 
 class pbr_pipeline_builder {
-	constructor(primitive = null, accessors = null, materials = null) {
+	constructor(primitive = null, accessors = null, material = null) {
 		this.attributes = []; // { type: "", name: "" }
 		this.definitions = [];
 		this.properties = null;
-		this.scan(primitive, accessors, materials);
+		this.scan(primitive, accessors, material);
 	}
 
-	scan(primitive, accessors, materials) {
-		if (golxzn.any_of(null, primitive, accessors, materials)) {
+	scan(primitive, accessors, material) {
+		if (golxzn.any_of(null, primitive, accessors)) {
 			return this;
 		}
 
 		this._scan_attributes(primitive.attributes, accessors);
-		if (golxzn.within_range(materials, primitive.material)) {
-			this._scan_material(materials[primitive.material]);
+		if (material) {
+			this._scan_material(material);
 		} else {
 			this.definitions.push(SHADER_DEFINITIONS.NO_TEXTURES);
 		}

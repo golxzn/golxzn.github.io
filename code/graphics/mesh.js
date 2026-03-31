@@ -17,15 +17,28 @@ class primitive {
 		this.material = material;
 		this.mode = info.mode || gl.TRIANGLES;
 		this.buffers = [];
-		this.pipeline_id = "PBR_GEOMETRY";
+		this._pipeline_id = "PBR_GEOMETRY";
 		this._draw_method = (self) => {
 			gl.drawArrays(self.mode, 0, self.vertex_count);
 		}
+
+		this._cached_pipeline = get_service("pipeline").get_pipeline(this.pipeline_id);
+	}
+
+	set pipeline_id(id) {
+		const pipeline = get_service("pipeline").get_pipeline(id);
+		if (pipeline != null) {
+			this._pipeline_id = id;
+			this._cached_pipeline = pipeline;
+		}
+	}
+	get pipeline_id() {
+		return this._pipeline_id;
 	}
 
 	/** @param {graphics} g  */
 	draw(g) {
-		g.push_pipeline(get_service("pipeline").get_pipeline(this.pipeline_id));
+		g.push_pipeline(this._cached_pipeline);
 		g.set_engine_uniforms();
 		g.set_engine_lighting_uniforms();
 		if (this.material) this.material.activate(g);

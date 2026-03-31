@@ -8,6 +8,7 @@ class gltf_loader {
 		this.gltf = gltf;
 		this._buffers = [];
 		this._textures = [];
+		this._materials = [];
 	}
 
 	invalid() {
@@ -25,22 +26,14 @@ class gltf_loader {
 		return "scene" in this.gltf ? this.parse_scene(this.gltf["scene"]) : null;
 	}
 
-	parse_material(material_id) {
+	parse_material(material_info) {
 		const gltf = this.gltf;
 
-		if (!golxzn.within_range(gltf.materials, material_id)) {
-			return null;
-		}
-
 		const take_texture = (info) => {
-			if (info == null) {
-				return null;
+			if (info != null) {
+				return this._get_texture(info.index);
 			}
-			if (!golxzn.within_range(gltf.textures, info.index)) {
-				return null;
-			}
-			const texture = gltf.textures[info.index];
-			return this._get_texture(texture.source);
+			return null;
 		};
 		const convert_mode = (mode_name) => {
 			switch (mode_name) {
@@ -84,17 +77,26 @@ class gltf_loader {
 
 		/// @todo generate uv usage bitset
 
-		const material_info = gltf.materials[material_id];
 		const pbr = material_info.pbrMetallicRoughness;
 		return new material({
-			textures: pbr ? load_textures(material_info, pbr) : null,
-			metallic_factor   : pbr ? pbr.metallicFactor : null,
-			emissive_factor   : get_emissive_factor(material_info),
-			roughness_factor  : pbr ? pbr.roughnessFactor : null,
-			base_color_factor : pbr ? pbr.baseColorFactor : null,
-			alpha_cutoff      : material_info.alphaCutoff,
-			alpha_mode        : convert_mode(material_info.alphaMode)
+			name             : material_info.name,
+			textures         : pbr ? load_textures(material_info, pbr) : null,
+			metallic_factor  : pbr ? pbr.metallicFactor : null,
+			emissive_factor  : get_emissive_factor(material_info),
+			roughness_factor : pbr ? pbr.roughnessFactor : null,
+			base_color_factor: pbr ? pbr.baseColorFactor : null,
+			alpha_cutoff     : material_info.alphaCutoff,
+			alpha_mode       : convert_mode(material_info.alphaMode)
 		});
+	}
+
+	parse_materials() {
+		const gltf = this.gltf;
+		const materials = [];
+		for (const material of gltf.materials) {
+			materials.push(this.parse_material(material));
+		}
+		return materials;
 	}
 
 	parse_mesh(mesh_id = 0) {
@@ -109,10 +111,8 @@ class gltf_loader {
 		var created_mesh = new mesh({
 			name: mesh_info.name,
 			primitives: mesh_info.primitives.map((info, id) => {
-				const prim = new primitive(id, info);
-				prim.material = this.parse_material(info.material);
-
-				const builder = new pbr_pipeline_builder(info, gltf.accessors, gltf.materials);
+				const prim = new primitive(id, info, this._materials[info.material]);
+				const builder = new pbr_pipeline_builder(info, gltf.accessors, gltf.materials[info.material]);
 				const hash = builder.make_hash();
 				if (!pipelines.has_pipeline(hash)) {
 					/// @todo it could be async
@@ -138,6 +138,9 @@ class gltf_loader {
 
 	parse_scene(scene_id = 0) {
 		const gltf = this.gltf;
+
+		this._materials = this.parse_materials();
+
 		if ("scenes" in gltf && golxzn.within_range(gltf.scenes, scene_id)) {
 			const scene = gltf.scenes[scene_id];
 			if (scene.nodes.length == 1) {

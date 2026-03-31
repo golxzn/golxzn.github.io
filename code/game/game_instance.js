@@ -49,6 +49,14 @@ class game_instance {
 			obj.position = [0.0, -2.0, 0.0];
 			obj.scale = [2.0, 2.0, 2.0];
 		});
+		this._load_model("assets/models/building/Building.gltf", (obj) => {
+			obj.position = [0.0, -1.5, 0.0];
+		});
+		this._load_model("assets/models/street-lamp-pillar/street-lamp-pillar.gltf", (obj) => {
+			obj.position = [1.0, 0.0, 1.0];
+		});
+
+
 		this._load_model("assets/models/third-party/water-bottle/WaterBottle.gltf", (obj) => {
 			obj.position = [-3.88, 2.25, -2.1];
 			obj.scale = [2.5, 2.5, 2.5];
@@ -68,17 +76,10 @@ class game_instance {
 			obj.rotation = golxzn.math.quat.from_euler([0.0, Math.PI * 0.58, 0.0]);
 		});
 
-		this._load_model("assets/models/street-lamp-pillar/street-lamp-pillar.gltf", (obj) => {
-			obj.position = [1.0, 0.0, 1.0];
-		});
 		this._load_model("assets/models/kostya/kostya-chill.gltf", (obj) => {
 			obj.position = [-3.0, 1.15, -3.0];
 			obj.scale = [5.0, 5.0, 5.0];
 			obj.rotation = golxzn.math.quat.from_euler([0.0, Math.PI * 0.6, 0.0]);
-		});
-
-		this._load_model("assets/models/building/building.gltf", (obj) => {
-			obj.position = [0.0, -1.5, 0.0];
 		});
 
 
@@ -110,26 +111,28 @@ class game_instance {
 		const point_lights = this.scene_manager.add_object(new node({ name: "PointLights" }));
 		for (const color of rgb) {
 			const pos = golxzn.math.sum(golxzn.math.scale(color, 7.0), [0.0, 1.0, 0.0]);
-			graphics.point_lights.push(new PointLight(pos, point_attenuation, {
-				color: color,
-				intensity: 1.0
-			}));
-
 			this._load_model("assets/models/gizmos/gizmos-sphere.gltf", (obj) => {
 				setup_light_gizmo(obj, color, pos);
 				obj.parent = point_lights;
 			});
+
+			graphics.point_lights.push(new PointLight(pos, point_attenuation, {
+				color: color,
+				intensity: 1.0
+			}));
 		}
 
-		graphics.point_lights.push(new PointLight([-9.02, 4.16, -21.3], point_attenuation, {
-			color: [0.988, 0.725, 0.471],
-			intensity: 1.0
-		}));
-
 		this._load_model("assets/models/gizmos/gizmos-sphere.gltf", (obj) => {
-			setup_light_gizmo(obj, [0.988, 0.725, 0.471], [-9.02, 4.16, -21.3]);
-			obj.scale = [1.1, 1.1, 1.1];
+			const porch_lamp_color       = [ 0.988, 0.725, 0.471 ];
+			const porch_lamp_position    = [ -9.02,  4.16, -21.09 ];
+			const porch_lamp_attenuation = [   1.0,  0.09, 0.032 ];
+
+			setup_light_gizmo(obj, porch_lamp_color, porch_lamp_position);
 			obj.parent = point_lights;
+			graphics.point_lights.push(new PointLight(porch_lamp_position, point_attenuation, {
+				color: porch_lamp_color,
+				intensity: 4.0
+			}));
 		});
 
 
@@ -153,19 +156,19 @@ class game_instance {
 				light_height,
 				distance_from_center * Math.sin(i * angle)
 			];
+			this._load_model("assets/models/gizmos/gizmos-sphere.gltf", (obj) => {
+				obj.name += `_${i}`;
+				setup_light_gizmo(obj, spot_color, position);
+				obj.parent = spot_lights;
+			});
+
 			var light = new SpotLight(
 				position, golxzn.math.vec3.negative(position), spot_attenuation, spot_limits, {
 					color: spot_color,
 					intensity: 1.0
 				}
 			);
-
 			graphics.spot_lights.push(light);
-			this._load_model("assets/models/gizmos/gizmos-sphere.gltf", (obj) => {
-				obj.name += `_${i}`;
-				setup_light_gizmo(obj, spot_color, position);
-				obj.parent = spot_lights;
-			});
 		}
 	}
 

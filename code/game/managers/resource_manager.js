@@ -82,7 +82,7 @@ class resource_manager {
 			img.src = this._make_url(path);
 		});
 
-		const tex = new texture(image, sampler);
+		const tex = new texture(path, image, sampler);
 		this.textures[path] = tex;
 		return tex;
 	}

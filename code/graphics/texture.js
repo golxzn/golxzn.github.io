@@ -16,7 +16,8 @@ const DEFAULT_SAMPLER = Object.freeze({
 });
 
 class texture {
-	constructor(image, sampler = DEFAULT_SAMPLER) {
+	constructor(path, image, sampler = DEFAULT_SAMPLER) {
+		this.path = path;
 		this._target = gl.TEXTURE_2D;
 		this._texture = this._make_texture();
 		this._width = image ? image.width : DEFAULT_TEXTURE_INFO.DEFAULT_WIDTH;

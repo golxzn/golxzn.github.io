@@ -1,6 +1,6 @@
 [ ] Optimization
-	[ ] INSTANCING!
-	[ ] Transform feedback for particles
+	[ ] Mesh Instancing
+	[ ] Clustered Shading
 	[ ] Tiled Deferred Shading
 	[ ] Stencil Shadow Volume
 	[ ] LOD
@@ -14,6 +14,7 @@
 	[ ] Render Graph
 	[ ] Normal & Parallax Mapping
 	[ ] Volumetric Fog
+	[ ] Particles
 	[x] Configure & Build pipeline for each mesh!
 	[x] PBR Materials & Lighting
 	[-] HDR

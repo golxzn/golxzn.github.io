@@ -5,27 +5,33 @@ const LOADING_SPEED      = 2.0;
 
 const PRELOAD_TEXTURES = Object.freeze([
 	{ path: "assets/textures/asphalt.jpg", sampler: DEFAULT_SAMPLER },
-	{ path: "assets/textures/lain.jpg", sampler: DEFAULT_SAMPLER },
+	// { path: "assets/textures/lain.jpg", sampler: DEFAULT_SAMPLER },
 	// { path: "assets/models/street-lamp-pillar/pillar_diffuse.png", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/models/building/ConcreteAlbedo.webp", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/models/building/ConcreteNormal.webp", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/models/building/MazutRoofAlbedo.webp", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/models/building/MetalPlatesAlbedo.webp", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/models/building/MetalPlatesOMR.webp", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/models/building/RustyMetalPlatesAlbedo.webp", sampler: DEFAULT_SAMPLER },
+	{ path: "assets/models/building/RustyMetalPlatesOMR.webp", sampler: DEFAULT_SAMPLER },
 	{ path: "assets/models/building/WarmGrayBricksAlbedo.webp", sampler: DEFAULT_SAMPLER },
 	{ path: "assets/models/building/WarmGrayBricksNormal.webp", sampler: DEFAULT_SAMPLER },
 	{ path: "assets/models/building/WarmGrayBricksRoughness.webp", sampler: DEFAULT_SAMPLER },
-	{ path: "assets/models/building/building-stone.webp", sampler: DEFAULT_SAMPLER },
 ]);
 
 const PRELOAD_MODELS = Object.freeze([
 // My models
 	"assets/models/ground/ground.gltf",
-	"assets/models/building/building.gltf",
+	"assets/models/building/Building.gltf",
 	// "assets/models/gizmos/gizmos-sphere.gltf",
-	"assets/models/kostya/kostya-chill.gltf",
-	"assets/models/street-lamp-pillar/street-lamp-pillar.gltf",
+	// "assets/models/kostya/kostya-chill.gltf",
+	// "assets/models/street-lamp-pillar/street-lamp-pillar.gltf",
 
 // Third party
-	"assets/models/third-party/water-bottle/WaterBottle.gltf",
-	"assets/models/third-party/DamagedHelmet/DamagedHelmet.gltf",
-	"assets/models/third-party/NormalTangentTest/glTF/NormalTangentTest.gltf",
-	"assets/models/third-party/EmissiveStrengthTest/EmissiveStrengthTest.gltf",
+	// "assets/models/third-party/water-bottle/WaterBottle.gltf",
+	// "assets/models/third-party/DamagedHelmet/DamagedHelmet.gltf",
+	// "assets/models/third-party/NormalTangentTest/glTF/NormalTangentTest.gltf",
+	// "assets/models/third-party/EmissiveStrengthTest/EmissiveStrengthTest.gltf",
 ]);
 
 

@@ -14,6 +14,7 @@ const ALPHA_MODE = Object.freeze({
 });
 
 const DEFAULT_MATERIAL_INFO = Object.freeze({
+	name: "__default__",
 	textures: {},
 	base_color_factor: [1.0, 1.0, 1.0, 1.0],
 	emissive_factor: [0.0, 0.0, 0.0],
@@ -33,6 +34,7 @@ const MATERIAL_CONSTANTS_OFFSETS = Object.freeze({
 
 class material {
 	constructor(info = DEFAULT_MATERIAL_INFO) {
+		this.name = info.name || DEFAULT_MATERIAL_INFO.name;
 		this.textures = info.textures;
 		this.data_block = new uniform_block(
 			SHADERS_COMMON.UNIFORM_BLOCKS.MATERIAL_CONSTANTS,
